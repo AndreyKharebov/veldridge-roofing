@@ -1,30 +1,26 @@
 import { useEffect, useState } from 'react';
+import { NavLink } from 'react-router';
+
 import './Header.sass';
 
 const Header = () => {
-  const [menuState, setMenuState] = useState('closed');
-
-  const isMenuOpen = menuState === 'open';
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [hasInteracted, setHasInteracted] = useState(false);
 
   const toggleMenu = () => {
-    setMenuState((prev) => (prev === 'open' ? 'closing' : 'open'));
+    setHasInteracted(true);
+    setIsMenuOpen((prev) => !prev);
+  };
+
+  const closeMenu = () => {
+    setIsMenuOpen(false);
   };
 
   const handleNavClick = (event) => {
     const link = event.target.closest('a');
 
     if (link && event.currentTarget.contains(link) && isMenuOpen) {
-      setMenuState('closing');
-    }
-  };
-
-  const handleMenuAnimationEnd = (event) => {
-    if (
-      event.target === event.currentTarget &&
-      menuState === 'closing' &&
-      event.animationName === 'menu-slide-up'
-    ) {
-      setMenuState('closed');
+      setIsMenuOpen(false);
     }
   };
 
@@ -33,7 +29,7 @@ const Header = () => {
 
     const handleKeyDown = (event) => {
       if (event.key === 'Escape') {
-        setMenuState('closing');
+        closeMenu();
       }
     };
 
@@ -49,7 +45,8 @@ const Header = () => {
 
     const handleBreakpointChange = (event) => {
       if (event.matches) {
-        setMenuState('closed');
+        setIsMenuOpen(false);
+        setHasInteracted(false);
       }
     };
 
@@ -63,58 +60,72 @@ const Header = () => {
   return (
     <header className='header'>
       <div className='container header__inner'>
-        <a
+        <NavLink
           className='header__logo'
-          href='/'
+          to='/'
           aria-label='Veldridge Roofing — Home'
         >
           <span className='header__logo-name'>Veldridge</span>
           <span className='header__logo-description'>Roofing</span>
-        </a>
+        </NavLink>
 
         <nav
-          className={`header__nav header__nav--${menuState}`}
+          className={[
+            'header__nav',
+            isMenuOpen && 'header__nav--open',
+            hasInteracted && 'header__nav--animated',
+          ]
+            .filter(Boolean)
+            .join(' ')}
           id='main-navigation'
           aria-label='Main navigation'
           onClick={handleNavClick}
-          onAnimationEnd={handleMenuAnimationEnd}
         >
           <ul className='header__nav-list'>
             <li className='header__nav-item'>
-              <a className='header__nav-link' href='#home' aria-current='page'>
+              <NavLink className='header__nav-link' to='/' end>
                 Home
-              </a>
+              </NavLink>
             </li>
 
             <li className='header__nav-item'>
-              <a className='header__nav-link' href='#about'>
+              <NavLink className='header__nav-link' to='/about'>
                 About
-              </a>
+              </NavLink>
             </li>
 
             <li className='header__nav-item'>
-              <a className='header__nav-link' href='#services'>
+              <NavLink className='header__nav-link' to='/services'>
                 Services
-              </a>
+              </NavLink>
             </li>
 
             <li className='header__nav-item'>
-              <a className='header__nav-link' href='#gallery'>
+              <NavLink className='header__nav-link' to='/gallery'>
                 Gallery
-              </a>
+              </NavLink>
             </li>
 
             <li className='header__nav-item'>
-              <a className='header__nav-link' href='#blog'>
+              <NavLink className='header__nav-link' to='/blog'>
                 Blog
-              </a>
+              </NavLink>
+            </li>
+
+            <li className='header__nav-item header__nav-item--contact'>
+              <NavLink
+                className='header__nav-link header__nav-link--contact'
+                to='/contact'
+              >
+                Contact
+              </NavLink>
             </li>
           </ul>
         </nav>
 
-        <a className='header__contact' href='#contact'>
+        <NavLink className='header__contact' to='/contact'>
           Contact
-        </a>
+        </NavLink>
 
         <button
           className='header__burger'

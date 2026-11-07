@@ -69,8 +69,11 @@
       outline: 2px solid vars.$color-primary
       outline-offset: 3px
 
-    &[aria-current='page']
+    &.active
       background-color: vars.$color-accent-light
+
+  &__nav-item--contact
+    display: none
 
   &__contact
     display: inline-flex
@@ -164,14 +167,13 @@
       transform: translateY(-20px)
 
       &--open
+        opacity: 1
         visibility: visible
         pointer-events: auto
-        animation: menu-slide-down 0.3s ease forwards
+        transform: translateY(0)
 
-      &--closing
-        visibility: visible
-        pointer-events: none
-        animation: menu-slide-up 0.3s ease forwards
+      &--animated
+        transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s
 
     &__nav-list
       display: flex
@@ -199,6 +201,9 @@
         background-color: vars.$color-primary
         color: vars.$color-white
         font-weight: vars.$font-bold
+
+        &.active
+          background-color: vars.$color-primary
 
         &:hover
           background-color: #d97700
@@ -235,34 +240,3 @@
 @media (prefers-reduced-motion: reduce)
   .header__nav
     transition: none
-
-@keyframes menu-slide-down
-  from
-    opacity: 0
-    transform: translateY(-20px)
-
-  to
-    opacity: 1
-    transform: translateY(0)
-
-@keyframes menu-slide-up
-  from
-    opacity: 1
-    transform: translateY(0)
-
-  to
-    opacity: 0
-    transform: translateY(-20px)
-
-@media (prefers-reduced-motion: reduce)
-  .header__nav--open,
-  .header__nav--closing
-    animation: none
-
-  .header__nav--open
-    opacity: 1
-    transform: translateY(0)
-
-  .header__nav--closing
-    opacity: 0
-    visibility: hidden

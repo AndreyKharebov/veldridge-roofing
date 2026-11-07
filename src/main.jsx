@@ -1,12 +1,17 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import App from './App.jsx'
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import { BrowserRouter } from 'react-router';
 
-import '@fontsource-variable/plus-jakarta-sans'
-import './styles/main.sass'
+import '@fontsource-variable/plus-jakarta-sans';
+
+import App from './App.jsx';
+
+import './styles/main.sass';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <App />
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
   </StrictMode>,
-)
+);
