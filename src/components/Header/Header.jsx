@@ -3,6 +3,14 @@ import { NavLink } from 'react-router';
 
 import './Header.sass';
 
+const navLinks = [
+  { label: 'Home', path: '/' },
+  { label: 'About', path: '/about' },
+  { label: 'Services', path: '/services' },
+  { label: 'Gallery', path: '/gallery' },
+  { label: 'Blog', path: '/blog' },
+];
+
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
@@ -20,7 +28,7 @@ const Header = () => {
     const link = event.target.closest('a');
 
     if (link && event.currentTarget.contains(link) && isMenuOpen) {
-      setIsMenuOpen(false);
+      closeMenu();
     }
   };
 
@@ -82,35 +90,17 @@ const Header = () => {
           onClick={handleNavClick}
         >
           <ul className='header__nav-list'>
-            <li className='header__nav-item'>
-              <NavLink className='header__nav-link' to='/' end>
-                Home
-              </NavLink>
-            </li>
-
-            <li className='header__nav-item'>
-              <NavLink className='header__nav-link' to='/about'>
-                About
-              </NavLink>
-            </li>
-
-            <li className='header__nav-item'>
-              <NavLink className='header__nav-link' to='/services'>
-                Services
-              </NavLink>
-            </li>
-
-            <li className='header__nav-item'>
-              <NavLink className='header__nav-link' to='/gallery'>
-                Gallery
-              </NavLink>
-            </li>
-
-            <li className='header__nav-item'>
-              <NavLink className='header__nav-link' to='/blog'>
-                Blog
-              </NavLink>
-            </li>
+            {navLinks.map(({ label, path }) => (
+              <li className='header__nav-item' key={path}>
+                <NavLink
+                  className='header__nav-link'
+                  to={path}
+                  end={path === '/'}
+                >
+                  {label}
+                </NavLink>
+              </li>
+            ))}
 
             <li className='header__nav-item header__nav-item--contact'>
               <NavLink
