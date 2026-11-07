@@ -1,14 +1,9 @@
 import { Link } from 'react-router';
 
 import heroImage from '../../assets/hero.png';
-import client1 from '../../assets/clients/client-1.png';
-import client2 from '../../assets/clients/client-2.png';
-import client3 from '../../assets/clients/client-3.png';
-import client4 from '../../assets/clients/client-4.png';
+import heroFrame from '../../assets/hero-frame.svg';
 
 import './Hero.sass';
-
-const clientAvatars = [client1, client2, client3, client4];
 
 const Hero = () => {
   return (
@@ -27,47 +22,20 @@ const Hero = () => {
             Contact
           </Link>
         </div>
-
         <div className='hero__visual'>
           <img
             className='hero__image'
             src={heroImage}
-            alt='Residential house with a professionally installed roof'
+            alt='Residential home with a newly installed roof'
             fetchPriority='high'
           />
 
-          <div className='hero__info-card'>
-            <p className='hero__info-text'>
-              Quality Roofing. Lasting Protection.
-            </p>
-          </div>
-
-          <div className='hero__service-card'>
-            <div className='hero__states'>
-              <span className='hero__state'>PA</span>
-              <span className='hero__state'>NJ</span>
-              <span className='hero__state'>DE</span>
-            </div>
-
-            <p className='hero__service-title'>Proudly Serving</p>
-
-            <p className='hero__service-description'>PA • NJ • DE</p>
-          </div>
-
-          <div className='hero__clients-card'>
-            <div className='hero__clients-avatars' aria-hidden='true'>
-              {clientAvatars.map((avatar, index) => (
-                <img
-                  className='hero__clients-avatar'
-                  src={avatar}
-                  alt=''
-                  key={index}
-                />
-              ))}
-            </div>
-
-            <p className='hero__clients-text'>Satisfied Clients</p>
-          </div>
+          <img
+            className='hero__frame'
+            src={heroFrame}
+            alt=''
+            aria-hidden='true'
+          />
         </div>
       </div>
     </section>
