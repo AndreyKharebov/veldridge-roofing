@@ -1,11 +1,14 @@
 import { Link } from 'react-router';
 
-import heroImage from '../../assets/hero.png';
-import heroFrame from '../../assets/hero-frame.svg';
+import HeroSlide from './HeroSlide';
+
+import { heroSlides } from './heroSlides.js';
 
 import './Hero.sass';
 
 const Hero = () => {
+  const currentSlide = heroSlides[0];
+
   return (
     <section className='hero'>
       <div className='container'>
@@ -22,21 +25,13 @@ const Hero = () => {
             Contact
           </Link>
         </div>
-        <div className='hero__visual'>
-          <img
-            className='hero__image'
-            src={heroImage}
-            alt='Residential home with a newly installed roof'
-            fetchPriority='high'
-          />
-
-          <img
-            className='hero__frame'
-            src={heroFrame}
-            alt=''
-            aria-hidden='true'
-          />
-        </div>
+        <HeroSlide
+          image={currentSlide.image}
+          imageAlt={currentSlide.imageAlt}
+          topRight={currentSlide.topRight}
+          topLeft={currentSlide.topLeft}
+          bottom={currentSlide.bottom}
+        />
       </div>
     </section>
   );
