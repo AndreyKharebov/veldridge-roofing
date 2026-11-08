@@ -164,8 +164,6 @@
       left: auto
       width: 100%
       height: auto
-      overflow: hidden
-      border-radius: 12px
 
       &--main
         grid-column: 1 / -1
@@ -185,7 +183,7 @@
       object-fit: cover
 
     &__frame
-      display: none
+      // display: none
 
     &__content
       grid-column: 1
@@ -202,7 +200,59 @@
       font-size: 15px
 
     &__stamp
-      top: -35px
-      left: 8px
-      width: 110px
-      height: 110px
+      top: calc((100cqw / 10) * 0.1227)
+      left: 11.84%
+      width: 15.5%
+      height: 15.5%
+      transform: translate(-50%, -50%)
+
+@media (max-width: 700px)
+  .about
+    padding: 56px 0
+
+    &__inner
+      flex-direction: column
+      align-items: stretch
+      gap: 56px
+
+    &__content
+      flex: none
+      width: 100%
+
+    &__title
+      font-size: clamp(28px, 7vw, 34px)
+
+    &__description
+      margin-top: 16px
+      font-size: 15px
+
+    &__benefits
+      margin-top: 20px
+      gap: 12px
+
+    &__benefit
+      font-size: 15px
+
+    &__button
+      margin-top: 24px
+
+    &__visual
+      flex: none
+      width: 100%
+      height: auto
+      aspect-ratio: 1 / 1
+      margin-top: 20px
+
+    &__photo--main
+      width: 70%
+      height: 75%
+
+    &__photo--secondary
+      width: 65%
+      height: 55%
+
+    &__stamp
+      top: 20%
+      left: 60%
+      width: 130px
+      height: 130px
