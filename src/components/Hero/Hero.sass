@@ -193,6 +193,25 @@
     height: 100%
     pointer-events: none
 
+  &__bottom-icon
+    position: absolute
+    top: -20px
+    left: 50%
+    z-index: 3
+    display: flex
+    align-items: center
+    justify-content: center
+    width: 48px
+    height: 48px
+    border-radius: 50%
+    background-color: vars.$color-text
+    transform: translateX(-50%)
+
+    img
+      display: block
+      width: 30px
+      height: 30px
+
   &__bottom-content
     position: relative
     z-index: 1
@@ -232,13 +251,14 @@
 
   &__insurance
     position: absolute
-    right: 24px
-    bottom: 16px
+    right: 0
+    bottom: 0
     z-index: 2
     display: flex
     align-items: center
     gap: 12px
-    // max-width: 360px
+    height: 10%
+    width: 47%
 
   &__insurance-icon
     flex-shrink: 0
@@ -255,7 +275,7 @@
 @media (max-width: 700px)
   .hero
     padding-top: 40px
-    padding-bottom: 48px
+    padding-bottom: 120px
 
     &__description
       font-size: 15px
@@ -354,8 +374,26 @@
     &__bottom-text
       font-size: 16px
 
-    &__insurance
+    &__bottom-icon
       display: none
+
+    &__insurance
+      position: absolute
+      top: 100%
+      right: 0
+      bottom: auto
+      left: 0
+      display: flex
+      align-items: center
+      justify-content: center
+      gap: 12px
+      width: 100%
+      margin-top: 20px
+
+    &__insurance-text
+      font-size: 14px
+      line-height: 1.4
+      text-align: center
 
 @media (min-width: 701px) and (max-width: 1100px)
   .hero
@@ -432,26 +470,19 @@
     &__bottom-text
       font-size: 13px
 
-    &__insurance
+    &__bottom-icon
       display: none
 
-
-@media (min-width: 1101px) and (max-width: 1200px)
-  .hero
     &__insurance
-      right: 20px
-      bottom: 4px
-      max-width: 480px
+      position: static
+      order: 4
+      flex: 0 0 100%
+      width: 100%
+      justify-content: center
+      padding: 12px 0
 
     &__insurance-text
       font-size: 16px
-
-@media (min-width: 1201px) and (max-width: 1340px)
-  .hero
-    &__insurance
-      right: 20px
-      bottom: 4px
-      max-width: 526px
 
 @media (prefers-reduced-motion: reduce)
   .hero__button

@@ -3,6 +3,7 @@ import heroRightFrame from '../../assets/hero-right-frame.svg';
 import heroLeftFrame from '../../assets/hero-left-frame.svg';
 import heroBottomFrame from '../../assets/hero-bottom-frame.svg';
 import heroInsuranceIcon from '../../assets/hero-insurance-icon.svg';
+import starIcon from '../../assets/star-icon.svg';
 
 const HeroSlide = ({ image, imageAlt, topRight, topLeft, bottom }) => {
   return (
@@ -64,6 +65,9 @@ const HeroSlide = ({ image, imageAlt, topRight, topLeft, bottom }) => {
           alt=''
           aria-hidden='true'
         />
+        <div className='hero__bottom-icon'>
+          <img src={starIcon} alt='' aria-hidden='true' />
+        </div>
 
         <div className='hero__bottom-content'>
           <div className='hero__bottom-avatars' aria-hidden='true'>
