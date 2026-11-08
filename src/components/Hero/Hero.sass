@@ -230,6 +230,26 @@
     line-height: 1.5
     text-align: center
 
+  &__insurance
+    position: absolute
+    right: 24px
+    bottom: 16px
+    z-index: 2
+    display: flex
+    align-items: center
+    gap: 12px
+    // max-width: 360px
+
+  &__insurance-icon
+    flex-shrink: 0
+    color: vars.$color-text
+
+  &__insurance-text
+    margin: 0
+    color: vars.$color-text
+    font-size: 17px
+    line-height: 1.4
+
 // Mobile: up to 600px
 
 @media (max-width: 700px)
@@ -334,9 +354,10 @@
     &__bottom-text
       font-size: 16px
 
-// Tablet: 601px - 1023px
+    &__insurance
+      display: none
 
-@media (min-width: 701px) and (max-width: 1023px)
+@media (min-width: 701px) and (max-width: 1100px)
   .hero
     &__visual
       display: flex
@@ -410,6 +431,27 @@
 
     &__bottom-text
       font-size: 13px
+
+    &__insurance
+      display: none
+
+
+@media (min-width: 1101px) and (max-width: 1200px)
+  .hero
+    &__insurance
+      right: 20px
+      bottom: 4px
+      max-width: 480px
+
+    &__insurance-text
+      font-size: 16px
+
+@media (min-width: 1201px) and (max-width: 1340px)
+  .hero
+    &__insurance
+      right: 20px
+      bottom: 4px
+      max-width: 526px
 
 @media (prefers-reduced-motion: reduce)
   .hero__button

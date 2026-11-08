@@ -2,6 +2,7 @@ import heroFrame from '../../assets/hero-frame.svg';
 import heroRightFrame from '../../assets/hero-right-frame.svg';
 import heroLeftFrame from '../../assets/hero-left-frame.svg';
 import heroBottomFrame from '../../assets/hero-bottom-frame.svg';
+import heroInsuranceIcon from '../../assets/hero-insurance-icon.svg';
 
 const HeroSlide = ({ image, imageAlt, topRight, topLeft, bottom }) => {
   return (
@@ -78,6 +79,19 @@ const HeroSlide = ({ image, imageAlt, topRight, topLeft, bottom }) => {
 
           <p className='hero__bottom-text'>{bottom.text}</p>
         </div>
+      </div>
+
+      <div className='hero__insurance'>
+        <img
+          className='hero__insurance-icon'
+          src={heroInsuranceIcon}
+          alt=''
+          aria-hidden='true'
+        />
+
+        <p className='hero__insurance-text'>
+          We handle insurance claims and collaborate with skilled contractors.
+        </p>
       </div>
     </div>
   );
