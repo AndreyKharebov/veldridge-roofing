@@ -1,8 +1,8 @@
-import heroImage from '../../assets/hero.png';
-import client1 from '../../assets/clients/client-1.png';
-import client2 from '../../assets/clients/client-2.png';
-import client3 from '../../assets/clients/client-3.png';
-import client4 from '../../assets/clients/client-4.png';
+import heroImage from '../../assets/hero.webp';
+import client1 from '../../assets/clients/client-1.webp';
+import client2 from '../../assets/clients/client-2.webp';
+import client3 from '../../assets/clients/client-3.webp';
+import client4 from '../../assets/clients/client-4.webp';
 
 export const heroSlides = [
   {
