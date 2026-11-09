@@ -4,6 +4,7 @@ import Services from '../components/Services/Services';
 import WhyChooseUs from '../components/WhyChooseUs/WhyChooseUs';
 import CTA from '../components/CTA/CTA';
 import Gallery from '../components/Gallery/Gallery';
+import Testimonials from '../components/Testimonials/Tesitmonials';
 
 const HomePage = () => {
   return (
@@ -14,6 +15,7 @@ const HomePage = () => {
       <WhyChooseUs />
       <CTA />
       <Gallery />
+      <Testimonials />
     </>
   );
 };

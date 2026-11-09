@@ -1,0 +1,236 @@
+
+@use '../../styles/abstracts/variables' as vars
+
+.testimonials
+  padding: 100px 0
+  background-color: vars.$color-white
+
+  &__header
+    max-width: 650px
+    margin-inline: auto
+    text-align: center
+
+  &__title
+    color: vars.$color-text
+    font-size: clamp(32px, 3vw, 44px)
+    font-weight: vars.$font-semibold
+    line-height: 1.25
+
+    span
+      color: vars.$color-primary
+
+  &__description
+    max-width: 550px
+    margin: 16px auto 0
+    color: vars.$color-text-secondary
+    font-size: 16px
+    line-height: 1.5
+
+  &__carousel
+    display: flex
+    align-items: center
+    gap: 16px
+    margin-top: 56px
+
+  &__viewport
+    flex: 1
+    min-width: 0
+    overflow: hidden
+
+  &__track
+    display: flex
+    gap: 24px
+    animation: testimonial-appear 0.3s ease both
+
+  &__card
+    display: flex
+    flex: 0 0 calc((100% - 24px) / 2)
+    flex-direction: column
+    gap: 24px
+    min-width: 0
+    min-height: 220px
+    padding: 28px
+    border-radius: 16px
+    background-color: vars.$color-background
+
+  &__card-header
+    display: flex
+    align-items: center
+    gap: 12px
+
+  &__avatar
+    display: block
+    flex-shrink: 0
+    width: 52px
+    height: 52px
+    border-radius: 50%
+    object-fit: cover
+
+  &__author
+    flex: 1
+    min-width: 0
+
+  &__author-name
+    margin: 0
+    color: vars.$color-text
+    font-size: 16px
+    font-weight: vars.$font-semibold
+    line-height: 1.4
+
+  &__author-location
+    margin: 4px 0 0
+    color: vars.$color-text-secondary
+    font-size: 13px
+    line-height: 1.4
+
+  &__rating
+    display: flex
+    flex-shrink: 0
+    gap: 2px
+    color: vars.$color-primary
+    font-size: 18px
+    line-height: 1
+
+  &__review
+    margin: 0
+    color: vars.$color-text-secondary
+    font-size: 15px
+    line-height: 1.6
+
+  &__arrow
+    display: flex
+    align-items: center
+    justify-content: center
+    flex-shrink: 0
+    width: 40px
+    height: 40px
+    padding: 0
+    border: 1px solid #dedede
+    border-radius: 50%
+    background-color: vars.$color-white
+    color: vars.$color-text
+    cursor: pointer
+    transition: background-color 0.2s ease, border-color 0.2s ease
+
+    svg
+      display: block
+      flex-shrink: 0
+      width: 20px
+      height: 20px
+
+    &:hover
+      border-color: vars.$color-primary
+      background-color: vars.$color-accent-light
+
+    &:focus-visible
+      outline: 2px solid vars.$color-primary
+      outline-offset: 4px
+
+  &__counter
+    margin: 24px 0 0
+    color: vars.$color-text-secondary
+    font-size: 14px
+    line-height: 1.5
+    text-align: center
+
+@keyframes testimonial-appear
+  from
+    opacity: 0
+    transform: translateX(12px)
+
+  to
+    opacity: 1
+    transform: translateX(0)
+
+// Tablet: 701px - 1100px
+
+@media (min-width: 701px) and (max-width: 1100px)
+  .testimonials
+    padding: 80px 0
+
+    &__carousel
+      gap: 12px
+      margin-top: 40px
+
+    &__track
+      gap: 16px
+
+    &__card
+      flex-basis: calc((100% - 16px) / 2)
+      min-height: 240px
+      padding: 20px
+      gap: 20px
+
+    &__card-header
+      flex-wrap: wrap
+
+    &__rating
+      font-size: 16px
+
+    &__review
+      font-size: 14px
+
+// Mobile: up to 700px
+
+@media (max-width: 700px)
+  .testimonials
+    padding: 56px 0
+
+    &__title
+      font-size: clamp(28px, 7vw, 34px)
+
+    &__description
+      font-size: 15px
+
+    &__carousel
+      gap: 8px
+      margin-top: 32px
+
+    &__track
+      gap: 12px
+
+    &__card
+      flex-basis: 100%
+      min-height: 240px
+      padding: 20px
+      gap: 20px
+      border-radius: 12px
+
+    &__card-header
+      flex-wrap: wrap
+
+    &__arrow
+      width: 32px
+      height: 32px
+
+      svg
+        width: 18px
+        height: 18px
+
+    &__author-name
+      font-size: 14px
+
+    &__author-location
+      font-size: 12px
+
+    &__rating
+      font-size: 16px
+
+    &__review
+      font-size: 14px
+
+    &__arrow
+      width: 28px
+      height: 28px
+      font-size: 22px
+
+    &__counter
+      margin-top: 20px
+
+@media (prefers-reduced-motion: reduce)
+  .testimonials
+    &__track
+      animation: none
+
+    &__arrow
+      transition: none
