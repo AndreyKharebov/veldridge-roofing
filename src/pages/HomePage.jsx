@@ -5,6 +5,7 @@ import WhyChooseUs from '../components/WhyChooseUs/WhyChooseUs';
 import CTA from '../components/CTA/CTA';
 import Gallery from '../components/Gallery/Gallery';
 import Testimonials from '../components/Testimonials/Tesitmonials';
+import LatestNews from '../components/LatestNews/LatestNews';
 
 const HomePage = () => {
   return (
@@ -16,6 +17,7 @@ const HomePage = () => {
       <CTA />
       <Gallery />
       <Testimonials />
+      <LatestNews />
     </>
   );
 };
