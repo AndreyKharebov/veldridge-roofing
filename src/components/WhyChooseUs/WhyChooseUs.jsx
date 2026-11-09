@@ -33,10 +33,14 @@ const benefits = [
 ];
 
 const WhyChooseUs = () => {
-  const [activeBenefit, setActiveBenefit] = useState('local');
+  const [activeBenefits, setActiveBenefits] = useState(['local']);
 
   const toggleBenefit = (id) => {
-    setActiveBenefit((current) => (current === id ? null : id));
+    setActiveBenefits((current) =>
+      current.includes(id)
+        ? current.filter((benefitId) => benefitId !== id)
+        : [...current, id],
+    );
   };
 
   return (
@@ -75,7 +79,7 @@ const WhyChooseUs = () => {
           <div className='why-choose-us__content'>
             <div className='why-choose-us__benefits'>
               {benefits.map((benefit) => {
-                const isOpen = activeBenefit === benefit.id;
+                const isOpen = activeBenefits.includes(benefit.id);
 
                 return (
                   <article
@@ -103,18 +107,23 @@ const WhyChooseUs = () => {
                       <span className='why-choose-us__benefit-toggle'>
                         <span>{benefit.title}</span>
 
-                        <span className='why-choose-us__benefit-symbol'>
-                          {isOpen ? '−' : '+'}
-                        </span>
+                        <span
+                          className='why-choose-us__benefit-symbol'
+                          aria-hidden='true'
+                        />
                       </span>
                     </h3>
 
-                    <p
-                      className='why-choose-us__benefit-description'
-                      id={`benefit-${benefit.id}`}
-                    >
-                      {benefit.description}
-                    </p>
+                    <div className='why-choose-us__benefit-panel'>
+                      <div className='why-choose-us__benefit-panel-inner'>
+                        <p
+                          className='why-choose-us__benefit-description'
+                          id={`benefit-${benefit.id}`}
+                        >
+                          {benefit.description}
+                        </p>
+                      </div>
+                    </div>
                   </article>
                 );
               })}
