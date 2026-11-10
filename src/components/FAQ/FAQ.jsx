@@ -4,7 +4,6 @@ import { faqItems } from './faq';
 
 import './FAQ.sass';
 
-
 const FAQ = () => {
   const [openItems, setOpenItems] = useState(['inspection']);
 

@@ -6,7 +6,8 @@ import CTA from '../components/CTA/CTA';
 import Gallery from '../components/Gallery/Gallery';
 import Testimonials from '../components/Testimonials/Tesitmonials';
 import LatestNews from '../components/LatestNews/LatestNews';
-import FAQ from '../components/FAQ/FAQ';
+import FAQ from '../components/FAQ/FAQ.jsx';
+import Footer from '../components/Footer/Footer';
 
 const HomePage = () => {
   return (
@@ -20,6 +21,7 @@ const HomePage = () => {
       <Testimonials />
       <LatestNews />
       <FAQ />
+      <Footer />
     </>
   );
 };
