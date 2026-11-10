@@ -1,14 +1,17 @@
 import { Link } from 'react-router';
+import { useScrollReveal } from '../../../../hooks/useScrollReveal.js';
 
 import aboutMain from './assets/about-main.webp';
 import aboutSecondary from './assets/about-secondary.webp';
 import aboutMainFrame from './assets/about-main-frame.svg';
 import aboutSecondaryFrame from './assets/about-secondary-frame.svg';
-import aboutStamp from './assets/about-stamp.svg';
 
 import './About.sass';
 
 const About = () => {
+  const [mainRef, mainVisible] = useScrollReveal();
+  const [secondaryRef, secondaryVisible] = useScrollReveal();
+
   return (
     <section className='about'>
       <div className='container'>
@@ -43,7 +46,12 @@ const About = () => {
           </div>
 
           <div className='about__visual'>
-            <div className='about__photo about__photo--main'>
+            <div
+              ref={mainRef}
+              className={`about__photo about__photo--main ${
+                mainVisible ? 'is-revealed' : ''
+              }`}
+            >
               <img
                 className='about__image'
                 src={aboutMain}
@@ -59,7 +67,12 @@ const About = () => {
               />
             </div>
 
-            <div className='about__photo about__photo--secondary'>
+            <div
+              ref={secondaryRef}
+              className={`about__photo about__photo--secondary ${
+                secondaryVisible ? 'is-revealed' : ''
+              }`}
+            >
               <img
                 className='about__image'
                 src={aboutSecondary}
@@ -73,10 +86,6 @@ const About = () => {
                 alt=''
                 aria-hidden='true'
               />
-            </div>
-
-            <div className='about__stamp' aria-hidden='true'>
-              <img className='about__stamp-image' src={aboutStamp} alt='' />
             </div>
           </div>
         </div>

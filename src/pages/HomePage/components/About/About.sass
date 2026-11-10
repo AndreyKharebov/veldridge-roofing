@@ -54,6 +54,22 @@
       width: 65%
       height: 55%
 
+  // Scroll reveal
+
+  &__photo--main,
+  &__photo--secondary
+    opacity: 0
+    transform: translateY(40px)
+    transition-property: opacity, transform
+    transition-duration: 0.7s
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1)
+
+  &__photo--main
+    transition-delay: 0s
+
+  &__photo--secondary
+    transition-delay: 0.15s
+
   &__image
     display: block
     width: 100%
@@ -74,27 +90,6 @@
     // height: 105%
     // left: -2px
     // top: -5px
-
-  &__stamp
-    position: absolute
-    top: 5px
-    left: -63px
-    z-index: 3
-    display: flex
-    align-items: center
-    justify-content: center
-    width: 126px
-    height: 126px
-    border-radius: 50%
-    background-color: rgba(255, 255, 255, 0.35)
-    backdrop-filter: blur(10px)
-    -webkit-backdrop-filter: blur(10px)
-    pointer-events: none
-
-  &__stamp-image
-    display: block
-    width: 100%
-    height: 100%
 
   &__button
     display: inline-flex
@@ -199,12 +194,10 @@
     &__benefit
       font-size: 15px
 
-    &__stamp
-      top: calc((100cqw / 10) * 0.1227)
-      left: 11.84%
-      width: 15.5%
-      height: 15.5%
-      transform: translate(-50%, -50%)
+    // Tablet scroll reveal
+
+    &__photo--secondary
+      transform: translateX(40px)
 
 @media (max-width: 700px)
   .about
@@ -251,8 +244,20 @@
       width: 65%
       height: 55%
 
-    &__stamp
-      top: 20%
-      left: 60%
-      width: 130px
-      height: 130px
+// Revealed state
+
+.about
+  &__photo--main.is-revealed,
+  &__photo--secondary.is-revealed
+    opacity: 1
+    transform: none
+
+// Reduced motion
+
+@media (prefers-reduced-motion: reduce)
+  .about
+    &__photo--main,
+    &__photo--secondary
+      opacity: 1
+      transform: none
+      transition: none
