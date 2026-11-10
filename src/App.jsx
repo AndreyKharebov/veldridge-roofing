@@ -1,13 +1,14 @@
 import { Routes, Route } from 'react-router';
 
-import Header from './components/Header/Header.jsx';
+import Header from './components/layout/Header/Header.jsx';
+import Footer from './components/layout/Footer/Footer.jsx';
 
-import HomePage from './pages/HomePage.jsx';
-import AboutPage from './pages/AboutPage.jsx';
-import ServicesPage from './pages/ServicesPage.jsx';
-import GalleryPage from './pages/GalleryPage.jsx';
-import BlogPage from './pages/BlogPage.jsx';
-import ContactPage from './pages/ContactPage.jsx';
+import HomePage from './pages/HomePage/HomePage.jsx';
+import AboutPage from './pages/AboutPage/AboutPage.jsx';
+import ServicesPage from './pages/ServicesPage/ServicesPage.jsx';
+import GalleryPage from './pages/GalleryPage/GalleryPage.jsx';
+import BlogPage from './pages/BlogPage/BlogPage.jsx';
+import ContactPage from './pages/ContactPage/ContactPage.jsx';
 
 function App() {
   return (
@@ -24,6 +25,8 @@ function App() {
           <Route path='/contact' element={<ContactPage />} />
         </Routes>
       </main>
+
+      <Footer />
     </>
   );
 }

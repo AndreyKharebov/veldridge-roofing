@@ -1,0 +1,277 @@
+
+@use '../../../styles/abstracts/variables' as vars
+
+.footer
+  background-color: vars.$color-text
+  color: vars.$color-white
+
+  &__main
+    display: flex
+    flex-direction: column
+    align-items: center
+    padding: 60px 0 48px
+    text-align: center
+
+  // Logo
+
+  &__logo
+    display: flex
+    flex-direction: column
+    align-items: center
+    gap: 2px
+    text-decoration: none
+    text-transform: uppercase
+
+    &:focus-visible
+      outline: 2px solid vars.$color-primary
+      outline-offset: 4px
+
+  &__logo-name
+    color: vars.$color-white
+    font-size: 24px
+    font-weight: vars.$font-bold
+    line-height: 1.2
+    letter-spacing: 0.5px
+
+  &__logo-description
+    color: vars.$color-primary
+    font-size: 13px
+    font-weight: vars.$font-semibold
+    line-height: 1.2
+    letter-spacing: 4px
+
+  // Description
+
+  &__description
+    max-width: 530px
+    margin: 24px 0 0
+    color: vars.$color-white
+    font-size: 16px
+    line-height: 1.5
+
+  // Navigation
+
+  &__nav
+    margin-top: 40px
+
+  &__nav-list
+    display: flex
+    align-items: center
+    justify-content: center
+    flex-wrap: wrap
+    gap: 64px
+    margin: 0
+    padding: 0
+    list-style: none
+
+  &__nav-link
+    color: vars.$color-white
+    font-size: 16px
+    font-weight: vars.$font-regular
+    line-height: 1.5
+    text-decoration: none
+    transition: color 0.2s ease
+
+    &:hover,
+    &.active
+      color: vars.$color-primary
+
+    &:focus-visible
+      outline: 2px solid vars.$color-primary
+      outline-offset: 4px
+
+  // Contacts
+
+  &__contacts
+    display: grid
+    grid-template-columns: repeat(3, minmax(0, 1fr))
+    gap: 32px
+    width: 100%
+    max-width: 1000px
+    margin-top: 40px
+
+  &__contact
+    display: flex
+    flex-direction: column
+    align-items: center
+    justify-content: flex-start
+    gap: 12px
+    min-width: 0
+    color: vars.$color-white
+    font-size: 16px
+    font-weight: vars.$font-medium
+    line-height: 1.5
+
+    a,
+    span
+      color: inherit
+      overflow-wrap: anywhere
+
+    a
+      text-decoration: none
+      transition: color 0.2s ease
+
+      &:hover
+        color: vars.$color-primary
+
+      &:focus-visible
+        outline: 2px solid vars.$color-primary
+        outline-offset: 4px
+
+  &__contact-icon
+    display: block
+    flex-shrink: 0
+    width: 24px
+    height: 24px
+    object-fit: contain
+
+  // Social icons
+
+  &__socials
+    display: flex
+    align-items: center
+    justify-content: center
+    flex-wrap: wrap
+    gap: 16px
+    margin-top: 36px
+
+  &__social
+    display: flex
+    align-items: center
+    justify-content: center
+    flex-shrink: 0
+    width: 32px
+    height: 32px
+    border-radius: 50%
+    background-color: vars.$color-primary
+    text-decoration: none
+    transition: background-color 0.2s ease, transform 0.2s ease
+
+    img
+      display: block
+      width: 16px
+      height: 16px
+      object-fit: contain
+
+    &:is(a):hover
+      background-color: #d97700
+      transform: translateY(-3px)
+
+    &:is(a):focus-visible
+      outline: 2px solid vars.$color-white
+      outline-offset: 4px
+
+  // Copyright
+
+  &__bottom
+    background-color: vars.$color-text-secondary
+
+  &__bottom-inner
+    display: flex
+    align-items: center
+    justify-content: space-between
+    gap: 24px
+    min-height: 44px
+    padding: 10px 0
+
+  &__copyright
+    margin: 0
+    color: vars.$color-white
+    font-size: 14px
+    font-weight: vars.$font-regular
+    line-height: 1.5
+
+  &__legal
+    display: flex
+    align-items: center
+    gap: 12px
+    color: vars.$color-white
+    font-size: 14px
+    line-height: 1.5
+
+  &__separator
+    flex-shrink: 0
+    width: 1px
+    height: 20px
+    background-color: rgba(255, 255, 255, 0.5)
+
+// Tablet: 701px - 1100px
+
+@media (min-width: 701px) and (max-width: 1100px)
+  .footer
+    &__main
+      padding: 56px 0 48px
+
+    &__nav-list
+      gap: 32px
+
+    &__contacts
+      gap: 20px
+
+    &__contact
+      font-size: 14px
+
+    &__bottom-inner
+      gap: 16px
+
+    &__copyright,
+    &__legal
+      font-size: 12px
+
+// Mobile: up to 700px
+
+@media (max-width: 700px)
+  .footer
+    &__main
+      padding: 48px 0
+
+    &__logo-name
+      font-size: 22px
+
+    &__logo-description
+      font-size: 12px
+
+    &__description
+      max-width: 350px
+      margin-top: 20px
+      font-size: 15px
+
+    &__nav
+      margin-top: 32px
+
+    &__nav-list
+      gap: 16px 24px
+
+    &__nav-link
+      font-size: 14px
+
+    &__contacts
+      grid-template-columns: minmax(0, 1fr)
+      gap: 28px
+      margin-top: 36px
+
+    &__contact
+      gap: 8px
+      font-size: 15px
+
+    &__socials
+      gap: 16px
+      margin-top: 32px
+
+    &__bottom-inner
+      flex-direction: column
+      justify-content: center
+      gap: 12px
+      padding: 20px 0
+      text-align: center
+
+    &__copyright,
+    &__legal
+      font-size: 12px
+
+@media (prefers-reduced-motion: reduce)
+  .footer
+    &__nav-link,
+    &__contact a,
+    &__social
+      transition: none

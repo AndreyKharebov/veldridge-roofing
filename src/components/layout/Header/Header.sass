@@ -1,0 +1,239 @@
+@use '../../../styles/abstracts/variables' as vars
+
+.header
+  position: relative
+  width: 100%
+  background-color: vars.$color-background-warm
+
+  &__inner
+    display: grid
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr)
+    align-items: center
+    min-height: 100px
+
+  &__logo
+    display: flex
+    flex-direction: column
+    justify-self: start
+    align-items: center
+    flex-shrink: 0
+    gap: 2px
+    text-decoration: none
+    text-transform: uppercase
+
+    &:focus-visible
+      outline: 2px solid vars.$color-primary
+      outline-offset: 4px
+
+  &__logo-name
+    color: vars.$color-text
+    font-size: 20px
+    font-weight: vars.$font-bold
+    line-height: 1.2
+    letter-spacing: 0.5px
+
+  &__logo-description
+    color: vars.$color-primary
+    font-size: 12px
+    font-weight: vars.$font-semibold
+    line-height: 1.2
+    letter-spacing: 3px
+
+  &__nav
+    display: flex
+    align-items: center
+    justify-content: center
+
+  &__nav-list
+    display: flex
+    align-items: center
+    gap: 32px
+    list-style: none
+
+  &__nav-link
+    display: inline-flex
+    align-items: center
+    padding: 8px 16px
+    border-radius: 30px
+    color: vars.$color-text
+    font-size: 16px
+    font-weight: vars.$font-medium
+    line-height: 24px
+    text-decoration: none
+    transition: background-color 0.2s ease
+
+    &:hover
+      background-color: vars.$color-accent-light
+
+    &:focus-visible
+      outline: 2px solid vars.$color-primary
+      outline-offset: 3px
+
+    &.active
+      background-color: vars.$color-accent-light
+
+  &__nav-item--contact
+    display: none
+
+  &__contact
+    display: inline-flex
+    align-items: center
+    justify-content: center
+    justify-self: end
+    flex-shrink: 0
+    padding: 12px 32px
+    border-radius: 12px
+    background-color: vars.$color-primary
+    color: vars.$color-white
+    font-size: 18px
+    font-weight: vars.$font-bold
+    line-height: 27px
+    text-decoration: none
+    transition: background-color 0.2s ease
+
+    &:hover
+      background-color: #d97700
+
+    &:focus-visible
+      outline: 2px solid vars.$color-text
+      outline-offset: 4px
+
+  &__burger
+    display: none
+    flex-direction: column
+    align-items: flex-start
+    justify-content: center
+    gap: 5px
+    width: 64px
+    height: 44px
+    padding: 0 21px
+    border: 1px solid #d8d2c9
+    border-radius: 50px
+    background-color: transparent
+    cursor: pointer
+
+    &:focus-visible
+      outline: 2px solid vars.$color-primary
+      outline-offset: 3px
+
+    &[aria-expanded='true']
+      .header__burger-line
+        &:first-child
+          transform: translateY(3.5px) rotate(45deg)
+
+        &:last-child
+          width: 20px
+          transform: translateY(-3.5px) rotate(-45deg)
+
+  &__burger-line
+    display: block
+    flex-shrink: 0
+    width: 20px
+    height: 2px
+    border-radius: 1px
+    background-color: vars.$color-text
+    transform-origin: center
+    transition: transform 0.3s ease, width 0.3s ease
+
+    &:last-child
+      width: 14px
+
+@media (max-width: 767px)
+  .header
+    &__inner
+      display: flex
+      align-items: center
+      justify-content: space-between
+      min-height: 72px
+
+    &__logo
+      flex-shrink: 0
+
+    &__nav
+      display: flex
+      position: absolute
+      top: 100%
+      left: 0
+      right: 0
+      z-index: 10
+      width: 100%
+      padding: 24px 16px
+      background-color: vars.$color-background-warm
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08)
+
+      opacity: 0
+      visibility: hidden
+      pointer-events: none
+      transform: translateY(-20px)
+
+      &--open
+        opacity: 1
+        visibility: visible
+        pointer-events: auto
+        transform: translateY(0)
+
+      &--animated
+        transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s
+
+    &__nav-list
+      display: flex
+      flex-direction: column
+      align-items: stretch
+      gap: 8px
+      width: 100%
+
+    &__nav-link
+      display: flex
+      align-items: center
+      width: 100%
+      padding: 12px 16px
+      font-size: 16px
+
+      &--contact
+        justify-content: center
+        margin-top: 16px
+        background-color: vars.$color-primary
+        color: vars.$color-white
+        font-weight: vars.$font-bold
+
+        &.active
+          background-color: vars.$color-primary
+
+        &:hover
+          background-color: #d97700
+
+    &__nav-item--contact
+      display: block
+
+    &__contact
+      display: none
+
+    &__burger
+      display: flex
+
+@media (min-width: 768px) and (max-width: 940px)
+  .header
+    &__inner
+      min-height: 80px
+
+    &__logo-name
+      font-size: 17px
+
+    &__logo-description
+      font-size: 10px
+
+    &__nav-list
+      gap: 8px
+
+    &__nav-link
+      padding: 8px
+      font-size: 14px
+
+    &__contact
+      padding: 10px 20px
+      font-size: 14px
+      line-height: 20px
+
+@media (prefers-reduced-motion: reduce)
+  .header__nav
+    transition: none
