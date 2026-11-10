@@ -1,10 +1,16 @@
 
 @use '../../../../styles/abstracts/variables' as vars
 
+// ========================================
+// Hero - Base
+// ========================================
+
 .hero
   padding-top: 60px
   padding-bottom: 80px
   background-color: vars.$color-background-warm
+
+  // Content
 
   &__content
     display: flex
@@ -48,12 +54,14 @@
       outline: 2px solid vars.$color-text
       outline-offset: 4px
 
+  // Visual
+
   &__visual
     position: relative
     width: 100%
     margin-top: 40px
 
-  // Hero image and crossfade
+  // Image carousel
 
   &__image-wrapper
     position: relative
@@ -73,14 +81,21 @@
     &--active
       opacity: 1
 
-  &__frame
+  // SVG frames
+
+  &__frame,
+  &__right-frame,
+  &__left-frame,
+  &__bottom-frame
     position: absolute
     inset: 0
-    z-index: 1
     display: block
     width: 100%
     height: 100%
     pointer-events: none
+
+  &__frame
+    z-index: 1
 
   // Right card
 
@@ -91,14 +106,6 @@
     z-index: 2
     width: 275px
     height: 108px
-
-  &__right-frame
-    position: absolute
-    inset: 0
-    display: block
-    width: 100%
-    height: 100%
-    pointer-events: none
 
   &__right-text
     position: relative
@@ -125,14 +132,6 @@
     z-index: 2
     width: 256px
     height: 138px
-
-  &__left-frame
-    position: absolute
-    inset: 0
-    display: block
-    width: 100%
-    height: 100%
-    pointer-events: none
 
   &__left-content
     position: relative
@@ -193,14 +192,6 @@
     z-index: 2
     width: 240px
     height: 140px
-
-  &__bottom-frame
-    position: absolute
-    inset: 0
-    display: block
-    width: 100%
-    height: 100%
-    pointer-events: none
 
   &__bottom-icon
     position: absolute
@@ -281,7 +272,9 @@
     font-size: 17px
     line-height: 1.4
 
+  // ======================================
   // Scroll reveal - Desktop defaults
+  // ======================================
 
   &__left-card,
   &__right-card,
@@ -308,16 +301,133 @@
     transform: translateX(40px)
     transition-delay: 2s
 
-  // Revealed elements remain visible
+// ========================================
+// Tablet: 701px - 1100px
+// ========================================
 
-  &__left-card.is-revealed,
-  &__right-card.is-revealed,
-  &__bottom-card.is-revealed,
-  &__insurance.is-revealed
-    opacity: 1
-    transform: none
+@media (min-width: 701px) and (max-width: 1100px)
+  .hero
 
+    // Visual
+
+    &__visual
+      display: flex
+      flex-wrap: wrap
+      gap: 16px
+
+    &__image-wrapper
+      flex: 0 0 100%
+      overflow: hidden
+      border-radius: 12px
+
+    &__frame
+      display: none
+
+    // Cards layout
+
+    &__left-card,
+    &__right-card,
+    &__bottom-card
+      position: static
+      flex: 1 1 0
+      min-width: 0
+      height: auto
+      min-height: 150px
+      border-radius: 12px
+      background-color: vars.$color-white
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08)
+
+    &__left-frame,
+    &__right-frame,
+    &__bottom-frame
+      display: none
+
+    &__left-content,
+    &__right-text,
+    &__bottom-content
+      width: 100%
+      height: 100%
+
+    // Left card
+
+    &__left-card
+      order: 1
+
+    &__left-content
+      gap: 6px
+      padding: 12px
+
+    &__left-text
+      margin-top: 2px
+      font-size: 15px
+      white-space: normal
+      text-align: center
+
+    &__left-description
+      font-size: 12px
+      white-space: normal
+      text-align: center
+
+    // Right card
+
+    &__right-card
+      order: 2
+
+    &__right-text
+      padding: 12px
+      font-size: 15px
+      line-height: 1.4
+      text-align: center
+
+    // Bottom card
+
+    &__bottom-card
+      order: 3
+
+    &__bottom-content
+      gap: 8px
+      padding: 12px 8px
+
+    &__bottom-text
+      font-size: 13px
+
+    &__bottom-icon
+      display: none
+
+    // Insurance
+
+    &__insurance
+      position: static
+      order: 4
+      flex: 0 0 100%
+      width: 100%
+      justify-content: center
+      padding: 12px 0
+
+    &__insurance-text
+      font-size: 16px
+
+    // Scroll reveal
+
+    &__left-card,
+    &__right-card,
+    &__bottom-card,
+    &__insurance
+      transition-duration: 0.6s
+
+    &__left-card,
+    &__right-card,
+    &__bottom-card
+      transform: translateY(50px)
+      transition-delay: 0.15s
+
+    &__insurance
+      transform: translateY(50px)
+      transition-delay: 1.05s
+
+// ========================================
 // Mobile: up to 700px
+// ========================================
 
 @media (max-width: 700px)
   .hero
@@ -325,12 +435,16 @@
     padding-bottom: 120px
     overflow-x: clip
 
+    // Content
+
     &__description
       font-size: 15px
 
     &__button
       margin-top: 24px
       font-size: 16px
+
+    // Visual
 
     &__visual
       display: flex
@@ -352,13 +466,12 @@
       border-radius: 12px
 
     &__image
-      width: 100%
-      height: 100%
-      object-fit: cover
       object-position: center
 
     &__frame
       display: none
+
+    // Cards layout
 
     &__left-card,
     &__right-card,
@@ -451,13 +564,13 @@
       line-height: 1.4
       text-align: center
 
-    // Mobile scroll reveal directions
+    // Scroll reveal
 
-      &__left-card,
-      &__right-card,
-      &__bottom-card,
-      &__insurance
-        transition-duration: 0.6s
+    &__left-card,
+    &__right-card,
+    &__bottom-card,
+    &__insurance
+      transition-duration: 0.6s
 
     &__left-card
       transform: translateX(-40px)
@@ -475,124 +588,26 @@
       transform: translateY(40px)
       transition-delay: 0.45s
 
-// Tablet: 701px - 1100px
+// ========================================
+// Revealed state
+// Must stay after responsive transforms
+// ========================================
 
-@media (min-width: 701px) and (max-width: 1100px)
-  .hero
-    &__visual
-      display: flex
-      flex-wrap: wrap
-      gap: 16px
+.hero
+  &__left-card.is-revealed,
+  &__right-card.is-revealed,
+  &__bottom-card.is-revealed,
+  &__insurance.is-revealed
+    opacity: 1
+    transform: none
 
-    &__image-wrapper
-      flex: 0 0 100%
-      overflow: hidden
-      border-radius: 12px
-
-    &__frame
-      display: none
-
-    &__left-card,
-    &__right-card,
-    &__bottom-card
-      position: static
-      flex: 1 1 0
-      min-width: 0
-      height: auto
-      min-height: 150px
-      border-radius: 12px
-      background-color: vars.$color-white
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08)
-
-    &__left-frame,
-    &__right-frame,
-    &__bottom-frame
-      display: none
-
-    &__left-content,
-    &__right-text,
-    &__bottom-content
-      width: 100%
-      height: 100%
-
-    // Left card
-
-    &__left-card
-      order: 1
-
-    &__left-content
-      gap: 6px
-      padding: 12px
-
-    &__left-text
-      margin-top: 2px
-      font-size: 15px
-      white-space: normal
-      text-align: center
-
-    &__left-description
-      font-size: 12px
-      white-space: normal
-      text-align: center
-
-    // Right card
-
-    &__right-card
-      order: 2
-
-    &__right-text
-      padding: 12px
-      font-size: 15px
-      line-height: 1.4
-      text-align: center
-
-    // Bottom card
-
-    &__bottom-card
-      order: 3
-
-    &__bottom-content
-      gap: 8px
-      padding: 12px 8px
-
-    &__bottom-text
-      font-size: 13px
-
-    &__bottom-icon
-      display: none
-
-    // Insurance
-
-    &__insurance
-      position: static
-      order: 4
-      flex: 0 0 100%
-      width: 100%
-      justify-content: center
-      padding: 12px 0
-
-    &__insurance-text
-      font-size: 16px
-
-    // Tablet scroll reveal directions and delays
-
-    &__left-card,
-    &__right-card,
-    &__bottom-card
-      transform: translateY(50px)
-      transition-delay: 0.5s
-
-    &__insurance
-      transform: translateY(50px)
-      transition-delay: 1.8s
-
+// ========================================
 // Reduced motion
+// ========================================
 
 @media (prefers-reduced-motion: reduce)
   .hero
-    &__button
-      transition: none
-
+    &__button,
     &__image
       transition: none
 

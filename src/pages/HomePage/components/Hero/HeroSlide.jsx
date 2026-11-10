@@ -10,7 +10,6 @@ import starIcon from './assets/star-icon.svg';
 const HeroSlide = ({
   slides,
   activeIndex,
-  introFinished,
   topRight,
   topLeft,
   bottom,
@@ -22,8 +21,7 @@ const HeroSlide = ({
 
   return (
     <div
-      className={`hero__visual ${introFinished ? 'hero__visual--intro-finished' : ''}`}
-    >
+      className='hero__visual'>
       <div className='hero__image-wrapper'>
         {slides.map((image, index) => (
           <img
