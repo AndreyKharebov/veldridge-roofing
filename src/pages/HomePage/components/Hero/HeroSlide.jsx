@@ -5,16 +5,32 @@ import heroBottomFrame from './assets/hero-bottom-frame.svg';
 import heroInsuranceIcon from './assets/hero-insurance-icon.svg';
 import starIcon from './assets/star-icon.svg';
 
-const HeroSlide = ({ image, imageAlt, topRight, topLeft, bottom }) => {
+const HeroSlide = ({
+  slides,
+  activeIndex,
+  introFinished,
+  topRight,
+  topLeft,
+  bottom,
+}) => {
   return (
-    <div className='hero__visual'>
+    <div
+      className={`hero__visual ${introFinished ? 'hero__visual--intro-finished' : ''}`}
+    >
       <div className='hero__image-wrapper'>
-        <img
-          className='hero__image'
-          src={image}
-          alt={imageAlt}
-          fetchPriority='high'
-        />
+        {slides.map((image, index) => (
+          <img
+            className={`hero__image ${
+              index === activeIndex ? 'hero__image--active' : ''
+            }`}
+            src={image.src}
+            alt={index === activeIndex ? image.alt : ''}
+            aria-hidden={index !== activeIndex}
+            fetchPriority={index === 0 ? 'high' : 'auto'}
+            loading={index === 0 ? 'eager' : 'lazy'}
+            key={image.id}
+          />
+        ))}
 
         <img
           className='hero__frame'

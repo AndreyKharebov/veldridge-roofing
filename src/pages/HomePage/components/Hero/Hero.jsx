@@ -1,13 +1,43 @@
+import { useEffect, useState } from 'react';
+
 import { Link } from 'react-router';
 
 import HeroSlide from './HeroSlide';
 
-import { heroSlides } from './heroSlides.js';
+import { heroImages, heroContent } from './heroSlides.js';
 
 import './Hero.sass';
 
 const Hero = () => {
-  const currentSlide = heroSlides[0];
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [introFinished, setIntroFinished] = useState(false);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setIntroFinished(true);
+    }, 2800);
+
+    return () => window.clearTimeout(timeoutId);
+  }, []);
+
+  useEffect(() => {
+    if (heroImages.length <= 1) return;
+
+    let intervalId;
+
+    const timeoutId = window.setTimeout(() => {
+      setActiveIndex((current) => (current + 1) % heroImages.length);
+
+      intervalId = window.setInterval(() => {
+        setActiveIndex((current) => (current + 1) % heroImages.length);
+      }, 5000);
+    }, 3300);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      window.clearInterval(intervalId);
+    };
+  }, []);
 
   return (
     <section className='hero'>
@@ -26,11 +56,10 @@ const Hero = () => {
           </Link>
         </div>
         <HeroSlide
-          image={currentSlide.image}
-          imageAlt={currentSlide.imageAlt}
-          topRight={currentSlide.topRight}
-          topLeft={currentSlide.topLeft}
-          bottom={currentSlide.bottom}
+          slides={heroImages}
+          activeIndex={activeIndex}
+          introFinished={introFinished}
+          {...heroContent}
         />
       </div>
     </section>
