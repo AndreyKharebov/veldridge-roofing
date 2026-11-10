@@ -1,6 +1,6 @@
 import { Link } from 'react-router';
 
-import { blog } from './latestNews';
+import { latestNews } from './latestNews';
 
 import './LatestNews.sass';
 
@@ -21,7 +21,7 @@ const LatestNews = () => {
         </div>
 
         <div className='latest-news__grid'>
-          {blog.map((article) => (
+          {latestNews.map((article) => (
             <article className='latest-news__card' key={article.id}>
               <Link
                 className='latest-news__image-link'
