@@ -1,3 +1,5 @@
+import { useScrollReveal } from '../../../../hooks/useScrollReveal.js';
+
 import heroFrame from './assets/hero-frame.svg';
 import heroRightFrame from './assets/hero-right-frame.svg';
 import heroLeftFrame from './assets/hero-left-frame.svg';
@@ -13,6 +15,11 @@ const HeroSlide = ({
   topLeft,
   bottom,
 }) => {
+  const [leftRef, leftVisible] = useScrollReveal();
+  const [rightRef, rightVisible] = useScrollReveal();
+  const [bottomRef, bottomVisible] = useScrollReveal();
+  const [insuranceRef, insuranceVisible] = useScrollReveal();
+
   return (
     <div
       className={`hero__visual ${introFinished ? 'hero__visual--intro-finished' : ''}`}
@@ -40,7 +47,10 @@ const HeroSlide = ({
         />
       </div>
 
-      <div className='hero__right-card'>
+      <div
+        ref={rightRef}
+        className={`hero__right-card ${rightVisible ? 'is-revealed' : ''}`}
+      >
         <img
           className='hero__right-frame'
           src={heroRightFrame}
@@ -51,7 +61,10 @@ const HeroSlide = ({
         <p className='hero__right-text'>{topRight.text}</p>
       </div>
 
-      <div className='hero__left-card'>
+      <div
+        ref={leftRef}
+        className={`hero__left-card ${leftVisible ? 'is-revealed' : ''}`}
+      >
         <img
           className='hero__left-frame'
           src={heroLeftFrame}
@@ -74,13 +87,17 @@ const HeroSlide = ({
         </div>
       </div>
 
-      <div className='hero__bottom-card'>
+      <div
+        ref={bottomRef}
+        className={`hero__bottom-card ${bottomVisible ? 'is-revealed' : ''}`}
+      >
         <img
           className='hero__bottom-frame'
           src={heroBottomFrame}
           alt=''
           aria-hidden='true'
         />
+
         <div className='hero__bottom-icon'>
           <img src={starIcon} alt='' aria-hidden='true' />
         </div>
@@ -101,7 +118,10 @@ const HeroSlide = ({
         </div>
       </div>
 
-      <div className='hero__insurance'>
+      <div
+        ref={insuranceRef}
+        className={`hero__insurance ${insuranceVisible ? 'is-revealed' : ''}`}
+      >
         <img
           className='hero__insurance-icon'
           src={heroInsuranceIcon}

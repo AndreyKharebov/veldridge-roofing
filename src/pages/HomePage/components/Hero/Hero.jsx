@@ -10,15 +10,6 @@ import './Hero.sass';
 
 const Hero = () => {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [introFinished, setIntroFinished] = useState(false);
-
-  useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      setIntroFinished(true);
-    }, 2800);
-
-    return () => window.clearTimeout(timeoutId);
-  }, []);
 
   useEffect(() => {
     if (heroImages.length <= 1) return;
@@ -58,7 +49,6 @@ const Hero = () => {
         <HeroSlide
           slides={heroImages}
           activeIndex={activeIndex}
-          introFinished={introFinished}
           {...heroContent}
         />
       </div>

@@ -53,6 +53,8 @@
     width: 100%
     margin-top: 40px
 
+  // Hero image and crossfade
+
   &__image-wrapper
     position: relative
     width: 100%
@@ -67,7 +69,6 @@
     object-fit: cover
     opacity: 0
     transition: opacity 1.1s ease
-    will-change: opacity
 
     &--active
       opacity: 1
@@ -109,7 +110,7 @@
     height: 100%
     margin: 0
     padding: 40px 18px 14px
-    color: #171717
+    color: vars.$color-text
     font-size: 19px
     font-weight: vars.$font-semibold
     line-height: 1.5
@@ -257,6 +258,8 @@
     line-height: 1.5
     text-align: center
 
+  // Insurance
+
   &__insurance
     position: absolute
     right: 0
@@ -265,8 +268,8 @@
     display: flex
     align-items: center
     gap: 12px
-    height: 10%
     width: 47%
+    height: 10%
 
   &__insurance-icon
     flex-shrink: 0
@@ -278,12 +281,49 @@
     font-size: 17px
     line-height: 1.4
 
-// Mobile: up to 600px
+  // Scroll reveal - Desktop defaults
+
+  &__left-card,
+  &__right-card,
+  &__bottom-card,
+  &__insurance
+    opacity: 0
+    transition-property: opacity, transform
+    transition-duration: 0.8s
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1)
+
+  &__left-card
+    transform: translateX(-60px)
+    transition-delay: 0.5s
+
+  &__right-card
+    transform: translateX(60px)
+    transition-delay: 1s
+
+  &__bottom-card
+    transform: translateY(50px)
+    transition-delay: 1.5s
+
+  &__insurance
+    transform: translateX(40px)
+    transition-delay: 2s
+
+  // Revealed elements remain visible
+
+  &__left-card.is-revealed,
+  &__right-card.is-revealed,
+  &__bottom-card.is-revealed,
+  &__insurance.is-revealed
+    opacity: 1
+    transform: none
+
+// Mobile: up to 700px
 
 @media (max-width: 700px)
   .hero
     padding-top: 40px
     padding-bottom: 120px
+    overflow-x: clip
 
     &__description
       font-size: 15px
@@ -307,13 +347,13 @@
       z-index: 0
       width: 100%
       height: 100%
+      aspect-ratio: auto
       overflow: hidden
       border-radius: 12px
 
     &__image
       width: 100%
       height: 100%
-      aspect-ratio: auto
       object-fit: cover
       object-position: center
 
@@ -347,6 +387,8 @@
       width: 100%
       height: auto
 
+    // Left card
+
     &__left-card
       order: 1
 
@@ -363,6 +405,8 @@
     &__left-description
       text-align: center
 
+    // Right card
+
     &__right-card
       order: 2
 
@@ -371,6 +415,8 @@
       font-size: 16px
       line-height: 1.5
       text-align: center
+
+    // Bottom card
 
     &__bottom-card
       order: 3
@@ -384,6 +430,8 @@
 
     &__bottom-icon
       display: none
+
+    // Insurance
 
     &__insurance
       position: absolute
@@ -403,17 +451,31 @@
       line-height: 1.4
       text-align: center
 
+    // Mobile scroll reveal directions
+
+      &__left-card,
+      &__right-card,
+      &__bottom-card,
+      &__insurance
+        transition-duration: 0.6s
+
     &__left-card
-      animation: hero-slide-from-left 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.5s both
+      transform: translateX(-40px)
+      transition-delay: 0s
 
     &__right-card
-      animation: hero-slide-from-right 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1s both
+      transform: translateX(40px)
+      transition-delay: 0.15s
 
     &__bottom-card
-      animation: hero-slide-from-left 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1.5s both
+      transform: translateX(-40px)
+      transition-delay: 0.3s
 
     &__insurance
-      animation: hero-slide-from-bottom 0.8s cubic-bezier(0.22, 1, 0.36, 1) 2s both
+      transform: translateY(40px)
+      transition-delay: 0.45s
+
+// Tablet: 701px - 1100px
 
 @media (min-width: 701px) and (max-width: 1100px)
   .hero
@@ -441,7 +503,6 @@
       border-radius: 12px
       background-color: vars.$color-white
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08)
-      animation: hero-slide-from-bottom 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.5s both
 
     &__left-frame,
     &__right-frame,
@@ -453,6 +514,8 @@
     &__bottom-content
       width: 100%
       height: 100%
+
+    // Left card
 
     &__left-card
       order: 1
@@ -472,6 +535,8 @@
       white-space: normal
       text-align: center
 
+    // Right card
+
     &__right-card
       order: 2
 
@@ -480,6 +545,8 @@
       font-size: 15px
       line-height: 1.4
       text-align: center
+
+    // Bottom card
 
     &__bottom-card
       order: 3
@@ -494,6 +561,8 @@
     &__bottom-icon
       display: none
 
+    // Insurance
+
     &__insurance
       position: static
       order: 4
@@ -501,71 +570,36 @@
       width: 100%
       justify-content: center
       padding: 12px 0
-      animation: hero-slide-from-bottom 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1s both
 
     &__insurance-text
       font-size: 16px
 
-@media (min-width: 1101px)
-  .hero
-    &__left-card
-      animation: hero-slide-from-left 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.5s both
+    // Tablet scroll reveal directions and delays
 
-    &__right-card
-      animation: hero-slide-from-right 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1s both
-
+    &__left-card,
+    &__right-card,
     &__bottom-card
-      animation: hero-slide-from-bottom 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1.5s both
+      transform: translateY(50px)
+      transition-delay: 0.5s
 
     &__insurance
-      animation: hero-slide-from-right 0.8s cubic-bezier(0.22, 1, 0.36, 1) 2s both
+      transform: translateY(50px)
+      transition-delay: 1.8s
 
-@keyframes hero-slide-from-left
-  from
-    opacity: 0
-    transform: translateX(-60px)
-
-  to
-    opacity: 1
-    transform: translateX(0)
-
-@keyframes hero-slide-from-right
-  from
-    opacity: 0
-    transform: translateX(60px)
-
-  to
-    opacity: 1
-    transform: translateX(0)
-
-@keyframes hero-slide-from-bottom
-  from
-    opacity: 0
-    transform: translateY(50px)
-
-  to
-    opacity: 1
-    transform: translateY(0)
+// Reduced motion
 
 @media (prefers-reduced-motion: reduce)
   .hero
     &__button
       transition: none
 
+    &__image
+      transition: none
+
     &__left-card,
     &__right-card,
     &__bottom-card,
     &__insurance
-      animation: none
-
-    &__image
+      opacity: 1
+      transform: none
       transition: none
-
-.hero__visual--intro-finished
-  .hero__left-card,
-  .hero__right-card,
-  .hero__bottom-card,
-  .hero__insurance
-    animation: none
-    opacity: 1
-    transform: none
