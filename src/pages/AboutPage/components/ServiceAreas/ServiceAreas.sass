@@ -1,0 +1,104 @@
+@use '../../../../styles/abstracts/variables' as vars
+
+.service-areas
+  padding: 80px 0
+  background-color: vars.$color-background-warm
+
+  &__inner
+    display: grid
+    grid-template-columns: repeat(2, minmax(0, 1fr))
+    align-items: center
+    gap: 64px
+
+  &__content
+    display: flex
+    flex-direction: column
+    align-items: flex-start
+    gap: 24px
+    min-width: 0
+
+  &__description
+    max-width: 540px
+
+  &__list
+    display: flex
+    flex-direction: column
+    gap: 16px
+    min-width: 0
+    margin: 0
+    padding: 0
+    list-style: none
+
+  &__card
+    display: flex
+    align-items: center
+    gap: 20px
+    min-width: 0
+    min-height: 104px
+    padding: 20px 24px
+    border-radius: 12px
+    background-color: vars.$color-white
+
+  &__badge
+    display: flex
+    align-items: center
+    justify-content: center
+    flex-shrink: 0
+    width: 64px
+    height: 64px
+    border-radius: 50%
+    background-color: vars.$color-accent-light
+    color: vars.$color-text
+    font-size: 20px
+    font-weight: vars.$font-semibold
+    line-height: 30px
+
+  &__card-content
+    display: flex
+    flex-direction: column
+    gap: 4px
+    min-width: 0
+
+  &__name
+    margin: 0
+    color: vars.$color-text
+    font-size: 20px
+    font-weight: vars.$font-semibold
+    line-height: 30px
+
+  &__card-description
+    margin: 0
+    color: vars.$color-text-secondary
+    font-size: 14px
+    line-height: 22px
+
+@media (min-width: 701px) and (max-width: 1100px)
+  .service-areas
+    padding: 72px 0
+
+    &__inner
+      gap: 32px
+
+    &__card
+      gap: 16px
+      padding: 20px
+
+@media (max-width: 700px)
+  .service-areas
+    padding: 56px 0
+
+    &__inner
+      grid-template-columns: minmax(0, 1fr)
+      gap: 32px
+
+    &__card
+      gap: 16px
+      padding: 16px
+
+    &__badge
+      width: 52px
+      height: 52px
+      font-size: 18px
+
+    &__name
+      font-size: 18px

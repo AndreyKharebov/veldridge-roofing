@@ -1,0 +1,83 @@
+@use '../../../../styles/abstracts/variables' as vars
+
+.our-approach
+  padding: 96px 0
+
+  &__inner
+    display: grid
+    grid-template-columns: repeat(2, minmax(0, 1fr))
+    align-items: center
+    gap: 64px
+
+  &__visual
+    position: relative
+    min-width: 0
+    aspect-ratio: 608 / 480
+
+  &__image
+    position: absolute
+    display: block
+    object-fit: cover
+    border-radius: 12px
+
+    &--main
+      top: 0
+      left: 0
+      width: 88.816%
+      height: 86.667%
+
+    &--detail
+      right: 0
+      bottom: 0
+      z-index: 1
+      width: 44.737%
+      height: 43.333%
+      border: 8px solid vars.$color-white
+      background-color: vars.$color-white
+
+  &__content
+    display: flex
+    flex-direction: column
+    align-items: flex-start
+    gap: 24px
+    min-width: 0
+
+  &__description
+    max-width: 560px
+
+  &__promise
+    display: flex
+    flex-direction: column
+    gap: 8px
+    padding-top: 8px
+
+  &__promise-title
+    margin: 0
+    color: vars.$color-text
+    font-size: 20px
+    font-weight: vars.$font-semibold
+    line-height: 30px
+
+  &__promise-caption
+    margin: 0
+    color: vars.$color-text-secondary
+    font-size: 13px
+    line-height: 20px
+
+@media (min-width: 701px) and (max-width: 1100px)
+  .our-approach
+    padding: 72px 0
+
+    &__inner
+      gap: 32px
+
+@media (max-width: 700px)
+  .our-approach
+    padding: 56px 0
+
+    &__inner
+      grid-template-columns: minmax(0, 1fr)
+      gap: 32px
+
+    &__content
+      gap: 20px
