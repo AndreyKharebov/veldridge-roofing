@@ -1,16 +1,20 @@
 import { useState } from 'react';
+import { useScrollReveal } from '../../../../hooks/useScrollReveal.js';
 import { Link } from 'react-router';
 
 const ServiceCard = ({ service }) => {
   const { title, description, image, icon } = service;
-
   const [failedImage, setFailedImage] = useState(null);
+  const [cardRef, cardVisible] = useScrollReveal();
 
   const hasImage = Boolean(image) && failedImage !== image;
 
   return (
     <article
-      className={`service-card${hasImage ? ' service-card--with-image' : ''}`}
+      ref={cardRef}
+      className={`service-card${hasImage ? ' service-card--with-image' : ''}${
+        cardVisible ? ' is-revealed' : ''
+      }`}
     >
       {hasImage && (
         <img
