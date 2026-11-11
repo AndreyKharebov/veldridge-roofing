@@ -1,18 +1,45 @@
+
 @use '../../../../styles/abstracts/variables' as vars
+
+// ========================================
+// Why Choose Us - Base
+// ========================================
 
 .why-choose-us
   padding: 100px 0
+  overflow-x: clip
+
+  // Header
 
   &__header
     max-width: 650px
     margin-inline: auto
     text-align: center
 
+  &__title
+    color: vars.$color-text
+    font-size: clamp(32px, 3vw, 44px)
+    font-weight: vars.$font-semibold
+    line-height: 1.25
+
+    span
+      color: vars.$color-primary
+
+  &__description
+    margin-top: 16px
+    color: vars.$color-text-secondary
+    font-size: 16px
+    line-height: 1.5
+
+  // Layout
+
   &__inner
     display: flex
     align-items: center
     gap: 60px
     margin-top: 56px
+
+  // Visual
 
   &__visual
     position: relative
@@ -32,29 +59,18 @@
     object-fit: cover
     border-radius: 12px
 
+  // Content
+
   &__content
     flex: 1
     min-width: 0
-
-  &__title
-    color: vars.$color-text
-    font-size: clamp(32px, 3vw, 44px)
-    font-weight: vars.$font-semibold
-    line-height: 1.25
-
-    span
-      color: vars.$color-primary
-
-  &__description
-    margin-top: 16px
-    color: vars.$color-text-secondary
-    font-size: 16px
-    line-height: 1.5
 
   &__benefits
     display: flex
     flex-direction: column
     gap: 16px
+
+  // Benefit card
 
   &__benefit
     padding: 24px
@@ -73,6 +89,19 @@
     color: vars.$color-text-secondary
     font-size: 15px
     line-height: 1.5
+
+  // Accordion - Desktop defaults
+
+  &__benefit-toggle
+    display: none
+
+  &__benefit-panel
+    width: 100%
+
+  &__benefit-panel-inner
+    min-height: 0
+
+  // Button
 
   &__button
     display: inline-flex
@@ -97,18 +126,23 @@
       outline: 2px solid vars.$color-text
       outline-offset: 4px
 
-  &__benefit-toggle
-    display: none
+// ========================================
+// Tablet: 701px - 1100px
+// ========================================
 
-  &__benefit-panel
-    width: 100%
+@media (min-width: 701px) and (max-width: 1100px)
+  .why-choose-us
+    padding: 80px 0
 
-  &__benefit-panel-inner
-    min-height: 0
+// ========================================
+// Mobile: up to 700px
+// ========================================
 
 @media (max-width: 700px)
   .why-choose-us
     padding: 56px 0
+
+    // Header
 
     &__header
       text-align: left
@@ -121,6 +155,8 @@
       font-size: 15px
       line-height: 1.5
 
+    // Layout
+
     &__inner
       display: grid
       grid-template-columns: minmax(0, 1fr)
@@ -129,6 +165,8 @@
 
     &__content
       display: contents
+
+    // Visual
 
     &__visual
       grid-column: 1
@@ -152,6 +190,8 @@
       object-fit: cover
       border-radius: 12px
 
+    // Benefits overlay
+
     &__benefits
       grid-column: 1
       grid-row: 1
@@ -162,6 +202,8 @@
       gap: 8px
       min-width: 0
       padding: 12px
+
+    // Accordion cards
 
     &__benefit
       padding: 16px
@@ -178,6 +220,8 @@
       &:focus-visible
         outline: 10px solid vars.$color-primary
         outline-offset: 4px
+
+    // Accordion title
 
     &__benefit-title
       margin: 0
@@ -201,6 +245,8 @@
       font-weight: inherit
       line-height: 1.4
       text-align: left
+
+    // Plus / minus icon
 
     &__benefit-symbol
       position: relative
@@ -231,6 +277,8 @@
       .why-choose-us__benefit-symbol::after
         display: none
 
+    // Accordion panel
+
     &__benefit-panel
       display: grid
       grid-template-rows: 0fr
@@ -251,8 +299,87 @@
         grid-template-rows: 1fr
         opacity: 1
 
+    // Button
+
     &__button
       grid-column: 1
       grid-row: 2
       width: 100%
       margin-top: 0
+
+// ========================================
+// Scroll Reveal - Desktop defaults
+// ========================================
+
+.why-choose-us__benefit
+  opacity: 0
+  transform: translateX(36px)
+  transition-property: opacity, transform
+  transition-duration: 0.6s
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1)
+  transition-delay: 0s
+
+  // Short stagger for cards visible together
+
+  &:nth-child(2)
+    transition-delay: 0.1s
+
+  &:nth-child(3)
+    transition-delay: 0.2s
+
+  &:nth-child(4)
+    transition-delay: 0.3s
+
+// ========================================
+// Tablet Scroll Reveal
+// ========================================
+
+@media (min-width: 701px) and (max-width: 1100px)
+  .why-choose-us__benefit
+    transform: translateX(28px)
+    transition-duration: 0.55s
+
+// ========================================
+// Mobile Scroll Reveal
+// ========================================
+
+@media (max-width: 700px)
+  .why-choose-us__benefit
+    transition-duration: 0.5s
+    transition-delay: 0s
+
+    // 1 and 3 - from left
+
+    &:nth-child(odd)
+      transform: translateX(-28px)
+
+    // 2 and 4 - from right
+
+    &:nth-child(even)
+      transform: translateX(28px)
+
+// ========================================
+// Revealed State
+// Must stay after responsive transforms
+// ========================================
+
+.why-choose-us__benefit.is-revealed
+  opacity: 1
+  transform: none
+
+// ========================================
+// Reduced Motion
+// ========================================
+
+@media (prefers-reduced-motion: reduce)
+  .why-choose-us
+    &__button
+      transition: none
+
+    &__benefit
+      opacity: 1
+      transform: none
+      transition: none
+
+    &__benefit-panel
+      transition: none

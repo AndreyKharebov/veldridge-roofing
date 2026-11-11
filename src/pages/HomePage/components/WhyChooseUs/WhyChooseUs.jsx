@@ -1,6 +1,8 @@
 import { Link } from 'react-router';
 import { useState } from 'react';
 
+import BenefitCard from './BenefitCard';
+
 import whyChooseUsImage from './assets/why-choose-us.webp';
 import whyChooseUsFullImage from './assets/why-choose-us-full.webp';
 
@@ -78,55 +80,14 @@ const WhyChooseUs = () => {
 
           <div className='why-choose-us__content'>
             <div className='why-choose-us__benefits'>
-              {benefits.map((benefit) => {
-                const isOpen = activeBenefits.includes(benefit.id);
-
-                return (
-                  <article
-                    className={`why-choose-us__benefit${
-                      isOpen ? ' why-choose-us__benefit--open' : ''
-                    }`}
-                    key={benefit.id}
-                    role='button'
-                    tabIndex={0}
-                    aria-expanded={isOpen}
-                    aria-controls={`benefit-${benefit.id}`}
-                    onClick={() => toggleBenefit(benefit.id)}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault();
-                        toggleBenefit(benefit.id);
-                      }
-                    }}
-                  >
-                    <h3 className='why-choose-us__benefit-title'>
-                      <span className='why-choose-us__benefit-heading'>
-                        {benefit.title}
-                      </span>
-
-                      <span className='why-choose-us__benefit-toggle'>
-                        <span>{benefit.title}</span>
-
-                        <span
-                          className='why-choose-us__benefit-symbol'
-                          aria-hidden='true'
-                        />
-                      </span>
-                    </h3>
-
-                    <div className='why-choose-us__benefit-panel'>
-                      <div className='why-choose-us__benefit-panel-inner'>
-                        <p
-                          className='why-choose-us__benefit-description'
-                          id={`benefit-${benefit.id}`}
-                        >
-                          {benefit.description}
-                        </p>
-                      </div>
-                    </div>
-                  </article>
-                );
-              })}
+              {benefits.map((benefit) => (
+                <BenefitCard
+                  key={benefit.id}
+                  benefit={benefit}
+                  isOpen={activeBenefits.includes(benefit.id)}
+                  onToggle={toggleBenefit}
+                />
+              ))}
             </div>
 
             <Link className='why-choose-us__button' to='/about'>
