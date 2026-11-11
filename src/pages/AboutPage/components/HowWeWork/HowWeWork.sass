@@ -1,0 +1,98 @@
+@use '../../../../styles/abstracts/variables' as vars
+
+.how-we-work
+  padding: 96px 0
+
+  &__header
+    display: flex
+    align-items: center
+    justify-content: space-between
+    gap: 64px
+
+  &__heading
+    display: flex
+    flex-direction: column
+    gap: 16px
+    min-width: 0
+
+  &__description
+    flex: 0 1 420px
+    max-width: 420px
+
+  &__steps
+    display: grid
+    grid-template-columns: repeat(4, minmax(0, 1fr))
+    gap: 24px
+    margin: 48px 0 0
+    padding: 0
+    list-style: none
+
+  &__step
+    display: flex
+    flex-direction: column
+    align-items: flex-start
+    gap: 16px
+    min-width: 0
+    min-height: 236px
+    padding-top: 16px
+    border-top: 2px solid vars.$color-primary
+
+  &__number
+    color: vars.$color-primary
+    font-size: 32px
+    font-weight: vars.$font-semibold
+    line-height: 40px
+
+  &__step-title
+    margin: 0
+    color: vars.$color-text
+    font-size: 20px
+    font-weight: vars.$font-semibold
+    line-height: 30px
+
+  &__step-description
+    max-width: 280px
+    margin: 0
+    color: vars.$color-text-secondary
+    font-size: 15px
+    line-height: 24px
+
+@media (min-width: 701px) and (max-width: 1100px)
+  .how-we-work
+    padding: 72px 0
+
+    &__header
+      gap: 32px
+
+    &__description
+      flex-basis: 340px
+
+    &__steps
+      grid-template-columns: repeat(2, minmax(0, 1fr))
+
+    &__step
+      min-height: 0
+
+@media (max-width: 700px)
+  .how-we-work
+    padding: 56px 0
+
+    &__header
+      flex-direction: column
+      align-items: flex-start
+      gap: 24px
+
+    &__description
+      flex: none
+      max-width: none
+
+    &__steps
+      grid-template-columns: minmax(0, 1fr)
+      gap: 24px
+      margin-top: 32px
+
+    &__step
+      min-height: 0
+
+    &__step-description
+      max-width: none

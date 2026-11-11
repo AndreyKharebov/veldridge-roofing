@@ -1,0 +1,48 @@
+name: Verify About desktop
+
+on:
+  push:
+    branches:
+      - 'verify/about-desktop-*'
+
+permissions:
+  contents: read
+
+jobs:
+  about:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install project dependencies
+        run: npm ci
+      - name: Lint About source
+        run: npx eslint src/pages/AboutPage
+      - name: Full project lint (report pre-existing issues)
+        continue-on-error: true
+        run: npm run lint
+      - name: Build the complete application
+        run: npm run build
+      - name: Install isolated browser verification tools
+        run: |
+          npm install --prefix "$RUNNER_TEMP/about-browser" --no-save playwright@1.55.1
+          node "$RUNNER_TEMP/about-browser/node_modules/playwright/cli.js" install --with-deps chromium webkit
+      - name: Verify About in real browsers
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/about-preview.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:4173/about > /dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/verify-about-desktop.mjs
+      - name: Upload screenshots and verification report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: about-desktop-verification
+          path: about-verification/
+          retention-days: 7

@@ -1,0 +1,75 @@
+@use '../../../../styles/abstracts/variables' as vars
+
+.our-values
+  padding: 80px 0
+  background-color: vars.$color-background
+
+  &__header
+    display: flex
+    flex-direction: column
+    align-items: center
+    gap: 12px
+    max-width: 1000px
+    margin-inline: auto
+    text-align: center
+
+  &__grid
+    display: grid
+    grid-template-columns: repeat(3, minmax(0, 1fr))
+    gap: 24px
+    margin-top: 40px
+
+  &__card
+    display: flex
+    flex-direction: column
+    align-items: flex-start
+    gap: 16px
+    min-width: 0
+    min-height: 276px
+    padding: 28px
+    border-radius: 12px
+    background-color: vars.$color-white
+
+  &__number
+    display: flex
+    align-items: center
+    justify-content: center
+    flex-shrink: 0
+    width: 48px
+    height: 48px
+    border-radius: 50%
+    background-color: vars.$color-text
+    color: vars.$color-white
+    font-size: 18px
+    font-weight: vars.$font-semibold
+    line-height: 24px
+
+  &__card-title
+    margin: 0
+    color: vars.$color-text
+    font-size: 20px
+    font-weight: vars.$font-semibold
+    line-height: 30px
+
+@media (min-width: 701px) and (max-width: 1100px)
+  .our-values
+    padding: 72px 0
+
+    &__grid
+      gap: 16px
+
+    &__card
+      padding: 20px
+
+@media (max-width: 700px)
+  .our-values
+    padding: 56px 0
+
+    &__grid
+      grid-template-columns: minmax(0, 1fr)
+      gap: 16px
+      margin-top: 32px
+
+    &__card
+      min-height: 0
+      padding: 24px
