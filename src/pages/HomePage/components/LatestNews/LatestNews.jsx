@@ -23,11 +23,7 @@ const LatestNews = () => {
         <div className='latest-news__grid'>
           {latestNews.map((article) => (
             <article className='latest-news__card' key={article.id}>
-              <Link
-                className='latest-news__image-link'
-                to='/blog'
-                aria-label={`Read article: ${article.title}`}
-              >
+              <div className='latest-news__image-wrapper'>
                 {article.image ? (
                   <img
                     className='latest-news__image'
@@ -41,7 +37,7 @@ const LatestNews = () => {
                     aria-hidden='true'
                   />
                 )}
-              </Link>
+              </div>
 
               <div className='latest-news__card-content'>
                 {article.date && (

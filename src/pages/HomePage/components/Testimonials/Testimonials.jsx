@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { testimonials } from './testimonials';
 
@@ -6,6 +6,19 @@ import './Testimonials.sass';
 
 const Testimonials = () => {
   const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    if (testimonials.length <= 1) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const intervalId = window.setInterval(() => {
+      if (!document.hidden) {
+        setActiveIndex((current) => (current + 1) % testimonials.length);
+      }
+    }, 5000);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
 
   const showPrevious = () => {
     setActiveIndex(
@@ -63,7 +76,7 @@ const Testimonials = () => {
               className='testimonials__track'
               id='testimonials-track'
               key={activeIndex}
-              aria-live='polite'
+              aria-live='off'
             >
               {orderedTestimonials.map((testimonial) => (
                 <article className='testimonials__card' key={testimonial.id}>

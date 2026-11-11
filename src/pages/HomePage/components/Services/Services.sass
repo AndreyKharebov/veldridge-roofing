@@ -156,13 +156,20 @@
     line-height: 1.5
     text-decoration: underline
     text-underline-offset: 5px
+    transition: color 0.2s ease
 
-    &:hover
+    &::after
+      content: ''
+      position: absolute
+      inset: 0
+      z-index: 2
+
+  &:focus-within
+    outline: 2px solid vars.$color-primary
+    outline-offset: 4px
+
+    .service-card__link
       color: vars.$color-primary
-
-    &:focus-visible
-      outline: 2px solid vars.$color-primary
-      outline-offset: 4px
 
 // ========================================
 // Tablet: 701px - 1100px
@@ -332,6 +339,17 @@
     transform: translateY(0)
 
 // ========================================
+// Desktop hover (mouse and trackpad)
+// ========================================
+
+@media (min-width: 1101px) and (hover: hover) and (pointer: fine)
+  .service-card.is-revealed:hover
+    transform: translateY(-6px)
+
+  .service-card:hover .service-card__link
+    color: vars.$color-primary
+
+// ========================================
 // Tablet Scroll Reveal
 // ========================================
 
@@ -371,3 +389,6 @@
     opacity: 1
     transform: none
     transition: none
+
+    &__link
+      transition: none

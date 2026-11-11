@@ -52,7 +52,11 @@ const ServiceCard = ({ service }) => {
 
         <p className='service-card__description'>{description}</p>
 
-        <Link className='service-card__link' to='/services'>
+        <Link
+          className='service-card__link'
+          to='/services'
+          aria-label={`Read more about ${title}`}
+        >
           Read More
         </Link>
       </div>
