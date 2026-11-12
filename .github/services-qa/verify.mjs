@@ -21,8 +21,6 @@ async function ready(page, route, base = 'http://127.0.0.1:4173') {
     await document.fonts.ready;
     document.querySelectorAll('main img').forEach((image) => { image.loading = 'eager'; });
   });
-  // Wait for completed loads before capture; decode() during the eager/lazy
-  // switch can reject a superseded decode even when the source is valid.
   await page.waitForFunction(() => [...document.querySelectorAll('main img')].every((image) => image.complete && image.naturalWidth > 0));
   await wait(150);
 }
@@ -115,6 +113,7 @@ for (const [engineName, engine] of [['chromium', chromium], ['webkit', webkit]])
     for (const selector of ['.page-hero__button', '#damage-repairs .services-page__button', '#roof-maintenance .service-care__card-link', '.page-cta__button']) {
       await ready(page, '/services');
       await page.locator(selector).click();
+      await page.getByRole('heading', { name: 'Contact Us', exact: true }).waitFor();
       assert.equal(new URL(page.url()).pathname, '/contact');
       assert.equal((await page.locator('main h1').innerText()).trim(), 'Contact Us');
       await page.goBack();
