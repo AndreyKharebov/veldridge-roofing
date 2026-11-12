@@ -1,0 +1,58 @@
+name: Verify Blog motion
+on:
+  push:
+    branches: [verify/blog-motion-20261112]
+permissions:
+  contents: read
+jobs:
+  blog-motion:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install, lint and build the application
+        run: |
+          npm ci --no-audit --no-fund
+          npm run lint
+          npm run build
+      - name: Install isolated browser verification tools
+        run: |
+          npm install --prefix "$RUNNER_TEMP/blog-browser" playwright@1.56.1 pngjs@7.0.0 --no-audit --no-fund
+          "$RUNNER_TEMP/blog-browser/node_modules/.bin/playwright" install --with-deps chromium webkit
+      - name: Prepare unchanged Blog baseline
+        run: |
+          git fetch --no-tags --depth 1 origin 9cf6a4becfe767f5abf9aa1e3e7433cdb8b889c7
+          git worktree add --detach "$RUNNER_TEMP/blog-baseline" 9cf6a4becfe767f5abf9aa1e3e7433cdb8b889c7
+          ln -s "$GITHUB_WORKSPACE/node_modules" "$RUNNER_TEMP/blog-baseline/node_modules"
+          (cd "$RUNNER_TEMP/blog-baseline" && npm run build)
+      - name: Verify responsive motion, readers and accessibility
+        env:
+          PLAYWRIGHT_MODULE: ${{ runner.temp }}/blog-browser/node_modules/playwright/index.mjs
+          PNG_MODULE: ${{ runner.temp }}/blog-browser/node_modules/pngjs/lib/png.js
+          QA_OUTPUT: ${{ runner.temp }}/blog-motion-qa
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > "$RUNNER_TEMP/blog-preview.log" 2>&1 &
+          (cd "$RUNNER_TEMP/blog-baseline" && npm run preview -- --host 127.0.0.1 --port 4174) > "$RUNNER_TEMP/blog-baseline.log" 2>&1 &
+          npm run dev -- --host 127.0.0.1 --port 4193 > "$RUNNER_TEMP/blog-dev.log" 2>&1 &
+          for port in 4173 4174 4193; do
+            for attempt in $(seq 1 40); do
+              if curl -fsS "http://127.0.0.1:$port/blog" > /dev/null; then break; fi
+              sleep 1
+            done
+          done
+          cp .github/qa/blog-motion-check.txt "$RUNNER_TEMP/blog-motion-check.mjs"
+          node "$RUNNER_TEMP/blog-motion-check.mjs"
+      - name: Upload verification report and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: blog-motion-verification
+          path: |
+            ${{ runner.temp }}/blog-motion-qa
+            ${{ runner.temp }}/blog-preview.log
+            ${{ runner.temp }}/blog-dev.log
+          retention-days: 7

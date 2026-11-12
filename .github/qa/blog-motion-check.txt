@@ -1,0 +1,267 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+const { chromium, webkit } = await import(process.env.PLAYWRIGHT_MODULE);
+const pngModule = await import(process.env.PNG_MODULE);
+const PNG = pngModule.PNG ?? pngModule.default.PNG;
+const out = process.env.QA_OUTPUT;
+await fs.mkdir(out, { recursive: true });
+const report = { checks: [], failures: [], layouts: [], motionSamples: [], comparisons: [] };
+const base = 'http://127.0.0.1:4173';
+const all = '[data-blog-reveal]';
+const pending = '[data-blog-reveal-state="pending"]';
+const seconds = (value) => Number.parseFloat(value) * (value.trim().endsWith('ms') ? 0.001 : 1);
+async function ready(page, url = `${base}/blog`) {
+  await page.goto(url, { waitUntil: 'domcontentloaded' });
+  await page.locator('.blog-page').waitFor();
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+    await Promise.all([...document.images].map(async (image) => {
+      image.loading = 'eager';
+      await image.decode();
+    }));
+  });
+}
+async function finish(page) {
+  await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }));
+  await page.waitForFunction(() => document.querySelectorAll('[data-blog-reveal-state="pending"]').length === 0);
+  await page.waitForFunction(() => [...document.querySelectorAll('[data-blog-reveal]')].every((el) => getComputedStyle(el).opacity === '1' && getComputedStyle(el).transform === 'none'));
+}
+async function open(page, index = 0) {
+  const button = page.locator('.article-row__open').nth(index);
+  await button.scrollIntoViewIfNeeded();
+  await button.click();
+  await page.locator('.article-dialog[open]').waitFor();
+  return button;
+}
+async function close(page) {
+  await page.keyboard.press('Escape');
+  await page.waitForFunction(() => !document.querySelector('.article-dialog'));
+  await page.waitForFunction(() => document.body.style.position === '');
+}
+async function scenario(browser, name, options, run, init) {
+  const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: 'no-preference', ...options });
+  if (init) await context.addInitScript(init);
+  const page = await context.newPage();
+  page.setDefaultTimeout(12000);
+  page.setDefaultNavigationTimeout(20000);
+  const errors = [];
+  page.on('pageerror', (error) => errors.push(String(error)));
+  try {
+    await run(page, context);
+    assert.deepEqual(errors, [], 'runtime errors');
+    report.checks.push(name);
+  } catch (error) {
+    report.failures.push({ name, message: String(error), stack: error.stack });
+    try { await page.screenshot({ path: path.join(out, `failure-${report.failures.length}.png`) }); } catch {}
+  } finally { await context.close(); }
+}
+
+for (const [engineName, engine] of Object.entries({ chromium, webkit })) {
+  const browser = await engine.launch();
+  for (const width of [320, 390, 700, 701, 900, 1100, 1101, 1280, 1440, 1920]) {
+    await scenario(browser, `${engineName}: responsive reveals ${width}px`, { viewport: { width, height: 900 } }, async (page, context) => {
+      await ready(page);
+      assert.equal(await page.locator(all).count(), 18);
+      assert.equal(await page.locator('.article-row').count(), 10);
+      assert.equal(await page.locator('h1').count(), 1);
+      const dates = await page.locator('.article-row__date').evaluateAll((nodes) => nodes.map((el) => el.dateTime));
+      assert.deepEqual(dates, [...dates].sort().reverse());
+      assert.equal(await page.locator('.article-row').last().getAttribute('data-blog-reveal-state'), 'pending');
+      const initial = await page.locator('.article-row').last().evaluate((el) => {
+        const css = getComputedStyle(el);
+        const matrix = new DOMMatrixReadOnly(css.transform);
+        return { opacity: css.opacity, x: matrix.m41, y: matrix.m42, duration: css.getPropertyValue('--blog-reveal-duration'), order: css.getPropertyValue('--blog-reveal-order') };
+      });
+      assert.equal(initial.opacity, '0');
+      assert.equal(initial.x, 0);
+      assert.equal(initial.y, width <= 700 ? 16 : width <= 1100 ? 22 : 28);
+      assert.equal(seconds(initial.duration), width <= 700 ? 0.4 : width <= 1100 ? 0.48 : 0.56);
+      assert.equal(Number(initial.order), 0, 'no cumulative article delay');
+      await finish(page);
+      const layout = await page.evaluate(() => ({ width: innerWidth, scrollWidth: document.documentElement.scrollWidth, clientWidth: document.documentElement.clientWidth, height: document.documentElement.scrollHeight }));
+      assert(layout.scrollWidth <= layout.clientWidth + 1, 'horizontal overflow');
+      report.layouts.push({ browser: engineName, ...layout });
+      if ([390, 1440].includes(width)) {
+        await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+        await page.mouse.move(0, 0);
+        const actualBuffer = await page.screenshot({ path: path.join(out, `${engineName}-blog-${width}.png`), fullPage: true });
+        const referencePage = await context.newPage();
+        await ready(referencePage, 'http://127.0.0.1:4174/blog');
+        await referencePage.mouse.move(0, 0);
+        const referenceBuffer = await referencePage.screenshot({ path: path.join(out, `${engineName}-baseline-${width}.png`), fullPage: true });
+        const actual = PNG.sync.read(actualBuffer);
+        const reference = PNG.sync.read(referenceBuffer);
+        assert.equal(actual.width, reference.width);
+        assert.equal(actual.height, reference.height);
+        let differentPixels = 0;
+        for (let i = 0; i < actual.data.length; i += 4) {
+          if (actual.data[i] !== reference.data[i] || actual.data[i + 1] !== reference.data[i + 1] || actual.data[i + 2] !== reference.data[i + 2] || actual.data[i + 3] !== reference.data[i + 3]) differentPixels++;
+        }
+        report.comparisons.push({ browser: engineName, width, differentPixels });
+        assert.equal(differentPixels, 0, 'unchanged final appearance');
+        await referencePage.close();
+      }
+    });
+  }
+
+  await scenario(browser, `${engineName}: 15% threshold and intermediate motion`, {}, async (page) => {
+    await ready(page);
+    const row = page.locator('.article-row').nth(2);
+    await row.evaluate((el) => {
+      const b = el.getBoundingClientRect();
+      window.scrollTo({ top: scrollY + b.top - innerHeight + b.height * 0.08, behavior: 'instant' });
+    });
+    await page.waitForTimeout(120);
+    assert.equal(await row.getAttribute('data-blog-reveal-state'), 'pending');
+    await row.evaluate((el) => window.scrollBy({ top: el.getBoundingClientRect().height * 0.18, behavior: 'instant' }));
+    await page.waitForFunction(() => document.querySelectorAll('.article-row')[2].getAnimations().length > 0);
+    const sample = await row.evaluate((el) => {
+      const animations = el.getAnimations();
+      animations.forEach((animation) => {
+        animation.pause();
+        const timing = animation.effect.getTiming();
+        animation.currentTime = timing.delay + timing.duration * 0.35;
+      });
+      const css = getComputedStyle(el);
+      const matrix = new DOMMatrixReadOnly(css.transform);
+      const result = { state: el.dataset.blogRevealState, opacity: Number(css.opacity), x: matrix.m41, y: matrix.m42, delay: css.transitionDelay, animations: animations.length };
+      animations.forEach((animation) => animation.play());
+      return result;
+    });
+    assert.equal(sample.state, 'visible');
+    assert(sample.opacity > 0 && sample.opacity < 1);
+    assert(sample.y > 0 && sample.y < 28);
+    assert.equal(seconds(sample.delay), 0);
+    report.motionSamples.push({ browser: engineName, ...sample });
+    await finish(page);
+    for (const width of [900, 390, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+      assert.equal(await page.locator(pending).count(), 0);
+      assert(await page.locator(all).evaluateAll((nodes) => nodes.every((el) => getComputedStyle(el).opacity === '1' && getComputedStyle(el).transform === 'none' && el.getAnimations().length === 0)));
+    }
+  });
+
+  await scenario(browser, `${engineName}: all ten readers, opening motion and return`, {}, async (page) => {
+    await ready(page);
+    await finish(page);
+    await page.evaluate(() => {
+      window.__readerAnimations = [];
+      document.addEventListener('animationstart', (event) => window.__readerAnimations.push(event.animationName));
+    });
+    for (let index = 0; index < 10; index++) {
+      const button = page.locator('.article-row__open').nth(index);
+      await button.scrollIntoViewIfNeeded();
+      const y = await page.evaluate(() => scrollY);
+      const title = await button.textContent();
+      await open(page, index);
+      assert.equal(await page.locator('.article-dialog__title').textContent(), title);
+      assert.equal(await page.locator('.article-dialog__section').count(), 3);
+      assert.equal(await page.locator('.article-dialog [data-blog-reveal]').count(), 0);
+      await page.waitForFunction(() => document.querySelector('.article-dialog').getAnimations().length === 0);
+      if (index === 0) {
+        assert((await page.evaluate(() => window.__readerAnimations)).includes('blog-dialog-enter'));
+        assert((await page.evaluate(() => window.__readerAnimations)).includes('blog-backdrop-enter'));
+        const toolbarY = (await page.locator('.article-dialog__toolbar').boundingBox()).y;
+        await page.locator('.article-dialog__scroll').evaluate((el) => { el.scrollTop = el.scrollHeight; });
+        assert.equal((await page.locator('.article-dialog__toolbar').boundingBox()).y, toolbarY);
+        await page.locator('.article-dialog__close').focus();
+        await page.keyboard.press('Shift+Tab');
+        assert(await page.locator('.article-dialog__cta').evaluate((el) => el === document.activeElement));
+        await page.keyboard.press('Tab');
+        assert(await page.locator('.article-dialog__close').evaluate((el) => el === document.activeElement));
+        await page.locator('.article-dialog__scroll').evaluate((el) => { el.scrollTop = 0; });
+        await page.screenshot({ path: path.join(out, `${engineName}-reader-1440.png`) });
+      }
+      await close(page);
+      assert(await button.evaluate((el) => el === document.activeElement));
+      assert(Math.abs((await page.evaluate(() => scrollY)) - y) < 2);
+      assert.equal(await page.locator(pending).count(), 0);
+    }
+    await open(page);
+    await page.mouse.click(5, 5);
+    await page.waitForFunction(() => !document.querySelector('.article-dialog'));
+    await open(page);
+    await page.getByRole('button', { name: 'Close article', exact: true }).click();
+    await page.waitForFunction(() => !document.querySelector('.article-dialog'));
+    await open(page, 2);
+    await page.locator('.article-dialog__cta').click();
+    await page.waitForURL('**/contact');
+    await page.waitForFunction(() => !document.querySelector('.article-dialog') && document.body.style.position === '');
+    assert.equal(await page.evaluate(() => history.state.usr.articleId), 'roof-repair-or-replacement');
+    assert.equal(await page.locator(all).count(), 0);
+  });
+
+  await scenario(browser, `${engineName}: anchor navigation and keyboard reveal`, {}, async (page) => {
+    await ready(page);
+    await page.getByRole('link', { name: 'Read the Latest', exact: true }).click();
+    await page.waitForFunction(() => location.hash === '#articles' && document.activeElement.id === 'articles');
+    assert.equal(await page.locator('#articles').getAttribute('data-blog-reveal-state'), 'static');
+    await ready(page, `${base}/blog#articles`);
+    await page.waitForFunction(() => document.activeElement.id === 'articles');
+    await page.locator('.article-row__open').last().focus();
+    assert.equal(await page.locator('.article-row').last().getAttribute('data-blog-reveal-state'), 'static');
+    assert.equal(await page.locator('.article-row').last().evaluate((el) => getComputedStyle(el).opacity), '1');
+  });
+
+  await scenario(browser, `${engineName}: initial reduced motion`, { reducedMotion: 'reduce' }, async (page) => {
+    await ready(page);
+    assert.equal(await page.locator(all).count(), 0);
+    await open(page);
+    assert.equal(await page.locator('.article-dialog').evaluate((el) => getComputedStyle(el).animationName), 'none');
+    assert.equal(await page.locator('.article-dialog').evaluate((el) => getComputedStyle(el, '::backdrop').animationName), 'none');
+    await close(page);
+  });
+  await scenario(browser, `${engineName}: live reduced motion and no replay`, {}, async (page) => {
+    await ready(page);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.waitForFunction(() => !document.querySelector('[data-blog-reveal-state="pending"]'));
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    assert(await page.locator(all).evaluateAll((nodes) => nodes.every((el) => el.dataset.blogRevealState === 'static' && getComputedStyle(el).opacity === '1')));
+  });
+  await scenario(browser, `${engineName}: print exposes all content`, {}, async (page) => {
+    await ready(page);
+    await page.evaluate(() => window.dispatchEvent(new Event('beforeprint')));
+    assert.equal(await page.locator(pending).count(), 0);
+    assert(await page.locator(all).evaluateAll((nodes) => nodes.every((el) => getComputedStyle(el).opacity === '1' && getComputedStyle(el).transform === 'none')));
+  });
+  await scenario(browser, `${engineName}: unavailable observer fallback`, {}, async (page) => {
+    await ready(page);
+    assert.equal(await page.locator(all).count(), 0);
+    await open(page, 9);
+    await close(page);
+  }, () => { window.IntersectionObserver = undefined; });
+  await scenario(browser, `${engineName}: StrictMode and route remount`, {}, async (page) => {
+    await ready(page, 'http://127.0.0.1:4193/blog');
+    assert.equal(await page.locator(all).count(), 18);
+    await open(page);
+    await close(page);
+    await page.locator('.header__contact').click();
+    await page.waitForURL('**/contact');
+    await page.locator('.header__nav-link[href="/blog"]').click();
+    await page.waitForFunction(() => document.querySelectorAll('[data-blog-reveal]').length === 18);
+    assert.equal(await page.locator('.article-row').last().getAttribute('data-blog-reveal-state'), 'pending');
+    await finish(page);
+  });
+  await scenario(browser, `${engineName}: touch reader and mobile motion`, { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true }, async (page) => {
+    await ready(page);
+    await finish(page);
+    const button = page.locator('.article-row__open').first();
+    await button.tap();
+    await page.locator('.article-dialog[open]').waitFor();
+    await page.waitForFunction(() => document.querySelector('.article-dialog').getAnimations().length === 0);
+    const b = await page.locator('.article-dialog').boundingBox();
+    assert(b.x >= 0 && b.y >= 0 && b.x + b.width <= 391 && b.y + b.height <= 845);
+    assert.equal(await page.evaluate(() => document.body.style.position), 'fixed');
+    await page.screenshot({ path: path.join(out, `${engineName}-reader-390.png`) });
+    await page.locator('.article-dialog__scroll').evaluate((el) => { el.scrollTop = el.scrollHeight; });
+    await page.locator('.article-dialog__close').tap();
+    await page.waitForFunction(() => !document.querySelector('.article-dialog') && document.body.style.position === '');
+    assert.equal(await page.locator(pending).count(), 0);
+  });
+  await browser.close();
+}
+await fs.writeFile(path.join(out, 'report.json'), JSON.stringify(report, null, 2));
+console.log(JSON.stringify({ checks: report.checks.length, failures: report.failures, comparisons: report.comparisons }, null, 2));
+if (report.failures.length) process.exitCode = 1;
