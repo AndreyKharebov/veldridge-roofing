@@ -1,0 +1,62 @@
+name: Verify Contact page
+on:
+  push:
+    branches: ['verify/contact-page-20261112']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  contact:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Prepare local approved Figma icons
+        run: bash .github/qa/contact-assets.sh
+      - name: Install existing dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Lint the entire application
+        run: npm run lint
+      - name: Build the entire application
+        run: npm run build
+      - name: Install isolated browser verification tools
+        run: |
+          npm install --prefix "$RUNNER_TEMP/contact-browser" playwright@1.56.1 --no-audit --no-fund
+          "$RUNNER_TEMP/contact-browser/node_modules/.bin/playwright" install --with-deps chromium webkit
+      - name: Verify form, files, routing and responsive layouts
+        env:
+          PLAYWRIGHT_MODULE: ${{ runner.temp }}/contact-browser/node_modules/playwright/index.mjs
+          QA_OUTPUT: ${{ runner.temp }}/contact-qa
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > "$RUNNER_TEMP/contact-preview.log" 2>&1 &
+          npm run dev -- --host 127.0.0.1 --port 4193 > "$RUNNER_TEMP/contact-dev.log" 2>&1 &
+          for i in $(seq 1 40); do curl -fsS http://127.0.0.1:4173/contact >/dev/null && curl -fsS http://127.0.0.1:4193/contact >/dev/null && break; sleep 1; done
+          cp .github/qa/contact-check.txt "$RUNNER_TEMP/contact-check.mjs"
+          node "$RUNNER_TEMP/contact-check.mjs"
+      - name: Commit verified assets on verification branch only
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/pages/ContactPage
+          if ! git diff --cached --quiet; then
+            git commit -m 'Store approved Contact SVG assets [skip ci]'
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
+          git rev-parse HEAD > "$RUNNER_TEMP/contact-qa/tested-commit.txt"
+          git rev-parse HEAD:src/pages/ContactPage > "$RUNNER_TEMP/contact-qa/contact-tree.txt"
+      - name: Upload screenshots, asset metadata and verification report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: contact-page-verification
+          path: |
+            ${{ runner.temp }}/contact-qa
+            ${{ runner.temp }}/contact-preview.log
+            ${{ runner.temp }}/contact-dev.log
+          retention-days: 7

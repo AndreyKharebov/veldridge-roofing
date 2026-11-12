@@ -1,0 +1,258 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+const { chromium, webkit } = await import(process.env.PLAYWRIGHT_MODULE);
+const helpers = await import(pathToFileURL(path.resolve('src/pages/ContactPage/data/inquiry.js')));
+const { photoRules } = await import(pathToFileURL(path.resolve('src/pages/ContactPage/data/contactData.js')));
+const out = process.env.QA_OUTPUT;
+await fs.mkdir(out, { recursive: true });
+const report = { checks: [], failures: [], layouts: [], assets: [] };
+const check = (message) => report.checks.push(message);
+const empty = helpers.createInitialInquiry(null);
+const valid = { ...empty, name: 'Alex Morgan', email: 'alex@example.com' };
+assert.deepEqual(helpers.validateInquiry(valid), {});
+assert.deepEqual(helpers.validateInquiry({ ...empty, name: 'Alex', phone: '(215) 555-0126' }), {});
+assert(helpers.validateInquiry({ ...valid, name: '   ' }).name);
+assert(helpers.validateInquiry({ ...empty, name: 'Alex' }).phone);
+assert(helpers.validateInquiry({ ...valid, phone: 'abc' }).phone);
+assert(helpers.validateInquiry({ ...valid, email: 'alex@' }).email);
+assert(helpers.validateInquiry({ ...valid, zip: '12' }).zip);
+assert.deepEqual(helpers.validateInquiry({ ...valid, zip: '19103-1234' }), {});
+assert(helpers.validateInquiry({ ...valid, service: 'unknown' }).service);
+assert(helpers.validateInquiry({ ...valid, message: 'x'.repeat(4001) }).message);
+assert.equal(helpers.getInquiryContext({ articleTitle: {} }), null);
+assert.equal(helpers.getInquiryContext({ projectTitle: 'X', projectId: 4 }).id, '');
+check('Pure field validation: required and optional fields, limits, malformed source state');
+const meta = (name, size = 1024, type = 'image/png') => ({ name, size, type, lastModified: 0 });
+assert.equal(helpers.selectPhotos([], [meta('roof.png')]).files.length, 1);
+assert.equal(helpers.selectPhotos([meta('roof.png')], [meta('roof.png')]).files.length, 1);
+assert(helpers.selectPhotos([], [meta('bad.exe')]).error);
+assert(helpers.selectPhotos([], [meta('bad.jpg', 4, 'text/plain')]).error);
+assert(helpers.selectPhotos([], [meta('empty.png', 0)]).error);
+assert(helpers.selectPhotos([], [meta('big.png', photoRules.maxBytes + 1)]).error);
+assert(!helpers.selectPhotos([], [meta('limit.png', photoRules.maxBytes)]).error);
+assert(helpers.selectPhotos([], Array.from({ length: 6 }, (_, i) => meta(`file-${i}.png`))).error);
+const existing = [meta('existing.png')];
+assert.equal(helpers.selectPhotos(existing, [meta('ok.png'), meta('bad.txt')]).files, existing);
+assert(!helpers.selectPhotos([], [meta('camera.JPG', 1, '')]).error);
+check('Pure photo validation: duplicate, type, empty, size boundary, count and atomic rejection');
+
+async function inspectAssets(dir) {
+  for (const entry of await fs.readdir(dir, { withFileTypes: true })) {
+    const file = path.join(dir, entry.name);
+    if (entry.isDirectory()) await inspectAssets(file);
+    else if (file.endsWith('.svg')) {
+      const content = await fs.readFile(file, 'utf8');
+      assert(content.includes('</svg>'), `complete svg: ${file}`);
+      const root = content.match(/<svg\b[^>]*>/)?.[0];
+      report.assets.push({ file, bytes: Buffer.byteLength(content), root });
+    }
+  }
+}
+await inspectAssets('src/pages/ContactPage/components');
+assert.equal(report.assets.length, 10);
+check('Ten complete local SVGs; original root dimensions captured');
+
+const base = 'http://127.0.0.1:4173';
+async function ready(page, url = `${base}/contact`) {
+  await page.goto(url, { waitUntil: 'networkidle' });
+  await page.evaluate(() => document.fonts.ready);
+  await page.waitForFunction(() => [...document.querySelectorAll('.contact-page img')].every((img) => img.complete && img.naturalWidth > 0));
+}
+const fileData = (name = 'roof.png', mimeType = 'image/png', size) => ({ name, mimeType, buffer: size ? Buffer.alloc(size) : Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jFioAAAAASUVORK5CYII=', 'base64') });
+
+for (const [browserName, engine] of Object.entries({ chromium, webkit })) {
+  const browser = await engine.launch();
+  const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const page = await context.newPage();
+  const errors = [], submissions = [], external = [], demoLogs = [];
+  page.on('pageerror', (error) => errors.push(String(error)));
+  page.on('request', (req) => {
+    if (req.method() === 'POST') submissions.push(req.url());
+    if (!req.url().startsWith('http://127.0.0.1:') && !req.url().startsWith('data:')) external.push(req.url());
+  });
+  page.on('console', async (msg) => {
+    if (msg.type() === 'log' && msg.text().startsWith('[Veldridge Contact demo')) {
+      demoLogs.push(await msg.args()[1].jsonValue());
+    }
+  });
+  try {
+    for (const width of [320, 390, 700, 701, 900, 1100, 1101, 1280, 1440, 1920]) {
+      await page.setViewportSize({ width, height: width <= 700 ? 844 : 900 });
+      await ready(page);
+      assert.equal(await page.locator('h1').count(), 1);
+      assert.equal(await page.locator('.inquiry-form form').count(), 1);
+      assert.equal(await page.locator('#contact-service option').count(), 10);
+      assert.equal(await page.locator('.contact-details a[href^="tel:"], .contact-details a[href^="mailto:"]').count(), 0, 'demo details are not live links');
+      const layout = await page.evaluate(() => ({
+        width: innerWidth, clientWidth: document.documentElement.clientWidth, scrollWidth: document.documentElement.scrollWidth,
+        columns: getComputedStyle(document.querySelector('.contact-page__columns')).gridTemplateColumns,
+        form: (() => { const b = document.querySelector('.inquiry-form').getBoundingClientRect(); return { width: b.width, x: b.x, height: b.height }; })(),
+        overflow: [...document.querySelectorAll('.contact-page h1, .contact-page h2, .contact-details__information, .inquiry-form__control, .photo-picker__guidance, .contact-map__card')].filter((el) => el.scrollWidth > el.clientWidth + 2).map((el) => el.className),
+      }));
+      assert(layout.scrollWidth <= layout.clientWidth + 1, `page overflow at ${width}`);
+      assert.deepEqual(layout.overflow, [], `text overflow at ${width}`);
+      report.layouts.push({ browser: browserName, ...layout });
+      if ([390, 900, 1440].includes(width)) await page.screenshot({ path: path.join(out, `${browserName}-contact-${width}.png`), fullPage: true });
+      if (width === 1440) {
+        assert(Math.abs(layout.form.width - 736) < 2, 'approved form width');
+        assert(Math.abs(layout.form.x - 624) < 2, 'approved form position');
+      }
+      check(`${browserName}: responsive layout and local assets ${width}px`);
+    }
+
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await ready(page);
+    await page.getByRole('button', { name: 'Send Message', exact: true }).click();
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'contact-name');
+    assert.equal(await page.locator('.inquiry-form__error-summary').count(), 1);
+    assert.equal(demoLogs.length, 0);
+    await page.screenshot({ path: path.join(out, `${browserName}-validation.png`), fullPage: true });
+    await page.getByLabel('Name *', { exact: true }).fill('Alex Morgan');
+    await page.getByLabel('Email', { exact: true }).fill('bad@');
+    await page.getByRole('button', { name: 'Send Message', exact: true }).click();
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'contact-email');
+    await page.getByLabel('Email', { exact: true }).fill('alex@example.com');
+    await page.getByRole('button', { name: 'Send Message', exact: true }).click();
+    await page.getByRole('heading', { name: 'Demo complete.' }).waitFor();
+    await page.waitForTimeout(100);
+    assert.equal(demoLogs.length, 1);
+    assert.equal(demoLogs[0].email, 'alex@example.com');
+    assert.equal(demoLogs[0].phone, '');
+    assert.deepEqual(demoLogs[0].photos, []);
+    assert(await page.locator('.inquiry-form__result').evaluate((el) => el === document.activeElement));
+    await page.screenshot({ path: path.join(out, `${browserName}-demo-result.png`), fullPage: true });
+    await page.getByRole('button', { name: 'Back to Form' }).click();
+    await page.waitForFunction(() => document.activeElement.id === 'contact-name');
+    assert.equal(await page.locator('#contact-name').inputValue(), 'Alex Morgan');
+    check(`${browserName}: validation, email-only, zero attachments, demo feedback, focus and preserved values`);
+
+    await page.locator('#contact-email').fill('');
+    await page.locator('#contact-phone').fill('(215) 555-0126');
+    await page.locator('#contact-zip').fill('123');
+    await page.getByRole('button', { name: 'Send Message', exact: true }).click();
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'contact-zip');
+    await page.locator('#contact-zip').fill('19103-1234');
+    await page.getByRole('button', { name: 'Send Message', exact: true }).click();
+    await page.getByRole('heading', { name: 'Demo complete.' }).waitFor();
+    await page.waitForTimeout(100);
+    assert.equal(demoLogs.length, 2);
+    assert.equal(demoLogs[1].phone, '(215) 555-0126');
+    check(`${browserName}: phone-only and ZIP validation`);
+    await page.getByRole('button', { name: 'Back to Form' }).click();
+
+    const picker = page.locator('.photo-picker input[type="file"]');
+    await picker.setInputFiles(fileData());
+    assert.equal(await page.locator('.photo-picker__file').count(), 1);
+    await picker.setInputFiles(fileData());
+    assert.equal(await page.locator('.photo-picker__file').count(), 1);
+    await picker.setInputFiles(fileData('bad.pdf', 'application/pdf'));
+    assert.equal(await page.locator('.photo-picker__file').count(), 1);
+    assert(await page.locator('#contact-photos-error').isVisible());
+    await page.getByRole('button', { name: 'Send Message', exact: true }).click();
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'contact-photos');
+    assert.equal(demoLogs.length, 2);
+    await page.getByRole('button', { name: 'Dismiss file error' }).click();
+    await picker.setInputFiles(fileData('big.png', 'image/png', photoRules.maxBytes + 1));
+    assert((await page.locator('#contact-photos-error').textContent()).includes('10 MB'));
+    await page.getByRole('button', { name: 'Dismiss file error' }).click();
+    await picker.setInputFiles(Array.from({ length: 5 }, (_, i) => fileData(`extra-${i}.png`)));
+    assert((await page.locator('#contact-photos-error').textContent()).includes('5 images'));
+    assert.equal(await page.locator('.photo-picker__file').count(), 1);
+    await page.getByRole('button', { name: 'Dismiss file error' }).click();
+    await page.getByRole('button', { name: 'Remove roof.png', exact: true }).click();
+    assert.equal(await page.locator('.photo-picker__file').count(), 0);
+    await picker.setInputFiles(fileData());
+    assert.equal(await page.locator('.photo-picker__file').count(), 1);
+    check(`${browserName}: optional local files, duplicates, invalid type, excess size/count, remove and reselect`);
+
+    await page.locator('.photo-picker__dropzone').evaluate((element) => {
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(new File(['image'], 'flashing.webp', { type: 'image/webp' }));
+      element.dispatchEvent(new DragEvent('dragover', { bubbles: true, cancelable: true, dataTransfer }));
+      element.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer }));
+    });
+    assert.equal(await page.locator('.photo-picker__file').count(), 2);
+    await page.locator('#contact-service').selectOption('roof-replacement');
+    await page.locator('#contact-message').fill('Please review my roof.');
+    await page.screenshot({ path: path.join(out, `${browserName}-files-selected.png`), fullPage: true });
+    await page.getByRole('button', { name: 'Send Message', exact: true }).click();
+    await page.getByRole('heading', { name: 'Demo complete.' }).waitFor();
+    await page.waitForTimeout(100);
+    assert.equal(demoLogs[2].photos.length, 2);
+    assert.deepEqual(Object.keys(demoLogs[2].photos[0]).sort(), ['lastModified', 'name', 'size', 'type']);
+    assert.equal(demoLogs[2].serviceLabel, 'Roof Replacement');
+    check(`${browserName}: file drop, service selection and metadata-only console payload`);
+
+    await ready(page, `${base}/gallery`);
+    await page.locator('.project-card__open').first().click();
+    await page.locator('.project-dialog[open]').waitFor();
+    const projectTitle = (await page.locator('.project-dialog__title').textContent()).replace(/\s+/g, ' ').trim();
+    await page.locator('.project-dialog__cta').click();
+    await page.waitForURL('**/contact');
+    await page.locator('#contact-message').waitFor();
+    assert((await page.locator('#contact-message').inputValue()).includes('Standing-Seam'));
+    await page.waitForFunction(() => document.body.style.position !== 'fixed');
+    await page.locator('#contact-message').fill('My own edited message.');
+    await page.locator('#contact-name').fill('Gallery visitor');
+    assert.equal(await page.locator('#contact-message').inputValue(), 'My own edited message.');
+    await page.locator('#contact-email').fill('visitor@example.com');
+    await page.getByRole('button', { name: 'Send Message', exact: true }).click();
+    await page.getByRole('heading', { name: 'Demo complete.' }).waitFor();
+    await page.waitForTimeout(100);
+    assert.equal(demoLogs.at(-1).source.type, 'project');
+    assert(demoLogs.at(-1).source.title.includes(projectTitle.split(' ')[0]));
+    check(`${browserName}: real Gallery-to-Contact transition, context and editable message`);
+
+    await ready(page, `${base}/blog`);
+    await page.locator('.article-row__open').first().click();
+    await page.locator('.article-dialog[open]').waitFor();
+    await page.locator('.article-dialog__cta').click();
+    await page.waitForURL('**/contact');
+    await page.locator('#contact-message').waitFor();
+    assert((await page.locator('#contact-message').inputValue()).includes('Getting Your Roof Ready for Winter'));
+    await page.waitForFunction(() => document.body.style.position !== 'fixed');
+    check(`${browserName}: real Blog-to-Contact transition and article context`);
+
+    await ready(page, `${base}/contact#contact-form`);
+    await page.waitForFunction(() => document.activeElement.id === 'contact-name');
+    await page.keyboard.press('Tab');
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'contact-zip');
+    check(`${browserName}: direct form anchor and keyboard tab order`);
+
+    await ready(page, 'http://127.0.0.1:4193/contact');
+    await page.locator('#contact-name').fill('Strict Mode');
+    await page.locator('#contact-email').fill('strict@example.com');
+    const before = demoLogs.length;
+    await page.getByRole('button', { name: 'Send Message', exact: true }).click();
+    await page.getByRole('heading', { name: 'Demo complete.' }).waitFor();
+    await page.waitForTimeout(150);
+    assert.equal(demoLogs.length, before + 1);
+    check(`${browserName}: StrictMode submits once`);
+    assert.deepEqual(errors, []);
+    assert.deepEqual(submissions, []);
+    assert.deepEqual(external, []);
+    check(`${browserName}: no runtime errors, POSTs or third-party requests`);
+
+    const phoneContext = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+    const phone = await phoneContext.newPage();
+    await ready(phone);
+    await phone.locator('#contact-name').fill('Mobile visitor');
+    await phone.locator('#contact-email').fill('mobile@example.com');
+    await phone.getByRole('button', { name: 'Send Message', exact: true }).tap();
+    await phone.getByRole('heading', { name: 'Demo complete.' }).waitFor();
+    await phone.getByRole('button', { name: 'Back to Form' }).tap();
+    assert.equal(await phone.locator('#contact-name').inputValue(), 'Mobile visitor');
+    await phoneContext.close();
+    check(`${browserName}: touch viewport submits without files and returns`);
+  } catch (error) {
+    report.failures.push({ browser: browserName, message: String(error), stack: error.stack });
+    try { await page.screenshot({ path: path.join(out, `${browserName}-failure.png`), fullPage: true }); } catch {}
+  } finally {
+    await browser.close();
+  }
+}
+await fs.writeFile(path.join(out, 'report.json'), JSON.stringify(report, null, 2));
+console.log(JSON.stringify({ checks: report.checks.length, failures: report.failures, layouts: report.layouts.length, assets: report.assets }, null, 2));
+if (report.failures.length) process.exitCode = 1;

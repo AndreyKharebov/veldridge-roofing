@@ -1,0 +1,173 @@
+@use '../../../../styles/abstracts/variables' as vars
+
+.photo-picker
+  display: flex
+  flex-direction: column
+  gap: 8px
+  min-width: 0
+
+  &__label
+    margin: 0
+    color: vars.$color-text
+    font-size: 14px
+    font-weight: vars.$font-medium
+    line-height: 20px
+
+  &__dropzone
+    border: 1px dashed #d5d0c9
+    border-radius: 10px
+    background-color: vars.$color-background
+
+    &.is-dragging
+      border-color: vars.$color-primary
+      background-color: vars.$color-background-warm
+
+  &__choose
+    display: flex
+    align-items: center
+    gap: 16px
+    width: 100%
+    padding: 15px
+    border: 0
+    border-radius: 10px
+    background: transparent
+    color: vars.$color-text
+    font: inherit
+    text-align: left
+    cursor: pointer
+
+    &:focus-visible
+      outline: 2px solid vars.$color-primary
+      outline-offset: 3px
+
+    &[aria-invalid='true']
+      outline: 1px solid #b42318
+
+  &__icon
+    display: flex
+    align-items: center
+    justify-content: center
+    flex: 0 0 24px
+    width: 24px
+    height: 24px
+
+    img
+      display: block
+      flex: none
+
+  &__guidance
+    display: flex
+    flex-direction: column
+    gap: 4px
+    min-width: 0
+
+  &__action
+    font-size: 15px
+    font-weight: vars.$font-semibold
+    line-height: 24px
+    text-decoration: underline
+    text-underline-offset: 3px
+
+  &__help,
+  &__note
+    margin: 0
+    color: vars.$color-text-secondary
+    font-size: 12px
+    line-height: 18px
+
+  &__files
+    display: flex
+    flex-direction: column
+    gap: 8px
+    margin: 0
+    padding: 0
+    list-style: none
+
+  &__file
+    display: flex
+    align-items: center
+    gap: 12px
+    min-width: 0
+    padding: 8px 12px
+    border-radius: 10px
+    background-color: vars.$color-background
+
+  &__file-icon
+    display: flex
+    align-items: center
+    justify-content: center
+    flex: 0 0 24px
+
+    img
+      display: block
+
+  &__file-text
+    display: flex
+    flex: 1
+    flex-direction: column
+    min-width: 0
+    gap: 2px
+    overflow-wrap: anywhere
+    font-size: 14px
+    line-height: 20px
+
+    small
+      color: vars.$color-text-secondary
+      font-size: 12px
+      line-height: 18px
+
+  &__remove
+    display: flex
+    align-items: center
+    justify-content: center
+    flex: 0 0 44px
+    width: 44px
+    height: 44px
+    padding: 0
+    border: 0
+    border-radius: 50%
+    background-color: vars.$color-white
+    cursor: pointer
+
+    img
+      display: block
+
+    &:focus-visible
+      outline: 2px solid vars.$color-primary
+      outline-offset: 2px
+
+  &__error
+    color: #b42318
+    font-size: 12px
+    line-height: 18px
+
+    p
+      margin: 0 0 4px
+
+    button
+      padding: 0
+      border: 0
+      background: none
+      color: inherit
+      font: inherit
+      text-decoration: underline
+      cursor: pointer
+
+      &:focus-visible
+        outline: 2px solid vars.$color-primary
+        outline-offset: 3px
+
+  &__status
+    position: absolute
+    width: 1px
+    height: 1px
+    padding: 0
+    margin: -1px
+    overflow: hidden
+    clip-path: inset(50%)
+    white-space: nowrap
+
+@media (max-width: 700px)
+  .photo-picker__choose
+    gap: 12px
+    padding: 12px
