@@ -1,0 +1,63 @@
+name: Verify Services motion
+on:
+  push:
+    branches: [verify/services-motion-20261112]
+permissions:
+  contents: read
+jobs:
+  services-motion:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install existing application dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Lint the entire application
+        run: npm run lint
+      - name: Build the entire application
+        run: npm run build
+      - name: Prepare unchanged Services baseline
+        run: |
+          mkdir -p "$RUNNER_TEMP/services-baseline"
+          git archive a8319540121d228e126618e4e31c6af354e45ef6 | tar -x -C "$RUNNER_TEMP/services-baseline"
+          ln -s "$GITHUB_WORKSPACE/node_modules" "$RUNNER_TEMP/services-baseline/node_modules"
+          cd "$RUNNER_TEMP/services-baseline"
+          npm run build
+      - name: Install isolated browser verification tools
+        run: |
+          npm install --prefix "$RUNNER_TEMP/services-motion-tools" playwright@1.56.1 pngjs@7.0.0 --no-audit --no-fund
+          "$RUNNER_TEMP/services-motion-tools/node_modules/.bin/playwright" install --with-deps chromium webkit
+      - name: Verify actual motion, anchors, accessibility and visual regression
+        env:
+          PLAYWRIGHT_MODULE: ${{ runner.temp }}/services-motion-tools/node_modules/playwright/index.mjs
+          PNG_MODULE: ${{ runner.temp }}/services-motion-tools/node_modules/pngjs/lib/png.js
+          QA_OUTPUT: ${{ runner.temp }}/services-motion-qa
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > "$RUNNER_TEMP/services-preview.log" 2>&1 &
+          npm run dev -- --host 127.0.0.1 --port 4193 > "$RUNNER_TEMP/services-dev.log" 2>&1 &
+          (cd "$RUNNER_TEMP/services-baseline" && npm run preview -- --host 127.0.0.1 --port 4175) > "$RUNNER_TEMP/services-baseline.log" 2>&1 &
+          for port in 4173 4193 4175; do
+            for attempt in $(seq 1 40); do
+              if curl -fsS "http://127.0.0.1:$port/services" > /dev/null; then break; fi
+              sleep 1
+            done
+          done
+          cp .github/qa/services-motion-check.txt "$RUNNER_TEMP/services-motion-check.mjs"
+          node "$RUNNER_TEMP/services-motion-check.mjs"
+      - name: Upload screenshots and verification report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: services-motion-verification
+          path: |
+            ${{ runner.temp }}/services-motion-qa
+            ${{ runner.temp }}/services-preview.log
+            ${{ runner.temp }}/services-dev.log
+            ${{ runner.temp }}/services-baseline.log
+          retention-days: 7

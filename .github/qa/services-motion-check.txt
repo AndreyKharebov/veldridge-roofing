@@ -1,0 +1,246 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+const { chromium, webkit } = await import(process.env.PLAYWRIGHT_MODULE);
+const { default: PNG } = await import(process.env.PNG_MODULE);
+const out = process.env.QA_OUTPUT;
+await fs.mkdir(out, { recursive: true });
+const base = 'http://127.0.0.1:4173';
+const marker = '[data-services-reveal]';
+const report = { checks: [], layouts: [], pixels: [], motion: [], failures: [] };
+const wait = (page, ms = 850) => page.waitForTimeout(ms);
+const state = (loc) => loc.evaluate((el) => ({ state: el.dataset.servicesRevealState, opacity: getComputedStyle(el).opacity, transform: getComputedStyle(el).transform, delay: getComputedStyle(el).transitionDelay }));
+async function ready(page, url = `${base}/services`) {
+  await page.goto(url, { waitUntil: 'networkidle' });
+  await page.evaluate(() => document.fonts.ready);
+  await page.locator('.services-page img').evaluateAll((nodes) => nodes.forEach((img) => { img.loading = 'eager'; }));
+  await page.waitForFunction(() => [...document.querySelectorAll('.services-page img')].every((img) => img.complete && img.naturalWidth > 0));
+}
+async function finishScroll(page) {
+  // A normal downward visit, not class manipulation or a fake observer.
+  await page.evaluate(async () => {
+    for (let y = 0; y < document.documentElement.scrollHeight; y += Math.max(100, innerHeight * 0.55)) {
+      scrollTo({ top: y, behavior: 'instant' });
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    }
+  });
+  await wait(page);
+}
+async function settled(page) {
+  await page.waitForFunction(() => [...document.querySelectorAll('[data-services-reveal]')].every((el) => getComputedStyle(el).opacity === '1' && getComputedStyle(el).transform === 'none'));
+}
+async function anchorReady(page, id) {
+  await page.waitForFunction((id) => {
+    const el = document.getElementById(id);
+    if (!el || document.activeElement !== el) return false;
+    const margin = parseFloat(getComputedStyle(el).scrollMarginTop);
+    const atTop = Math.abs(el.getBoundingClientRect().top - margin) < 2;
+    const atBottom = Math.abs(scrollY + innerHeight - document.documentElement.scrollHeight) < 2;
+    return atTop || atBottom;
+  }, id);
+}
+
+for (const [name, engine] of Object.entries({ chromium, webkit })) {
+  const browser = await engine.launch();
+  const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: 'no-preference' });
+  const page = await context.newPage();
+  const runtimeErrors = [];
+  page.on('pageerror', (err) => runtimeErrors.push(String(err)));
+  const ok = (message) => report.checks.push(`${name}: ${message}`);
+  try {
+    for (const width of [320, 390, 700, 701, 900, 1100, 1101, 1280, 1440, 1920]) {
+      await page.setViewportSize({ width, height: width <= 700 ? 844 : 900 });
+      await ready(page);
+      assert.equal(await page.locator(marker).count(), 25);
+      assert.equal(await page.locator('h1').count(), 1);
+      assert.equal(await page.locator('.service-finder__link').count(), 9);
+      assert.equal(await page.locator('.service-finder__grid [data-services-reveal]').count(), 0);
+      const before = await state(page.locator('.service-detail__image').first());
+      assert.equal(before.state, 'pending');
+      assert.equal(before.opacity, '0');
+      const matrix = await page.locator('.service-detail__image').first().evaluate((el) => { const m = new DOMMatrix(getComputedStyle(el).transform); return { x: m.m41, y: m.m42 }; });
+      if (width <= 700) assert.deepEqual(matrix, { x: 0, y: 16 });
+      else assert.deepEqual(matrix, { x: width <= 1100 ? -22 : -28, y: 0 });
+      await finishScroll(page);
+      await settled(page);
+      const layout = await page.evaluate(() => ({ width: innerWidth, scrollWidth: document.documentElement.scrollWidth, clientWidth: document.documentElement.clientWidth, pending: document.querySelectorAll('[data-services-reveal-state="pending"]').length, images: document.querySelectorAll('.services-page img').length, duration: getComputedStyle(document.querySelector('.services-page')).getPropertyValue('--services-reveal-duration').trim(), stagger: getComputedStyle(document.querySelector('.services-page')).getPropertyValue('--services-reveal-stagger').trim() }));
+      assert(layout.scrollWidth <= layout.clientWidth + 1, `overflow at ${width}`);
+      assert.equal(layout.pending, 0);
+      assert.equal(layout.duration, width <= 700 ? '0.4s' : width <= 1100 ? '0.48s' : '0.56s');
+      assert.equal(layout.stagger, width <= 700 ? '0s' : width <= 1100 ? '0.05s' : '0.08s');
+      report.layouts.push({ browser: name, ...layout });
+      await page.evaluate(() => scrollTo({ top: 0, behavior: 'instant' }));
+      await wait(page, 100);
+      await settled(page);
+      if ([390, 900, 1440].includes(width)) {
+        await page.mouse.move(1, 1);
+        await page.screenshot({ path: path.join(out, `${name}-services-${width}.png`), fullPage: true });
+      }
+      ok(`real scroll reveals all 25 items once; layout/images/timing at ${width}px`);
+    }
+
+    // Verify the settled layout against the exact pre-change Services build.
+    for (const width of [1440, 390]) {
+      await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
+      await ready(page); await finishScroll(page); await settled(page);
+      await page.evaluate(() => scrollTo({ top: 0, behavior: 'instant' }));
+      await page.mouse.move(1, 1); await wait(page, 100);
+      const actual = await page.screenshot({ fullPage: true });
+      const original = await context.newPage();
+      await original.setViewportSize({ width, height: width === 390 ? 844 : 900 });
+      await ready(original, 'http://127.0.0.1:4175/services');
+      await original.mouse.move(1, 1);
+      const expected = await original.screenshot({ fullPage: true });
+      const a = PNG.sync.read(actual); const b = PNG.sync.read(expected);
+      assert.equal(a.width, b.width); assert.equal(a.height, b.height);
+      let changed = 0;
+      for (let i = 0; i < a.data.length; i += 4) if (a.data[i] !== b.data[i] || a.data[i + 1] !== b.data[i + 1] || a.data[i + 2] !== b.data[i + 2] || a.data[i + 3] !== b.data[i + 3]) changed++;
+      report.pixels.push({ browser: name, width, height: a.height, changed, total: a.width * a.height });
+      assert(changed / (a.width * a.height) < 0.0001, `baseline pixel difference: ${changed}`);
+      await original.close();
+      ok(`settled ${width}px page matches unchanged baseline`);
+    }
+
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await ready(page);
+    const firstImage = page.locator('.service-detail__image').first();
+    await firstImage.evaluate((el) => { const b = el.getBoundingClientRect(); scrollTo({ top: scrollY + b.top - innerHeight + b.height * 0.1, behavior: 'instant' }); });
+    await wait(page, 150);
+    assert.equal((await state(firstImage)).state, 'pending', '10% must stay hidden');
+    const samples = await firstImage.evaluate(async (el) => {
+      const b = el.getBoundingClientRect(); scrollTo({ top: scrollY + b.top - innerHeight + b.height * 0.25, behavior: 'instant' });
+      const samples = [];
+      for (let i = 0; i < 48; i++) {
+        await new Promise(requestAnimationFrame);
+        const c = getComputedStyle(el); const m = new DOMMatrix(c.transform);
+        samples.push({ opacity: Number(c.opacity), x: m.m41, y: m.m42, state: el.dataset.servicesRevealState });
+      }
+      return samples;
+    });
+    assert(samples.some((s) => s.opacity > 0 && s.opacity < 1 && s.x < 0 && s.x > -28), 'visible intermediate movement');
+    await wait(page, 300);
+    assert.equal((await state(firstImage)).opacity, '1');
+    assert.equal((await state(firstImage)).transform, 'none');
+    report.motion.push({ browser: name, samples });
+    assert.deepEqual(await page.locator('.service-detail__image').evaluateAll((nodes) => nodes.map((n) => n.dataset.servicesReveal)), ['left', 'right', 'left', 'right', 'left', 'right']);
+    const orders = await page.locator('.service-care__card').evaluateAll((nodes) => nodes.map((n) => n.style.getPropertyValue('--services-reveal-order')));
+    assert.deepEqual(orders, ['0', '1', '2']);
+    assert.deepEqual(await page.locator('.service-detail__content').evaluateAll((nodes) => nodes.map((n) => n.style.getPropertyValue('--services-reveal-order'))), ['1', '1', '1', '1', '1', '1']);
+    ok('15% threshold, measured intermediate motion, alternating photos and local-only stagger');
+
+    await finishScroll(page); await settled(page);
+    const completed = await page.locator(marker).evaluateAll((nodes) => nodes.map((n) => n.dataset.servicesRevealState));
+    for (const width of [900, 390, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.evaluate(() => scrollTo({ top: 0, behavior: 'instant' }));
+      await wait(page, 100);
+      assert.deepEqual(await page.locator(marker).evaluateAll((nodes) => nodes.map((n) => n.dataset.servicesRevealState)), completed);
+      await settled(page);
+    }
+    ok('resize and reverse scrolling never hide or replay completed items');
+
+    // All nine menu targets, repeated clicks and direct hashes with real motion.
+    await ready(page);
+    const ids = await page.locator('.service-finder__link').evaluateAll((nodes) => nodes.map((n) => new URL(n.href).hash.slice(1)));
+    for (const width of [1440, 390]) {
+      await page.setViewportSize({ width, height: 900 });
+      for (const id of ids) {
+        await ready(page);
+        await page.locator(`.service-finder__link[href$="#${id}"]`).click();
+        await anchorReady(page, id);
+        const states = await page.locator(`[id="${id}"]`).evaluate((el) => [el, ...el.querySelectorAll('[data-services-reveal]')].filter((n) => n.hasAttribute('data-services-reveal')).map((n) => ({ state: n.dataset.servicesRevealState, opacity: getComputedStyle(n).opacity, transform: getComputedStyle(n).transform })));
+        assert(states.length > 0);
+        assert(states.every((s) => s.state === 'static' && s.opacity === '1' && s.transform === 'none'));
+        await page.locator(`.service-finder__link[href$="#${id}"]`).click();
+        await anchorReady(page, id);
+        await ready(page, `${base}/services#${id}`);
+        await anchorReady(page, id);
+      }
+      ok(`all nine anchors: visible destination, accurate scroll, repeated clicks and direct URL at ${width}px`);
+    }
+
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await ready(page);
+    await page.getByRole('link', { name: 'Explore Services', exact: true }).click();
+    await anchorReady(page, 'service-finder');
+    assert.equal(await page.locator('.service-finder__heading').getAttribute('data-services-reveal-state'), 'static');
+    await page.locator(`.service-finder__link[href$="#${ids[1]}"]`).click(); await anchorReady(page, ids[1]);
+    await page.locator(`.service-finder__link[href$="#${ids[2]}"]`).click(); await anchorReady(page, ids[2]);
+    await page.goBack(); await anchorReady(page, ids[1]);
+    await page.goForward(); await anchorReady(page, ids[2]);
+    ok('Hero finder link and browser Back/Forward preserve anchor destinations');
+
+    await ready(page);
+    await page.locator('.service-care__card-link').last().focus();
+    assert.equal((await state(page.locator('.service-care__card').last())).state, 'static');
+    await page.locator('.service-care__card-link').last().press('Enter');
+    await page.waitForURL('**/contact');
+    await page.locator('.contact-page').waitFor();
+    assert.equal(await page.locator(marker).count(), 0);
+    await page.getByRole('navigation').first().getByRole('link', { name: 'About', exact: true }).click();
+    await page.locator('.about-page').waitFor();
+    assert.equal(await page.locator(marker).count(), 0);
+    assert((await page.locator('[data-about-reveal]').count()) > 0);
+    await page.getByRole('navigation').first().getByRole('link', { name: 'Blog', exact: true }).click();
+    await page.locator('.blog-page').waitFor();
+    assert.equal(await page.locator(marker).count(), 0);
+    ok('keyboard focus reveals immediately; Contact links, unmount cleanup, About/Blog isolation');
+
+    await ready(page);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await settled(page);
+    assert.equal(await page.locator('[data-services-reveal-state="pending"]').count(), 0);
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await settled(page);
+    ok('live Reduced Motion finishes all motion and never re-hides content');
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await ready(page);
+    assert.equal(await page.locator(marker).count(), 0);
+    assert.equal(await page.locator('.page-hero__visual').evaluate((el) => getComputedStyle(el).opacity), '1');
+    ok('initial Reduced Motion leaves all content visible without observer targets');
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await ready(page); await page.emulateMedia({ media: 'print' }); await settled(page);
+    await page.emulateMedia({ media: 'screen' });
+    await page.evaluate(() => dispatchEvent(new Event('beforeprint'))); await settled(page);
+    assert.equal(await page.locator('[data-services-reveal-state="pending"]').count(), 0);
+    ok('print CSS and beforeprint expose all content');
+
+    const noObserver = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+    await noObserver.addInitScript(() => { window.IntersectionObserver = undefined; });
+    const fallback = await noObserver.newPage(); await ready(fallback);
+    assert.equal(await fallback.locator(marker).count(), 0);
+    assert.equal(await fallback.locator('.service-detail__content').last().evaluate((el) => getComputedStyle(el).opacity), '1');
+    await noObserver.close(); ok('missing IntersectionObserver fails open');
+
+    await ready(page, 'http://127.0.0.1:4193/services');
+    assert.equal(await page.locator(marker).count(), 25);
+    await finishScroll(page); await settled(page);
+    ok('development StrictMode completes every reveal after setup/cleanup');
+    const touch = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+    const phone = await touch.newPage(); await ready(phone);
+    const duringScroll = await phone.evaluate(async () => {
+      const el = document.querySelector('.service-detail__image');
+      const end = scrollY + el.getBoundingClientRect().top;
+      let becameVisibleWhileMoving = false;
+      for (let y = 0; y <= end + 100; y += 35) {
+        scrollTo({ top: y, behavior: 'instant' });
+        await new Promise(requestAnimationFrame);
+        if (el.dataset.servicesRevealState === 'visible' && y < end) becameVisibleWhileMoving = true;
+      }
+      return becameVisibleWhileMoving;
+    });
+    assert(duringScroll, 'reveal must not wait for scrolling to stop');
+    await finishScroll(phone); await settled(phone); await touch.close();
+    ok('touch layout reveals while scrolling, without a scroll-end wait');
+    assert.deepEqual(runtimeErrors, [], 'no runtime errors');
+    ok('no JavaScript runtime errors');
+  } catch (err) {
+    report.failures.push({ browser: name, message: String(err), stack: err.stack });
+    try { await page.screenshot({ path: path.join(out, `${name}-failure.png`), fullPage: false }); } catch {}
+  } finally {
+    await context.close(); await browser.close();
+  }
+}
+await fs.writeFile(path.join(out, 'report.json'), JSON.stringify(report, null, 2));
+console.log(JSON.stringify({ checks: report.checks.length, layouts: report.layouts.length, pixels: report.pixels, failures: report.failures }, null, 2));
+if (report.failures.length) process.exitCode = 1;
