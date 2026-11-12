@@ -2,7 +2,7 @@ import arrowRight from '../../assets/icons/arrow-right.svg';
 import './ProjectCard.sass';
 
 const ProjectCard = ({ project, onOpen, dialogId }) => (
-  <li className='project-card'>
+  <li className='project-card' data-gallery-project={project.id}>
     <button
       className='project-card__button'
       id={`project-card-${project.id}`}
