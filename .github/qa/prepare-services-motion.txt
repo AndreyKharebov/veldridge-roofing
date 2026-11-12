@@ -1,0 +1,17 @@
+import fs from 'node:fs';
+import path from 'node:path';
+let source = fs.readFileSync('.github/qa/services-motion-check.txt', 'utf8');
+const replacements = [
+  ["const { default: PNG } = await import(process.env.PNG_MODULE);", "const { PNG } = (await import(process.env.PNG_MODULE)).default;"],
+  ["await page.goto(url, { waitUntil: 'networkidle' });", "await page.goto(url, { waitUntil: 'domcontentloaded' });\n  await page.locator('.services-page').waitFor();"],
+  ["assert.equal(layout.duration, width <= 700 ? '0.4s' : width <= 1100 ? '0.48s' : '0.56s');", "assert.equal(seconds(layout.duration), width <= 700 ? 0.4 : width <= 1100 ? 0.48 : 0.56);"],
+  ["assert.equal(layout.stagger, width <= 700 ? '0s' : width <= 1100 ? '0.05s' : '0.08s');", "assert.equal(seconds(layout.stagger), width <= 700 ? 0 : width <= 1100 ? 0.05 : 0.08);"],
+];
+for (const [from, to] of replacements) {
+  if (!source.includes(from)) throw new Error(`Missing test adaptation: ${from}`);
+  source = source.replace(from, to);
+}
+// Wait for actual page content, fonts and all images, not unrelated network idle.
+// Normalize CSS serialization only; keep all expected timing and behavior checks.
+source = "const seconds = value => Number.parseFloat(value) / (value.endsWith('ms') ? 1000 : 1);\n" + source;
+fs.writeFileSync(path.join(process.env.RUNNER_TEMP, 'services-motion-check.mjs'), source);

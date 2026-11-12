@@ -48,17 +48,7 @@ jobs:
               sleep 1
             done
           done
-          # Normalize CSS time units and the PNG library's CommonJS export.
-          {
-            printf '%s\n' "const seconds = value => Number.parseFloat(value) / (value.endsWith('ms') ? 1000 : 1);"
-            sed \
-              -e 's/const { default: PNG } = await import(process.env.PNG_MODULE);/const { PNG } = (await import(process.env.PNG_MODULE)).default;/' \
-              -e 's/assert.equal(layout.duration,/assert.equal(seconds(layout.duration),/' \
-              -e "s/width <= 700 ? '0.4s' : width <= 1100 ? '0.48s' : '0.56s'/width <= 700 ? 0.4 : width <= 1100 ? 0.48 : 0.56/" \
-              -e 's/assert.equal(layout.stagger,/assert.equal(seconds(layout.stagger),/' \
-              -e "s/width <= 700 ? '0s' : width <= 1100 ? '0.05s' : '0.08s'/width <= 700 ? 0 : width <= 1100 ? 0.05 : 0.08/" \
-              .github/qa/services-motion-check.txt
-          } > "$RUNNER_TEMP/services-motion-check.mjs"
+          node --input-type=module < .github/qa/prepare-services-motion.txt
           node "$RUNNER_TEMP/services-motion-check.mjs"
       - name: Upload screenshots and verification report
         if: always()
@@ -67,6 +57,7 @@ jobs:
           name: services-motion-verification
           path: |
             ${{ runner.temp }}/services-motion-qa
+            ${{ runner.temp }}/services-motion-check.mjs
             ${{ runner.temp }}/services-preview.log
             ${{ runner.temp }}/services-dev.log
             ${{ runner.temp }}/services-baseline.log
