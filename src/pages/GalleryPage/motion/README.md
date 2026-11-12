@@ -14,7 +14,7 @@ Page-owned progressive enhancement. No changes to Home, About, Services, shared 
 
 ## Behavior and accessibility
 
-`useGalleryReveal.js` owns one IntersectionObserver and one child-list MutationObserver, scoped to this page. It remembers revealed IDs only for the current visit. A fresh page mount starts a new sequence. Individual items are observed, not the entire long grid.
+`useGalleryReveal.js` owns one IntersectionObserver and one child-list MutationObserver, scoped to this page. It remembers revealed IDs only for the current visit. A fresh page mount starts a new sequence. Individual items are observed, not the entire long grid. A passive, animation-frame-throttled scroll fallback exposes already-passed pending items after fast viewport jumps; it does no geometry work once no items remain pending.
 
 The outer card is animated, leaving the existing inner button hover and focus ring intact. Keyboard focus (including Load More focus transfer) reveals its target immediately. Anchor focus occurs before scroll measurement. Finished reveals never replay on resize or subsequent scrolling.
 

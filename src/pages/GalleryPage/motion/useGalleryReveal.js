@@ -28,6 +28,7 @@ export const useGalleryReveal = () => {
     let motionDisabled = false;
     let firstFrame = 0;
     let secondFrame = 0;
+    let passedFrame = 0;
 
     const reveal = (element, immediate = false) => {
       if (disposed || !targets.has(element)) return;
@@ -52,6 +53,22 @@ export const useGalleryReveal = () => {
       });
     }, { threshold: [0, 0.15] });
 
+    const revealPassedItems = () => {
+      passedFrame = 0;
+      if (disposed || motionDisabled) return;
+      // A fast jump can cross the viewport between observer samples. Batch
+      // geometry reads before writes and never leave passed content invisible.
+      const passed = [...pending].filter((element) =>
+        root.contains(element) && element.getBoundingClientRect().bottom <= 0,
+      );
+      passed.forEach((element) => reveal(element, true));
+    };
+    const onScroll = () => {
+      if (!disposed && !motionDisabled && pending.size && !passedFrame) {
+        passedFrame = window.requestAnimationFrame(revealPassedItems);
+      }
+    };
+
     const observeAfterPaint = () => {
       if (disposed || motionDisabled || !queued.size || firstFrame || secondFrame) return;
       firstFrame = window.requestAnimationFrame(() => {
@@ -63,6 +80,7 @@ export const useGalleryReveal = () => {
             if (pending.has(element) && root.contains(element)) observer.observe(element);
           });
           queued.clear();
+          onScroll();
         });
       });
     };
@@ -108,8 +126,10 @@ export const useGalleryReveal = () => {
       motionDisabled = true;
       window.cancelAnimationFrame(firstFrame);
       window.cancelAnimationFrame(secondFrame);
+      window.cancelAnimationFrame(passedFrame);
       firstFrame = 0;
       secondFrame = 0;
+      passedFrame = 0;
       queued.clear();
       targets.forEach((_, element) => reveal(element, true));
       observer.disconnect();
@@ -129,17 +149,20 @@ export const useGalleryReveal = () => {
     root.addEventListener('focusin', onFocus);
     preference.addEventListener('change', onPreferenceChange);
     window.addEventListener('beforeprint', revealAll);
+    window.addEventListener('scroll', onScroll, { passive: true });
     syncTargets();
 
     return () => {
       disposed = true;
       window.cancelAnimationFrame(firstFrame);
       window.cancelAnimationFrame(secondFrame);
+      window.cancelAnimationFrame(passedFrame);
       observer.disconnect();
       mutations.disconnect();
       root.removeEventListener('focusin', onFocus);
       preference.removeEventListener('change', onPreferenceChange);
       window.removeEventListener('beforeprint', revealAll);
+      window.removeEventListener('scroll', onScroll);
       targets.forEach((_, element) => {
         delete element.dataset.galleryReveal;
         delete element.dataset.galleryRevealState;
@@ -153,4 +176,3 @@ export const useGalleryReveal = () => {
   }, []);
 
   return pageRef;
-};

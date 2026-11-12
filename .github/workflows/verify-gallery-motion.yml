@@ -27,6 +27,7 @@ jobs:
           "$RUNNER_TEMP/gallery-browser/node_modules/.bin/playwright" install --with-deps chromium webkit
       - name: Prepare unchanged Gallery baseline
         run: |
+          git fetch --no-tags --depth 1 origin 2201fcae08e9bf5ca0755865306fe499862ed4ca
           git worktree add --detach "$RUNNER_TEMP/gallery-baseline" 2201fcae08e9bf5ca0755865306fe499862ed4ca
           ln -s "$GITHUB_WORKSPACE/node_modules" "$RUNNER_TEMP/gallery-baseline/node_modules"
           (cd "$RUNNER_TEMP/gallery-baseline" && npm run build)
@@ -45,6 +46,7 @@ jobs:
               sleep 1
             done
           done
+          python3 .github/qa/prepare-gallery-check.txt
           cp .github/qa/gallery-motion-check.txt "$RUNNER_TEMP/gallery-motion-check.mjs"
           node "$RUNNER_TEMP/gallery-motion-check.mjs"
       - name: Upload verification report and screenshots
