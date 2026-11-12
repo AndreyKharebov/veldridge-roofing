@@ -5,6 +5,21 @@ old = 'assert.equal(await page.locator(pending).count(), 0);'
 new = '''assert.equal(await page.locator(pending).count(), 0, JSON.stringify(await page.locator(pending).evaluateAll((els) => els.map((el) => ({ className: el.className, bounds: el.getBoundingClientRect().toJSON(), viewport: [innerWidth, innerHeight], scrollY })))));'''
 assert s.count(old) == 1
 s = s.replace(old, new)
+old_finish = '''  await page.waitForTimeout(750);
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));'''
+new_finish = '''  // A stepped jump can miss a target's 15% interval. Explicitly visit any
+  // remaining item before comparing the fully-revealed layout. Do not force
+  // reveal attributes or disable motion; the real observer/fallback must run.
+  // Exact-threshold and rapid-scroll behavior have separate checks below.
+  for (const element of await page.locator(pending).elementHandles()) {
+    await element.evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' }));
+    await page.waitForFunction((el) => el.dataset.contactRevealState !== 'pending', element);
+    await element.dispose();
+  }
+  await page.waitForTimeout(750);
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));'''
+assert s.count(old_finish) == 1
+s = s.replace(old_finish, new_finish)
 marker = '  for (const width of [390, 1440]) {'
 extra = '''  await check(browser, engine, 'missed-observer-notification-fallback', async (page) => {
     await page.addInitScript(() => {
