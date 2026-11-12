@@ -44,9 +44,14 @@ jobs:
           assert old in s
           s = s.replace(old, new)
           # Exercise real scrolling and await decoding before a full-page capture.
-          # A downloaded offscreen image is not necessarily painted yet.
           old = "await page.screenshot({ path: path.join(out, `${name}-blog-${width}.png`), fullPage: true });"
           new = "for (const image of await page.locator('.blog-page img').all()) { await image.scrollIntoViewIfNeeded(); await image.evaluate((img) => img.decode()); } await page.evaluate(() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' })); await page.waitForTimeout(150); " + old
+          assert old in s
+          s = s.replace(old, new)
+          # The history URL changes before React finishes committing the new route.
+          # Check actual unmount and body cleanup, not the URL update alone.
+          old = "await page.waitForURL('**/contact');"
+          new = old + " await page.waitForFunction(() => location.pathname === '/contact' && !document.querySelector('.blog-page') && !document.querySelector('.article-dialog') && document.body.style.position !== 'fixed');"
           assert old in s
           p.write_text(s.replace(old, new))
           PY
