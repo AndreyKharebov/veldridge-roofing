@@ -1,0 +1,32 @@
+@use '../../styles/abstracts/variables' as vars
+
+.contact-page
+  background-color: vars.$color-white
+
+  &__main
+    padding-bottom: 80px
+    background-color: vars.$color-background-warm
+
+  &__columns
+    display: grid
+    grid-template-columns: minmax(0, 480fr) minmax(0, 736fr)
+    align-items: start
+    gap: 64px
+
+@media (min-width: 701px) and (max-width: 1100px)
+  .contact-page
+    &__main
+      padding-bottom: 64px
+
+    &__columns
+      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr)
+      gap: 28px
+
+@media (max-width: 700px)
+  .contact-page
+    &__main
+      padding-bottom: 48px
+
+    &__columns
+      grid-template-columns: minmax(0, 1fr)
+      gap: 36px

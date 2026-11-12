@@ -1,0 +1,139 @@
+@use '../../../../styles/abstracts/variables' as vars
+
+.contact-details
+  display: flex
+  flex-direction: column
+  gap: 32px
+  min-width: 0
+  color: vars.$color-text
+
+  &__intro
+    h2
+      margin: 0
+      font-size: 32px
+      font-weight: vars.$font-semibold
+      line-height: 42px
+
+    p
+      max-width: 456px
+      margin: 12px 0 0
+      color: vars.$color-text-secondary
+      font-size: 16px
+      line-height: 26px
+
+  &__list
+    display: flex
+    flex-direction: column
+    gap: 24px
+    margin: 0
+
+  &__row
+    display: flex
+    align-items: flex-start
+    gap: 16px
+    min-width: 0
+
+  &__icon
+    display: flex
+    align-items: center
+    justify-content: center
+    flex: 0 0 44px
+    width: 44px
+    height: 44px
+
+    img
+      display: block
+      flex: none
+
+  &__information
+    min-width: 0
+    overflow-wrap: anywhere
+
+    dt
+      margin: 0 0 4px
+      color: vars.$color-text-secondary
+      font-size: 11px
+      font-weight: vars.$font-bold
+      line-height: 16px
+      text-transform: uppercase
+
+    dd
+      margin: 0
+      font-size: 18px
+      font-weight: vars.$font-semibold
+      line-height: 27px
+
+    span
+      display: block
+      margin-top: 4px
+      color: vars.$color-text-secondary
+      font-size: 13px
+      font-weight: vars.$font-regular
+      line-height: 20px
+
+    a
+      color: inherit
+      text-decoration: none
+
+      &:hover
+        color: vars.$color-primary
+
+      &:focus-visible
+        outline: 2px solid vars.$color-primary
+        outline-offset: 4px
+
+  &__area
+    display: flex
+    flex-direction: column
+    gap: 12px
+
+    h3
+      margin: 0
+      color: vars.$color-primary
+      font-size: 11px
+      font-weight: vars.$font-bold
+      line-height: 16px
+      text-transform: uppercase
+
+    p
+      margin: 0
+      font-size: 16px
+      font-weight: vars.$font-medium
+      line-height: 26px
+
+    .contact-details__area-note
+      max-width: 456px
+      color: vars.$color-text-secondary
+      font-size: 14px
+      font-weight: vars.$font-regular
+      line-height: 22px
+
+  &__disclosure
+    padding: 20px
+    border-radius: 12px
+    background-color: vars.$color-white
+
+    h3
+      margin: 0 0 8px
+      font-size: 14px
+      font-weight: vars.$font-semibold
+      line-height: 22px
+
+    p
+      margin: 0
+      color: vars.$color-text-secondary
+      font-size: 13px
+      line-height: 21px
+
+@media (max-width: 1100px)
+  .contact-details
+    &__intro h2
+      font-size: 28px
+      line-height: 1.35
+
+    &__row
+      gap: 12px
+
+    &__information dd
+      font-size: 16px
+      line-height: 24px
