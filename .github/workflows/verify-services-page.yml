@@ -15,13 +15,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: npm
-      - name: Download approved Figma content assets
-        run: python3 .github/services-qa/download-assets.py
+      - name: Download and optimize approved Figma content assets
+        run: |
+          python3 -m pip install --quiet Pillow
+          python3 .github/services-qa/download-assets.py
       - name: Install existing project dependencies
         run: npm ci
       - name: Lint the full project
@@ -51,16 +53,17 @@ jobs:
             sleep 1
           done
           node .github/services-qa/verify.mjs
-      - name: Commit verified local assets to the verification branch only
+      - name: Commit verified assets and imports to the verification branch only
         run: |
           python3 - <<'PY'
           import json, subprocess
-          paths = [asset['path'] for asset in json.load(open('.github/services-qa/assets.json'))]
-          assert all(p.startswith('src/pages/ServicesPage/components/') and p.endswith('.png') for p in paths)
+          paths = [asset['path'] for asset in json.load(open('services-verification/asset-manifest.json'))]
+          assert all(p.startswith('src/pages/ServicesPage/components/') and p.endswith('.webp') for p in paths)
+          paths += ['src/pages/ServicesPage/servicesData.js', 'src/pages/ServicesPage/components/ServicesHero/ServicesHero.jsx', 'src/pages/ServicesPage/components/ServicesCTA/ServicesCTA.jsx', 'src/pages/ServicesPage/README.md']
           subprocess.run(['git', 'add', '--', *paths], check=True)
           PY
           if ! git diff --cached --quiet; then
-            git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'Add verified local Services imagery from approved Figma design'
+            git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'Add verified optimized Services imagery from approved Figma design'
             git push origin "HEAD:$GITHUB_REF_NAME"
           fi
           git rev-parse HEAD > services-verification/verified-head.txt

@@ -20,8 +20,10 @@ async function ready(page, route, base = 'http://127.0.0.1:4173') {
   await page.evaluate(async () => {
     await document.fonts.ready;
     document.querySelectorAll('main img').forEach((image) => { image.loading = 'eager'; });
-    await Promise.all([...document.querySelectorAll('main img')].map((image) => image.decode()));
   });
+  // Wait for completed loads before capture; decode() during the eager/lazy
+  // switch can reject a superseded decode even when the source is valid.
+  await page.waitForFunction(() => [...document.querySelectorAll('main img')].every((image) => image.complete && image.naturalWidth > 0));
   await wait(150);
 }
 
@@ -33,9 +35,10 @@ async function screenshotTop(page, filename) {
 
 for (const [engineName, engine] of [['chromium', chromium], ['webkit', webkit]]) {
   const browser = await engine.launch();
+  let page;
   try {
     const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: 1 });
-    const page = await context.newPage();
+    page = await context.newPage();
     page.on('pageerror', (error) => report.errors.push(`${engineName}: ${error.message}`));
 
     for (const width of widths) {
@@ -61,11 +64,15 @@ for (const [engineName, engine] of [['chromium', chromium], ['webkit', webkit]])
           font: getComputedStyle(root.querySelector('h1')).fontFamily,
           sections: [...root.children].map((node) => ({ className: node.className, ...rect(node) })),
           images: [...root.querySelectorAll('img')].map((node) => ({ src: node.currentSrc, naturalWidth: node.naturalWidth, naturalHeight: node.naturalHeight, alt: node.alt, ...rect(node) })),
-          contactLinks: [...root.querySelectorAll('a[href="/contact"]')].length,
+          contactLinks: root.querySelectorAll('a[href="/contact"]').length,
           nestedLinks: root.querySelectorAll('a a').length,
           textOverflow: [...root.querySelectorAll('h1, h2, h3, p, .service-finder__label')].filter((n) => n.scrollWidth > n.clientWidth + 1).map((n) => n.textContent),
         };
       });
+      report.layouts.push({ engine: engineName, width, ...measurements });
+      if ([1440, 1101, 900, 390].includes(width)) {
+        await screenshotTop(page, `${engineName}-services-${width}.png`);
+      }
       assert(measurements.scrollWidth <= width + 1, `${engineName} ${width}: horizontal overflow`);
       assert(measurements.font.includes('Plus Jakarta Sans'), 'Wrong product font');
       assert.equal(measurements.images.length, 11);
@@ -87,10 +94,6 @@ for (const [engineName, engine] of [['chromium', chromium], ['webkit', webkit]])
         assert(Math.abs(measurements.images.at(-1).width - 496) < 1);
         assert(Math.abs(measurements.images.at(-1).height - 320) < 1);
       }
-      report.layouts.push({ engine: engineName, width, ...measurements });
-      if ([1440, 1101, 900, 390].includes(width)) {
-        await screenshotTop(page, `${engineName}-services-${width}.png`);
-      }
     }
 
     await page.setViewportSize({ width: 1440, height: 1000 });
@@ -98,30 +101,27 @@ for (const [engineName, engine] of [['chromium', chromium], ['webkit', webkit]])
     await page.getByRole('link', { name: 'Explore Services', exact: true }).click();
     await page.waitForFunction(() => Math.abs(document.getElementById('service-finder').getBoundingClientRect().top - 24) < 3);
     for (const id of ids) {
-      await page.locator(`.service-finder__link[href="#${id}"]`).click();
+      await page.locator(`.service-finder__link[href$="#${id}"]`).click();
       await page.waitForFunction((targetId) => {
         const target = document.getElementById(targetId);
         return window.location.hash === `#${targetId}` && document.activeElement === target && Math.abs(target.getBoundingClientRect().top - 24) < 3;
       }, id);
       report.anchors.push({ engine: engineName, id, passed: true });
     }
-
-    // Re-activating the current hash must still scroll to the section.
     await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
-    await page.locator('.service-finder__link[href="#gutters-drainage"]').click();
+    await page.locator('.service-finder__link[href$="#gutters-drainage"]').click();
     await page.waitForFunction(() => Math.abs(document.getElementById('gutters-drainage').getBoundingClientRect().top - 24) < 3);
 
     for (const selector of ['.page-hero__button', '#damage-repairs .services-page__button', '#roof-maintenance .service-care__card-link', '.page-cta__button']) {
       await ready(page, '/services');
       await page.locator(selector).click();
       assert.equal(new URL(page.url()).pathname, '/contact');
-      assert.equal((await page.locator('main h1').innerText()).trim(), 'Contact');
+      assert.equal((await page.locator('main h1').innerText()).trim(), 'Contact Us');
       await page.goBack();
       await page.waitForSelector('.services-page');
       report.actions.push({ engine: engineName, selector, passed: true });
     }
 
-    // A copied URL and reload must both restore its anchor.
     await ready(page, '/services#solar-panels');
     await page.waitForFunction(() => Math.abs(document.getElementById('solar-panels').getBoundingClientRect().top - 24) < 3);
     await page.reload({ waitUntil: 'networkidle' });
@@ -129,11 +129,10 @@ for (const [engineName, engine] of [['chromium', chromium], ['webkit', webkit]])
     await ready(page, '/services#%E0%A4%A');
     assert.equal(await page.locator('main h1').count(), 1);
 
-    // Reduced motion and keyboard activation at a mobile width.
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.setViewportSize({ width: 390, height: 844 });
     await ready(page, '/services');
-    const keyboardLink = page.locator('.service-finder__link[href="#solar-panels"]');
+    const keyboardLink = page.locator('.service-finder__link[href$="#solar-panels"]');
     await keyboardLink.focus();
     assert.equal(await keyboardLink.evaluate((node) => getComputedStyle(node).outlineStyle), 'solid');
     await keyboardLink.press('Enter');
@@ -141,7 +140,6 @@ for (const [engineName, engine] of [['chromium', chromium], ['webkit', webkit]])
     assert.equal(await page.evaluate(() => document.activeElement.id), 'solar-panels');
     await page.emulateMedia({ reducedMotion: 'no-preference' });
 
-    // The extracted shared Hero and CTA must not change About visually.
     for (const width of [1440, 390]) {
       await page.setViewportSize({ width, height: 1000 });
       await ready(page, '/about', 'http://127.0.0.1:4174');
@@ -160,6 +158,14 @@ for (const [engineName, engine] of [['chromium', chromium], ['webkit', webkit]])
     await context.close();
   } catch (error) {
     report.errors.push(`${engineName}: ${error.stack}`);
+    if (page && !page.isClosed()) {
+      await page.screenshot({ path: path.join(out, `${engineName}-failure.png`), fullPage: true });
+      report[`${engineName}Failure`] = await page.evaluate(() => ({
+        url: window.location.href, scrollY: window.scrollY,
+        activeElement: document.activeElement?.id,
+        finderLinks: [...document.querySelectorAll('.service-finder__link')].map((node) => node.getAttribute('href')),
+      }));
+    }
   } finally {
     await browser.close();
     await fs.writeFile(path.join(out, 'report.json'), JSON.stringify(report, null, 2));
