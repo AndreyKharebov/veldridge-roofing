@@ -1,6 +1,7 @@
-@use '../../../../styles/abstracts/variables' as vars
+@use '../../../styles/abstracts/variables' as vars
+@use '../../../styles/abstracts/interior-page' as ui
 
-.about-hero
+.page-hero
   padding: 24px 0 64px
   background-color: vars.$color-background-warm
 
@@ -44,6 +45,9 @@
     gap: 24px
     min-width: 0
 
+  &__eyebrow
+    @include ui.eyebrow
+
   &__title
     margin: 0
     color: vars.$color-text
@@ -67,6 +71,12 @@
     flex-wrap: wrap
     gap: 16px 24px
 
+  &__button
+    @include ui.button
+
+  &__text-link
+    @include ui.text-link
+
   &__note
     margin: 0
     color: vars.$color-text-secondary
@@ -86,8 +96,8 @@
     height: 100%
     object-fit: cover
     border-radius: 12px
-    -webkit-mask: url('./assets/about-hero-mask.svg') center / 100% 100% no-repeat
-    mask: url('./assets/about-hero-mask.svg') center / 100% 100% no-repeat
+    -webkit-mask: url('./assets/page-hero-mask.svg') center / 100% 100% no-repeat
+    mask: url('./assets/page-hero-mask.svg') center / 100% 100% no-repeat
 
   &__area
     position: absolute
@@ -138,7 +148,7 @@
     line-height: 21px
 
 @media (min-width: 701px) and (max-width: 1100px)
-  .about-hero
+  .page-hero
     &__inner
       gap: 32px
 
@@ -163,7 +173,7 @@
       background-color: vars.$color-background-warm
 
 @media (max-width: 700px)
-  .about-hero
+  .page-hero
     padding: 24px 0 48px
 
     &__inner
@@ -199,5 +209,5 @@
       padding-top: 0
 
 @media (prefers-reduced-motion: reduce)
-  .about-hero__breadcrumbs a
+  .page-hero__breadcrumbs a
     transition: none

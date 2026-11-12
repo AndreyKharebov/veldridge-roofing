@@ -1,0 +1,29 @@
+@use '../../styles/abstracts/variables' as vars
+@use '../../styles/abstracts/interior-page' as ui
+
+// Deliberately separate from HomePage's .services / .service-card selectors.
+.services-page
+  color: vars.$color-text
+
+  &__eyebrow
+    @include ui.eyebrow
+
+  &__title
+    @include ui.section-title
+
+  &__text
+    @include ui.body-text
+
+  &__button
+    @include ui.button
+
+  [data-service-anchor]
+    scroll-margin-top: 24px
+
+    // Programmatic focus announces the destination; links retain visible rings.
+    &:focus
+      outline: none
+
+@media (max-width: 700px)
+  .services-page [data-service-anchor]
+    scroll-margin-top: 16px

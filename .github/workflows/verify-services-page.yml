@@ -1,0 +1,73 @@
+name: Verify Services page
+
+on:
+  push:
+    branches:
+      - 'verify/services-page-*'
+
+permissions:
+  contents: write
+
+jobs:
+  services:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Download approved Figma content assets
+        run: python3 .github/services-qa/download-assets.py
+      - name: Install existing project dependencies
+        run: npm ci
+      - name: Lint the full project
+        run: npm run lint
+      - name: Build the full project
+        run: npm run build
+      - name: Prepare unchanged About baseline
+        run: |
+          mkdir -p "$RUNNER_TEMP/services-baseline"
+          git archive fa28119c965e5a49023d73a114c1afbfaebdad4f | tar -x -C "$RUNNER_TEMP/services-baseline"
+          ln -s "$GITHUB_WORKSPACE/node_modules" "$RUNNER_TEMP/services-baseline/node_modules"
+          cd "$RUNNER_TEMP/services-baseline"
+          npm run build
+      - name: Install isolated browser verification tools
+        run: |
+          npm install --prefix "$RUNNER_TEMP/services-browser" --no-save playwright@1.55.1 pngjs@7.0.0 pixelmatch@7.1.0
+          node "$RUNNER_TEMP/services-browser/node_modules/playwright/cli.js" install --with-deps chromium webkit
+      - name: Verify layout, assets, anchors, navigation and About regression
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/services-preview.log 2>&1 &
+          current_pid=$!
+          npm --prefix "$RUNNER_TEMP/services-baseline" run preview -- --host 127.0.0.1 --port 4174 > /tmp/services-baseline.log 2>&1 &
+          baseline_pid=$!
+          trap 'kill "$current_pid" "$baseline_pid" || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:4173/services > /dev/null && curl --fail --silent http://127.0.0.1:4174/about > /dev/null; then break; fi
+            sleep 1
+          done
+          node .github/services-qa/verify.mjs
+      - name: Commit verified local assets to the verification branch only
+        run: |
+          python3 - <<'PY'
+          import json, subprocess
+          paths = [asset['path'] for asset in json.load(open('.github/services-qa/assets.json'))]
+          assert all(p.startswith('src/pages/ServicesPage/components/') and p.endswith('.png') for p in paths)
+          subprocess.run(['git', 'add', '--', *paths], check=True)
+          PY
+          if ! git diff --cached --quiet; then
+            git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'Add verified local Services imagery from approved Figma design'
+            git push origin "HEAD:$GITHUB_REF_NAME"
+          fi
+          git rev-parse HEAD > services-verification/verified-head.txt
+      - name: Upload screenshots and report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: services-page-verification
+          path: services-verification/
+          retention-days: 7

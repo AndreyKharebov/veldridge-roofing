@@ -1,0 +1,12 @@
+[
+  {"path":"src/pages/ServicesPage/components/ServicesHero/assets/services-hero.png","url":"https://www.figma.com/api/mcp/asset/c1086134-75b4-4c6b-b1b0-d6a53d54c01e.png"},
+  {"path":"src/pages/ServicesPage/components/ServiceDetail/assets/inspection.png","url":"https://www.figma.com/api/mcp/asset/8ca62183-aa5e-49bb-b7a8-eff88ab81c44.png"},
+  {"path":"src/pages/ServicesPage/components/ServiceDetail/assets/replacement.png","url":"https://www.figma.com/api/mcp/asset/7394f638-620d-431a-9dda-236955197d5d.png"},
+  {"path":"src/pages/ServicesPage/components/ServiceDetail/assets/repairs.png","url":"https://www.figma.com/api/mcp/asset/bd872690-92c9-4006-8258-e9d7fde024d8.png"},
+  {"path":"src/pages/ServicesPage/components/ServiceDetail/assets/renovation.png","url":"https://www.figma.com/api/mcp/asset/17a3cc8c-245b-406b-ae99-7f5bbd90c6d2.png"},
+  {"path":"src/pages/ServicesPage/components/ServiceDetail/assets/commercial.png","url":"https://www.figma.com/api/mcp/asset/5f0b2abb-8887-4095-bf64-6e56fa84e6cf.png"},
+  {"path":"src/pages/ServicesPage/components/ServiceDetail/assets/solar.png","url":"https://www.figma.com/api/mcp/asset/d5ce6823-e8a1-4d89-9b37-34e148f31249.png"},
+  {"path":"src/pages/ServicesPage/components/ServiceCare/assets/maintenance.png","url":"https://www.figma.com/api/mcp/asset/fb7db44c-ffef-4713-b7b2-c9c661f277c1.png"},
+  {"path":"src/pages/ServicesPage/components/ServiceCare/assets/gutters.png","url":"https://www.figma.com/api/mcp/asset/b9865ac4-0ef7-4968-b792-4aa47bbf366f.png"},
+  {"path":"src/pages/ServicesPage/components/ServicesCTA/assets/services-cta.png","url":"https://www.figma.com/api/mcp/asset/ebaf6189-096e-424c-a49c-33740687916e.png"}
+]
