@@ -48,10 +48,11 @@ jobs:
               sleep 1
             done
           done
-          # Normalize both .4s and 50ms without changing the tested durations.
+          # Normalize CSS time units and the PNG library's CommonJS export.
           {
             printf '%s\n' "const seconds = value => Number.parseFloat(value) / (value.endsWith('ms') ? 1000 : 1);"
             sed \
+              -e 's/const { default: PNG } = await import(process.env.PNG_MODULE);/const { PNG } = (await import(process.env.PNG_MODULE)).default;/' \
               -e 's/assert.equal(layout.duration,/assert.equal(seconds(layout.duration),/' \
               -e "s/width <= 700 ? '0.4s' : width <= 1100 ? '0.48s' : '0.56s'/width <= 700 ? 0.4 : width <= 1100 ? 0.48 : 0.56/" \
               -e 's/assert.equal(layout.stagger,/assert.equal(seconds(layout.stagger),/' \
