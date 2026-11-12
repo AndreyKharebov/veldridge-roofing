@@ -1,6 +1,5 @@
 import { useLayoutEffect, useRef } from 'react';
 
-// Keep filters, status, Load More and the photo viewer out of scroll reveals.
 const STATIC_GROUPS = [
   { selector: '.page-hero__content', direction: 'up' },
   { selector: '.page-hero__visual', direction: 'right', offset: 1 },
@@ -12,17 +11,14 @@ const STATIC_GROUPS = [
 
 export const useGalleryReveal = () => {
   const pageRef = useRef(null);
-
   useLayoutEffect(() => {
     const root = pageRef.current;
     const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
     if (!root || preference.matches || typeof window.IntersectionObserver !== 'function'
       || typeof window.MutationObserver !== 'function') return;
-
     const targets = new Map();
     const pending = new Set();
     const queued = new Set();
-    // Stable project IDs survive filter unmount/remount within this visit.
     const seenProjects = new Set();
     let disposed = false;
     let motionDisabled = false;
@@ -40,24 +36,20 @@ export const useGalleryReveal = () => {
       observer.unobserve(element);
       if (pending.size === 0) observer.disconnect();
     };
-
     const observer = new IntersectionObserver((entries) => {
       if (disposed) return;
       entries.forEach((entry) => {
         if (!root.contains(entry.target)) return;
-        if (entry.isIntersecting && entry.intersectionRatio >= 0.15) {
-          reveal(entry.target);
-        } else if (entry.boundingClientRect.bottom <= 0) {
-          reveal(entry.target, true);
-        }
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.15) reveal(entry.target);
+        else if (entry.boundingClientRect.bottom <= 0) reveal(entry.target, true);
       });
     }, { threshold: [0, 0.15] });
 
     const revealPassedItems = () => {
       passedFrame = 0;
       if (disposed || motionDisabled) return;
-      // A fast jump can cross the viewport between observer samples. Batch
-      // geometry reads before writes and never leave passed content invisible.
+      // Fast jumps can cross the viewport between observer samples. Batch reads
+      // before writes; passed content must not remain invisible on the way back.
       const passed = [...pending].filter((element) =>
         root.contains(element) && element.getBoundingClientRect().bottom <= 0,
       );
@@ -68,7 +60,6 @@ export const useGalleryReveal = () => {
         passedFrame = window.requestAnimationFrame(revealPassedItems);
       }
     };
-
     const observeAfterPaint = () => {
       if (disposed || motionDisabled || !queued.size || firstFrame || secondFrame) return;
       firstFrame = window.requestAnimationFrame(() => {
@@ -84,7 +75,6 @@ export const useGalleryReveal = () => {
         });
       });
     };
-
     const register = (element, direction, order, tabletOrder = order, projectId = null) => {
       element.style.setProperty('--gallery-reveal-order', String(order));
       element.style.setProperty('--gallery-reveal-tablet-order', String(tabletOrder));
@@ -99,7 +89,6 @@ export const useGalleryReveal = () => {
       pending.add(element);
       queued.add(element);
     };
-
     const syncTargets = () => {
       if (disposed) return;
       targets.forEach((_, element) => {
@@ -116,12 +105,11 @@ export const useGalleryReveal = () => {
         });
       });
       root.querySelectorAll('.project-card[data-gallery-project]').forEach((element, index) => {
-        // Stagger within a row, never accumulate a delay across the whole list.
+        // Stagger within each row; stable project IDs survive filter remounts.
         register(element, 'up', index % 3, index % 2, element.dataset.galleryProject);
       });
       observeAfterPaint();
     };
-
     const revealAll = () => {
       motionDisabled = true;
       window.cancelAnimationFrame(firstFrame);
@@ -136,22 +124,20 @@ export const useGalleryReveal = () => {
     };
     const onPreferenceChange = (event) => { if (event.matches) revealAll(); };
     const onFocus = (event) => {
-      // Load More can focus a newly mounted card before the mutation callback.
+      // Load More can focus a new card before the mutation callback runs.
       syncTargets();
       targets.forEach((_, element) => {
         if (element.contains(event.target)) reveal(element, true);
       });
     };
-
     const mutations = new MutationObserver(syncTargets);
-    // Only React's child-list changes matter; our own attributes cannot loop.
+    // Child-list changes only: our own data/style attributes cannot loop.
     mutations.observe(root, { childList: true, subtree: true });
     root.addEventListener('focusin', onFocus);
     preference.addEventListener('change', onPreferenceChange);
     window.addEventListener('beforeprint', revealAll);
     window.addEventListener('scroll', onScroll, { passive: true });
     syncTargets();
-
     return () => {
       disposed = true;
       window.cancelAnimationFrame(firstFrame);
@@ -174,5 +160,5 @@ export const useGalleryReveal = () => {
       queued.clear();
     };
   }, []);
-
   return pageRef;
+};
