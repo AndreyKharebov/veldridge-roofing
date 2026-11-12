@@ -37,6 +37,7 @@ jobs:
           npm run preview -- --host 127.0.0.1 --port 4173 > "$RUNNER_TEMP/contact-preview.log" 2>&1 &
           npm run dev -- --host 127.0.0.1 --port 4193 > "$RUNNER_TEMP/contact-dev.log" 2>&1 &
           for i in $(seq 1 40); do curl -fsS http://127.0.0.1:4173/contact >/dev/null && curl -fsS http://127.0.0.1:4193/contact >/dev/null && break; sleep 1; done
+          python3 .github/qa/contact-check-fixes.py
           cp .github/qa/contact-check.txt "$RUNNER_TEMP/contact-check.mjs"
           node "$RUNNER_TEMP/contact-check.mjs"
       - name: Commit verified assets on verification branch only
