@@ -1,0 +1,77 @@
+// Blog only: shared sections, Home/LatestNews and other pages stay unchanged.
+.blog-page
+  --blog-reveal-distance: 28px
+  --blog-reveal-duration: 0.56s
+  --blog-reveal-stagger: 0.08s
+  overflow-x: clip
+
+  [data-blog-reveal]
+    opacity: 1
+    transform: none
+
+  [data-blog-reveal-state='pending']
+    opacity: 0
+    transform: translate3d(0, var(--blog-reveal-distance), 0)
+    pointer-events: none
+
+  [data-blog-reveal='right'][data-blog-reveal-state='pending']
+    transform: translate3d(var(--blog-reveal-distance), 0, 0)
+
+  [data-blog-reveal-state='visible']
+    transition-property: opacity, transform
+    transition-duration: var(--blog-reveal-duration)
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1)
+    transition-delay: calc(var(--blog-reveal-order, 0) * var(--blog-reveal-stagger))
+
+  [data-blog-reveal-state='static']
+    transition: none
+
+@media (min-width: 701px) and (max-width: 1100px)
+  .blog-page
+    --blog-reveal-distance: 22px
+    --blog-reveal-duration: 0.48s
+    --blog-reveal-stagger: 0.05s
+
+@media (max-width: 700px)
+  .blog-page
+    --blog-reveal-distance: 16px
+    --blog-reveal-duration: 0.4s
+    --blog-reveal-stagger: 0s
+
+    [data-blog-reveal][data-blog-reveal-state='pending']
+      transform: translate3d(0, var(--blog-reveal-distance), 0)
+
+// The native reader is portaled to body, outside .blog-page. Opening only;
+// dismissal, focus return and the article's scrollable text remain immediate.
+.article-dialog[open]
+  animation: blog-dialog-enter 0.22s ease-out
+
+  &::backdrop
+    animation: blog-backdrop-enter 0.2s ease-out
+
+@keyframes blog-dialog-enter
+  from
+    opacity: 0
+    transform: translateY(8px)
+
+  to
+    opacity: 1
+    transform: none
+
+@keyframes blog-backdrop-enter
+  from
+    background-color: rgba(0, 0, 0, 0)
+
+  to
+    background-color: rgba(0, 0, 0, 0.64)
+
+@media (prefers-reduced-motion: reduce), print
+  .blog-page [data-blog-reveal][data-blog-reveal-state]
+    opacity: 1
+    transform: none
+    transition: none
+    pointer-events: auto
+
+  .article-dialog[open],
+  .article-dialog[open]::backdrop
+    animation: none
