@@ -44,15 +44,15 @@ def fetch_photo(item):
     return optimize(temp, dest)
 
 report = list(ThreadPoolExecutor(max_workers=6).map(fetch_photo, enumerate(urls, 1)))
-# Additional clearly labelled examples for the second Load More batch.
 for index, name in enumerate(['replacement', 'commercial', 'repairs', 'renovation', 'solar', 'inspection'], 13):
     source = Path('src/pages/HomePage/components/Services/assets') / f'{name}.webp'
     report.append(optimize(source, photos / f'project-{index:02d}.webp'))
 
+# Asset mapping checked visually against the Figma previous/next controls.
 for name, url in [
     ('close', 'https://www.figma.com/api/mcp/asset/61ad14cc-7f25-4051-b5aa-16f51ee49040.svg'),
-    ('arrow-left', 'https://www.figma.com/api/mcp/asset/349ba403-61a6-48df-83a7-b6fe5508e0ee.svg'),
-    ('arrow-right', 'https://www.figma.com/api/mcp/asset/144af6b1-aef2-4d8c-9502-ce0b2fb046ab.svg'),
+    ('arrow-left', 'https://www.figma.com/api/mcp/asset/144af6b1-aef2-4d8c-9502-ce0b2fb046ab.svg'),
+    ('arrow-right', 'https://www.figma.com/api/mcp/asset/349ba403-61a6-48df-83a7-b6fe5508e0ee.svg'),
 ]:
     target = icons / f'{name}.svg'
     download(url, target)

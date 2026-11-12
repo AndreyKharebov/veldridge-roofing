@@ -31,8 +31,7 @@ for (const [engine, launcher] of [['chromium', chromium], ['webkit', webkit]]) {
     await check(`${engine}: layout and dialog at ${width}px`, async () => {
       await page.setViewportSize({ width, height: 900 });
       await page.goto(`${base}/gallery`);
-      await loaded(page);
-      await photosReady(page);
+      await loaded(page); await photosReady(page);
       assert.equal(await page.locator('h1').count(), 1);
       assert.equal(await page.locator('header.header').count(), 1);
       assert.equal(await page.locator('footer.footer').count(), 1);
@@ -48,9 +47,9 @@ for (const [engine, launcher] of [['chromium', chromium], ['webkit', webkit]]) {
       if ([390, 1440].includes(width)) await page.screenshot({ path: `${out}/${engine}-gallery-${width}.png`, fullPage: true });
       const first = page.locator('.project-card__button').first();
       await first.click();
-      await page.waitForSelector('dialog[open]');
-      await photosReady(page);
-      assert.equal(await page.locator('.project-dialog__title').innerText(), 'Standing-Seam\nRoof Upgrade');
+      await page.waitForSelector('dialog[open]'); await photosReady(page);
+      // WebKit innerText normalizes explicit newlines differently from Chromium.
+      assert.equal(await page.locator('.project-dialog__title').textContent(), 'Standing-Seam\nRoof Upgrade');
       assert.equal(await page.locator('.project-dialog__counter').innerText(), '01 / 03');
       assert.equal(await page.locator('.project-dialog__facts dd').count(), 4);
       assert.equal(await page.locator('.project-dialog__work li').count(), 3);
@@ -58,12 +57,16 @@ for (const [engine, launcher] of [['chromium', chromium], ['webkit', webkit]]) {
       assert.ok(box.x >= 0 && box.x + box.width <= width + 1);
       assert.ok(box.y >= 0 && box.y + box.height <= 901);
       assert.equal(await page.locator('body').evaluate((body) => body.style.position), 'fixed');
-      const dialogOverflow = await page.locator('dialog').evaluate((node) => node.scrollWidth > node.clientWidth + 1);
-      assert.equal(dialogOverflow, false);
+      assert.equal(await page.locator('dialog').evaluate((node) => node.scrollWidth > node.clientWidth + 1), false);
       if ([390, 1440].includes(width)) await page.screenshot({ path: `${out}/${engine}-dialog-${width}.png` });
-      await page.keyboard.press('Escape');
+      if (width === 390) {
+        await page.locator('.project-dialog__cta').scrollIntoViewIfNeeded();
+        await page.screenshot({ path: `${out}/${engine}-dialog-mobile-details.png` });
+        await page.getByRole('button', { name: 'Close project', exact: true }).click();
+      } else await page.keyboard.press('Escape');
       await page.waitForSelector('dialog', { state: 'detached' });
       assert.equal(await page.locator('body').evaluate((body) => body.style.position), '');
+      assert.equal(await first.evaluate((node) => document.activeElement === node), true);
     });
   }
   await check(`${engine}: filters, incremental loading and focus`, async () => {
@@ -87,12 +90,10 @@ for (const [engine, launcher] of [['chromium', chromium], ['webkit', webkit]]) {
     for (let i = 0; i < 18; i++) {
       const card = cards.nth(i);
       const name = (await card.getAttribute('aria-label')).replace('View project: ', '');
-      await card.scrollIntoViewIfNeeded();
-      await card.focus();
+      await card.scrollIntoViewIfNeeded(); await card.focus();
       const before = await page.evaluate(() => scrollY);
-      await page.keyboard.press('Enter');
-      await page.waitForSelector('dialog[open]');
-      assert.equal((await page.locator('.project-dialog__title').innerText()).replace(/\s+/g, ' '), name);
+      await page.keyboard.press('Enter'); await page.waitForSelector('dialog[open]');
+      assert.equal((await page.locator('.project-dialog__title').textContent()).replace(/\s+/g, ' '), name);
       await page.getByRole('button', { name: 'Next photo', exact: true }).click();
       assert.equal(await page.locator('.project-dialog__counter').innerText(), '02 / 03');
       await page.keyboard.press('ArrowRight');
@@ -114,18 +115,14 @@ for (const [engine, launcher] of [['chromium', chromium], ['webkit', webkit]]) {
     await page.getByRole('link', { name: 'Explore Projects', exact: true }).click();
     await page.waitForURL('**/gallery#projects');
     await page.waitForFunction(() => document.activeElement.id === 'projects');
-    await page.locator('.project-card__button').first().click();
-    await page.waitForSelector('dialog[open]');
+    await page.locator('.project-card__button').first().click(); await page.waitForSelector('dialog[open]');
     assert.equal(await page.evaluate(() => document.activeElement.getAttribute('aria-label')), 'Close project');
     await page.keyboard.press('Tab');
     assert.equal(await page.evaluate(() => document.querySelector('dialog').contains(document.activeElement)), true);
-    // Programmatic focus on the background must fail while the modal is open.
     await page.locator('.header__logo').evaluate((node) => node.focus());
     assert.equal(await page.evaluate(() => document.querySelector('dialog').contains(document.activeElement)), true);
-    await page.mouse.click(2, 2);
-    await page.waitForSelector('dialog', { state: 'detached' });
-    await page.locator('.project-card__button').first().click();
-    await page.waitForSelector('dialog[open]');
+    await page.mouse.click(2, 2); await page.waitForSelector('dialog', { state: 'detached' });
+    await page.locator('.project-card__button').first().click(); await page.waitForSelector('dialog[open]');
     await page.getByRole('link', { name: 'Discuss a Similar Project', exact: true }).click();
     await page.waitForURL('**/contact');
     await page.getByRole('heading', { name: 'Contact Us', exact: true }).waitFor();
@@ -135,11 +132,31 @@ for (const [engine, launcher] of [['chromium', chromium], ['webkit', webkit]]) {
     await page.goto(`${base}/gallery#projects`); await loaded(page);
     await page.waitForFunction(() => document.activeElement.id === 'projects');
     for (const route of ['about', 'services']) {
-      await page.goto(`${base}/${route}`);
-      await page.locator('h1').waitFor();
+      await page.goto(`${base}/${route}`); await page.locator('h1').waitFor();
       assert.equal(await page.locator('h1').count(), 1);
     }
     assert.deepEqual(pageErrors, []);
+  });
+  await check(`${engine}: hover boundaries, reduced motion and touch photo gesture`, async () => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    for (const width of [1440, 900, 390]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto(`${base}/gallery`); await loaded(page);
+      const card = page.locator('.project-card__button').first();
+      await card.hover(); await page.waitForTimeout(250);
+      const matrix = await card.evaluate((node) => getComputedStyle(node).transform);
+      assert.equal(matrix, width === 1440 ? 'matrix(1, 0, 0, 1, 0, -4)' : 'none');
+    }
+    await page.locator('.project-card__button').first().click(); await page.waitForSelector('dialog[open]');
+    const stage = page.locator('.project-dialog__stage');
+    await stage.dispatchEvent('pointerdown', { pointerType: 'touch', clientX: 220, clientY: 200 });
+    await stage.dispatchEvent('pointerup', { pointerType: 'touch', clientX: 100, clientY: 205 });
+    assert.equal(await page.locator('.project-dialog__counter').innerText(), '02 / 03');
+    await page.keyboard.press('Escape'); await page.waitForSelector('dialog', { state: 'detached' });
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.locator('.project-card__button').first().hover();
+    assert.equal(await page.locator('.project-card__button').first().evaluate((node) => getComputedStyle(node).transform), 'none');
   });
   await browser.close();
 }

@@ -10,7 +10,12 @@ const ProjectCard = ({ project, onOpen, dialogId }) => (
       aria-haspopup='dialog'
       aria-controls={dialogId}
       aria-label={`View project: ${project.title}`}
-      onClick={() => onOpen(project)}
+      onClick={(event) => {
+        // Safari does not focus mouse-clicked buttons by default. Give the
+        // native dialog a consistent focus-return target in every browser.
+        event.currentTarget.focus({ preventScroll: true });
+        onOpen(project);
+      }}
     >
       <img className='project-card__image' src={project.image} alt={project.imageAlt} width='612' height='408' loading='lazy' decoding='async' />
       <span className='project-card__content'>
