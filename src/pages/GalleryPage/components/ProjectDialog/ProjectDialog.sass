@@ -1,0 +1,262 @@
+@use '../../../../styles/abstracts/variables' as vars
+@use '../../../../styles/abstracts/interior-page' as interior
+
+.project-dialog
+  position: fixed
+  width: min(1280px, calc(100% - 48px))
+  max-width: none
+  max-height: calc(100vh - 48px)
+  max-height: calc(100dvh - 48px)
+  margin: auto
+  padding: 24px 32px 32px
+  overflow-x: hidden
+  overflow-y: auto
+  overscroll-behavior: contain
+  border: 0
+  border-radius: 16px
+  background-color: vars.$color-white
+  color: vars.$color-text
+
+  &::backdrop
+    background-color: rgba(23, 23, 23, 0.7)
+
+  &:not([open])
+    display: none
+
+  &__toolbar
+    position: sticky
+    top: -24px
+    z-index: 3
+    display: flex
+    align-items: center
+    justify-content: space-between
+    gap: 16px
+    min-height: 44px
+    margin-bottom: 24px
+    background-color: vars.$color-white
+
+    p
+      @include interior.eyebrow
+      letter-spacing: 1.5px
+
+  &__icon-button
+    display: inline-flex
+    align-items: center
+    justify-content: center
+    flex-shrink: 0
+    width: 44px
+    height: 44px
+    padding: 0
+    border: 0
+    border-radius: 50%
+    background-color: vars.$color-white
+    cursor: pointer
+
+    img
+      display: block
+
+    &:hover
+      background-color: vars.$color-accent-light
+
+    &:focus-visible
+      outline: 3px solid vars.$color-primary
+      outline-offset: 3px
+
+  &__body
+    display: grid
+    grid-template-columns: minmax(0, 704fr) minmax(0, 480fr)
+    align-items: start
+    gap: 32px
+
+  &__viewer,
+  &__details
+    display: flex
+    flex-direction: column
+    gap: 16px
+    min-width: 0
+
+  &__stage
+    position: relative
+    width: 100%
+    aspect-ratio: 704 / 444
+    overflow: hidden
+    border-radius: 12px
+    touch-action: pan-y
+
+  &__previous,
+  &__next
+    position: absolute
+    top: 50%
+    transform: translateY(-50%)
+
+  &__previous
+    left: 16px
+
+  &__next
+    right: 16px
+
+  &__caption
+    display: flex
+    justify-content: space-between
+    gap: 16px
+    color: vars.$color-text-secondary
+    font-size: 13px
+    line-height: 20px
+
+  &__counter
+    flex-shrink: 0
+    color: vars.$color-text
+    font-weight: vars.$font-semibold
+    font-variant-numeric: tabular-nums
+
+  &__thumbnails
+    display: flex
+    flex-wrap: wrap
+    gap: 12px
+    padding: 3px
+    margin: -3px
+
+  &__thumbnail
+    display: block
+    flex: 0 0 108px
+    width: 108px
+    height: 72px
+    padding: 0
+    border: 0
+    border-radius: 12px
+    background: none
+    cursor: pointer
+
+    &[aria-pressed='true']
+      outline: 3px solid vars.$color-primary
+
+    &:focus-visible
+      outline: 3px solid vars.$color-text
+      outline-offset: 4px
+
+  &__photo-note
+    margin: 0
+    color: vars.$color-text-secondary
+    font-size: 13px
+    line-height: 20px
+
+  &__category
+    margin: 0
+    color: vars.$color-primary
+    font-size: 11px
+    font-weight: vars.$font-bold
+    line-height: 16px
+    letter-spacing: 1.2px
+    text-transform: uppercase
+
+  &__title
+    margin: 0
+    color: vars.$color-text
+    font-size: 32px
+    font-weight: vars.$font-semibold
+    line-height: 40px
+    white-space: pre-line
+    overflow-wrap: anywhere
+
+  &__summary
+    margin: 0
+    color: vars.$color-text-secondary
+    font-size: 15px
+    line-height: 24px
+
+  &__facts
+    display: grid
+    grid-template-columns: repeat(2, minmax(0, 1fr))
+    gap: 16px 24px
+    margin: 0
+
+    div
+      min-width: 0
+
+    dt
+      margin: 0 0 4px
+      color: vars.$color-text-secondary
+      font-size: 10px
+      font-weight: vars.$font-bold
+      line-height: 16px
+      text-transform: uppercase
+
+    dd
+      margin: 0
+      color: vars.$color-text
+      font-size: 15px
+      font-weight: vars.$font-medium
+      line-height: 22px
+      overflow-wrap: anywhere
+
+  &__work
+    h3
+      margin: 0 0 8px
+      font-size: 17px
+      font-weight: vars.$font-semibold
+      line-height: 24px
+
+    ul
+      margin: 0
+      padding-left: 16px
+      color: vars.$color-text-secondary
+      font-size: 14px
+      line-height: 24px
+      list-style: disc
+
+  &__cta
+    @include interior.button
+    max-width: 100%
+
+  &__disclosure
+    margin: 0
+    color: vars.$color-text-secondary
+    opacity: 0.75
+    font-size: 11px
+    line-height: 17px
+
+@media (max-width: 1000px)
+  .project-dialog
+    width: calc(100% - 32px)
+    max-height: calc(100dvh - 32px)
+    padding: 20px 24px 24px
+
+    &__toolbar
+      top: -20px
+
+    &__body
+      grid-template-columns: minmax(0, 1fr)
+      gap: 32px
+
+@media (max-width: 700px)
+  .project-dialog
+    width: calc(100% - 24px)
+    max-height: calc(100dvh - 24px)
+    padding: 12px 16px 24px
+    border-radius: 12px
+
+    &__toolbar
+      top: -12px
+      margin-bottom: 16px
+
+    &__title
+      font-size: 26px
+      line-height: 34px
+
+    &__previous
+      left: 8px
+
+    &__next
+      right: 8px
+
+    &__thumbnail
+      flex-basis: 76px
+      width: 76px
+      height: 52px
+
+    &__facts
+      column-gap: 16px
+
+    &__cta
+      align-self: stretch
+      padding-inline: 16px

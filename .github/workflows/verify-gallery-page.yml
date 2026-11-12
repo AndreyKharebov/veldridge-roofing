@@ -1,0 +1,55 @@
+name: Verify Gallery page
+on:
+  push:
+    branches: ['verify/gallery-page-20261111']
+permissions:
+  contents: write
+jobs:
+  gallery:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Prepare local approved Gallery assets
+        run: |
+          python3 -m pip install --quiet Pillow
+          python3 .qa/gallery-assets.py
+      - name: Install existing application dependencies
+        run: npm ci
+      - name: Lint the entire application
+        run: npm run lint
+      - name: Build the entire application
+        run: npm run build
+      - name: Install isolated browser tools
+        run: |
+          npm install --prefix "$RUNNER_TEMP/gallery-browser" --no-save playwright@1.55.1
+          node "$RUNNER_TEMP/gallery-browser/node_modules/playwright/cli.js" install --with-deps chromium webkit
+      - name: Verify Gallery in Chromium and WebKit
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/gallery-preview.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:4173/gallery > /dev/null; then break; fi
+            sleep 1
+          done
+          node .qa/verify-gallery.mjs
+      - name: Commit tested assets on verification branch only
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/pages/GalleryPage/assets
+          if ! git diff --cached --quiet; then
+            git commit -m 'Add verified local Gallery photographs and Figma icons'
+            git push origin HEAD:verify/gallery-page-20261111
+          fi
+          git rev-parse HEAD > gallery-verification/verified-commit.txt
+      - name: Upload browser screenshots and verification report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gallery-page-verification
+          path: gallery-verification/
+          retention-days: 7

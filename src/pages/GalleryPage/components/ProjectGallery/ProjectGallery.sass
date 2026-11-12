@@ -1,0 +1,140 @@
+@use '../../../../styles/abstracts/variables' as vars
+@use '../../../../styles/abstracts/interior-page' as interior
+
+.project-gallery
+  padding: 80px 0
+  background-color: vars.$color-background
+
+  &__inner
+    display: flex
+    flex-direction: column
+    gap: 32px
+
+  &__header
+    display: grid
+    grid-template-columns: minmax(0, 736fr) minmax(0, 480fr)
+    align-items: center
+    gap: 64px
+
+  &__eyebrow
+    @include interior.eyebrow
+    margin-bottom: 12px
+
+  &__title
+    @include interior.section-title
+
+  &__description
+    @include interior.body-text
+
+  &__filters
+    display: flex
+    flex-wrap: wrap
+    gap: 12px
+
+  &__filter
+    padding: 12px 20px
+    min-height: 48px
+    border: 0
+    border-radius: 24px
+    background-color: vars.$color-white
+    color: vars.$color-text
+    font: inherit
+    font-size: 15px
+    font-weight: vars.$font-semibold
+    line-height: 24px
+    cursor: pointer
+    transition: background-color 0.2s ease, color 0.2s ease
+
+    &:hover
+      background-color: vars.$color-accent-light
+
+    &[aria-pressed='true']
+      background-color: vars.$color-text
+      color: vars.$color-white
+
+    &:focus-visible
+      outline: 3px solid vars.$color-primary
+      outline-offset: 3px
+
+  &__disclosure
+    margin: 0
+    color: vars.$color-text-secondary
+    opacity: 0.8
+    font-size: 12px
+    line-height: 18px
+
+  &__status
+    position: absolute
+    width: 1px
+    height: 1px
+    padding: 0
+    overflow: hidden
+    clip-path: inset(50%)
+    white-space: nowrap
+
+  &__grid
+    display: grid
+    grid-template-columns: repeat(3, minmax(0, 1fr))
+    align-items: stretch
+    gap: 24px
+    margin: 0
+    padding: 0
+    list-style: none
+
+  &__more
+    display: flex
+    flex-direction: column
+    align-items: center
+    gap: 16px
+    padding-top: 16px
+    text-align: center
+
+    p
+      margin: 0
+      color: vars.$color-text-secondary
+      font-size: 14px
+      line-height: 22px
+
+  &__load-more
+    @include interior.button
+    align-self: center
+    border: 0
+    cursor: pointer
+
+@media (min-width: 701px) and (max-width: 1100px)
+  .project-gallery
+    padding: 64px 0
+
+    &__header
+      grid-template-columns: minmax(0, 1fr)
+      gap: 20px
+
+    &__grid
+      grid-template-columns: repeat(2, minmax(0, 1fr))
+
+@media (max-width: 700px)
+  .project-gallery
+    padding: 56px 0
+
+    &__inner
+      gap: 24px
+
+    &__header
+      grid-template-columns: minmax(0, 1fr)
+      gap: 16px
+
+    &__filters
+      gap: 8px
+
+    &__filter
+      min-height: 44px
+      padding: 10px 14px
+      font-size: 13px
+
+    &__grid
+      grid-template-columns: minmax(0, 1fr)
+      gap: 20px
+
+@media (prefers-reduced-motion: reduce)
+  .project-gallery__filter
+    transition: none
