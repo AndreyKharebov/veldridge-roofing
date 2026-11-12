@@ -1,0 +1,56 @@
+@use '../../../../styles/abstracts/variables' as vars
+@use '../../../../styles/abstracts/interior-page' as interior
+
+.article-list
+  padding: 80px 0
+  background-color: #fafafa
+
+  &__inner
+    display: flex
+    flex-direction: column
+    gap: 40px
+
+  &__header
+    display: grid
+    grid-template-columns: minmax(0, 736fr) minmax(0, 480fr)
+    align-items: center
+    gap: 64px
+
+  &__eyebrow
+    @include interior.eyebrow
+    margin-bottom: 12px
+
+  &__title
+    @include interior.section-title
+
+  &__description
+    @include interior.body-text
+
+  &__items
+    display: flex
+    flex-direction: column
+    gap: 24px
+    margin: 0
+    padding: 0
+    list-style: none
+
+@media (min-width: 701px) and (max-width: 1100px)
+  .article-list
+    padding: 64px 0
+
+    &__header
+      gap: 32px
+
+@media (max-width: 700px)
+  .article-list
+    padding: 48px 0
+
+    &__inner
+      gap: 28px
+
+    &__header
+      grid-template-columns: minmax(0, 1fr)
+      gap: 16px
+
+    &__items
+      gap: 20px
