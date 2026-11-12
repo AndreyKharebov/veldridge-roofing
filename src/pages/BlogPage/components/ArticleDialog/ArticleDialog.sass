@@ -1,0 +1,256 @@
+@use '../../../../styles/abstracts/variables' as vars
+@use '../../../../styles/abstracts/interior-page' as interior
+
+.article-dialog
+  position: fixed
+  inset: 0
+  width: min(960px, calc(100vw - 48px))
+  max-width: none
+  height: min(780px, calc(100vh - 48px))
+  height: min(780px, calc(100dvh - 48px))
+  max-height: none
+  margin: auto
+  padding: 0
+  border: 0
+  border-radius: 16px
+  overflow: hidden
+  background-color: vars.$color-white
+  color: vars.$color-text
+
+  &[open]
+    display: flex
+    flex-direction: column
+
+  &::backdrop
+    background-color: rgba(0, 0, 0, 0.64)
+
+  &__toolbar
+    display: flex
+    flex-shrink: 0
+    align-items: center
+    justify-content: space-between
+    gap: 16px
+    min-height: 76px
+    padding: 16px 32px
+    background-color: vars.$color-white
+
+    p
+      @include interior.eyebrow
+
+  &__close
+    display: inline-flex
+    flex-shrink: 0
+    align-items: center
+    justify-content: center
+    width: 44px
+    height: 44px
+    margin: 0
+    padding: 0
+    border: 0
+    border-radius: 50%
+    background-color: vars.$color-white
+    cursor: pointer
+    transition: background-color 0.2s ease
+
+    img
+      display: block
+
+    &:hover
+      background-color: vars.$color-background-warm
+
+    &:focus-visible
+      outline: 2px solid vars.$color-primary
+      outline-offset: 2px
+
+  &__scroll
+    flex: 1
+    min-height: 0
+    overflow-y: auto
+    overflow-x: hidden
+    overscroll-behavior: contain
+    scrollbar-width: thin
+
+    &:focus-visible
+      outline: 2px solid vars.$color-primary
+      outline-offset: -2px
+
+  &__content
+    display: flex
+    flex-direction: column
+    gap: 24px
+    min-width: 0
+    padding: 24px 80px 48px
+
+  &__heading
+    display: flex
+    flex-direction: column
+    gap: 16px
+
+  &__date
+    color: vars.$color-text-secondary
+    font-size: 13px
+    font-weight: vars.$font-medium
+    line-height: 20px
+
+  &__title
+    margin: 0
+    font-size: 38px
+    font-weight: vars.$font-semibold
+    line-height: 48px
+    overflow-wrap: break-word
+
+  &__intro
+    margin: 0
+    color: vars.$color-text-secondary
+    font-size: 17px
+    line-height: 28px
+
+  &__image
+    display: block
+    width: 100%
+    height: 260px
+    flex-shrink: 0
+    border-radius: 12px
+    object-fit: cover
+
+  &__section
+    display: flex
+    flex-direction: column
+    gap: 12px
+
+    h3
+      margin: 0
+      font-size: 22px
+      font-weight: vars.$font-semibold
+      line-height: 30px
+
+    p
+      margin: 0
+      color: vars.$color-text-secondary
+      font-size: 16px
+      line-height: 28px
+
+  &__source
+    display: flex
+    flex-direction: column
+    align-items: flex-start
+    gap: 8px
+    color: vars.$color-text-secondary
+
+    p
+      margin: 0
+      font-size: 10px
+      font-weight: vars.$font-bold
+      line-height: 16px
+      text-transform: uppercase
+
+    a
+      color: inherit
+      font-size: 13px
+      line-height: 20px
+      text-decoration: underline
+      text-underline-offset: 3px
+      overflow-wrap: anywhere
+
+      &:hover
+        color: vars.$color-primary
+
+      &:focus-visible
+        outline: 2px solid vars.$color-primary
+        outline-offset: 3px
+
+  &__contact
+    display: flex
+    flex-direction: column
+    align-items: flex-start
+    gap: 16px
+    padding: 24px
+    border-radius: 12px
+    background-color: vars.$color-background-warm
+
+    h3
+      margin: 0
+      font-size: 22px
+      font-weight: vars.$font-semibold
+      line-height: 30px
+
+    p
+      @include interior.body-text
+
+  &__cta
+    @include interior.button
+
+  &__note
+    margin: 0
+    color: vars.$color-text-secondary
+    font-size: 12px
+    line-height: 20px
+
+  &__sr-only
+    position: absolute
+    width: 1px
+    height: 1px
+    padding: 0
+    overflow: hidden
+    clip-path: inset(50%)
+    white-space: nowrap
+
+@media (min-width: 701px) and (max-width: 1100px)
+  .article-dialog
+    &__content
+      padding-inline: 40px
+
+    &__title
+      font-size: 34px
+      line-height: 1.3
+
+@media (max-width: 700px)
+  .article-dialog
+    width: calc(100vw - 24px)
+    height: calc(100vh - 24px)
+    height: calc(100dvh - 24px)
+    border-radius: 12px
+
+    &__toolbar
+      min-height: 68px
+      padding: 12px 16px
+
+      p
+        font-size: 11px
+        letter-spacing: 1.3px
+
+    &__content
+      gap: 24px
+      padding: 20px 20px 32px
+
+    &__title
+      font-size: 28px
+      line-height: 1.3
+
+    &__intro
+      font-size: 16px
+      line-height: 1.6
+
+    &__image
+      height: auto
+      aspect-ratio: 3 / 2
+
+    &__section h3,
+    &__contact h3
+      font-size: 20px
+      line-height: 1.4
+
+    &__section p
+      font-size: 15px
+      line-height: 1.7
+
+    &__contact
+      padding: 20px
+
+    &__cta
+      align-self: stretch
+      padding-inline: 16px
+
+@media (prefers-reduced-motion: reduce)
+  .article-dialog__close
+    transition: none

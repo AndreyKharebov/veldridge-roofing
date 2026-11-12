@@ -1,0 +1,11 @@
+@use '../../styles/abstracts/variables' as vars
+
+.blog-page
+  color: vars.$color-text
+
+  #articles
+    scroll-margin-top: 120px
+
+    &:focus-visible
+      outline: 2px solid vars.$color-primary
+      outline-offset: 8px

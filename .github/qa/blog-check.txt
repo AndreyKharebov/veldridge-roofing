@@ -1,0 +1,222 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import crypto from 'node:crypto';
+const { chromium, webkit } = await import(process.env.PLAYWRIGHT_MODULE);
+const out = process.env.QA_OUTPUT;
+await fs.mkdir(out, { recursive: true });
+const report = { checks: [], failures: [], layouts: [], assets: [] };
+const base = 'http://127.0.0.1:4173';
+const titles = [
+  'Getting Your Roof Ready for Winter',
+  '5 Signs It’s Time for a Roof Inspection',
+  'Roof Repair or Replacement: Where to Start',
+  'Metal Roofing or Shingles: Questions to Ask',
+  'Why Gutters Matter to Your Roof',
+  'Roof Flashing: The Small Details That Matter',
+  'What to Expect During a Roof Replacement',
+  'Choosing a Roof Color That Fits Your Home',
+  'Planning Solar? Start With Your Roof',
+  'Understanding Attic Ventilation',
+];
+const expectedBlobs = [
+  '2eb5ed275eaa075e54f08596e773742b33d11d62', '5ffd7cc7c270a0cd5665f2e5cef2dfd112f838b1',
+  'ea7d29989a7125c954873eb396be41239fd019db', '1f7728a8987ab876bef8d2b0e262125e67a84458',
+  'cfecbd3fc96be966ee4c5f13bbd23fe98ff8d03a', '4fd8e58be18281c0c69bc3d2aeb8599931fbe0f4',
+  '4da5234ddc193261daf6441075b00a25a6a77380', '7d9a1bc9931cc772421daee638a9897e5f7c34c3',
+  '0d33fe6b09a0e3927a23f10440a434bfb14a1838', '4a3f0ad77116bbefdfd16b8f8ef7af5885f509fc',
+];
+for (let index = 0; index < 10; index++) {
+  const file = `src/pages/BlogPage/assets/articles/article-${String(index + 1).padStart(2, '0')}.webp`;
+  const bytes = await fs.readFile(file);
+  assert(bytes.length > 1000, file);
+  const sha = crypto.createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');
+  assert.equal(sha, expectedBlobs[index], `approved photo mapping: ${file}`);
+  report.assets.push({ file, bytes: bytes.length, sha });
+}
+for (const icon of ['close', 'arrow-right']) {
+  const file = `src/pages/BlogPage/assets/icons/${icon}.svg`;
+  assert((await fs.readFile(file, 'utf8')).includes('<svg'), file);
+}
+report.checks.push('All ten local photographs match approved Figma/Gallery source blobs; SVGs exist');
+
+async function ready(page, url = `${base}/blog`) {
+  await page.goto(url, { waitUntil: 'networkidle' });
+  await page.evaluate(() => document.fonts.ready);
+  await page.locator('.blog-page img').evaluateAll((images) => images.forEach((img) => { img.loading = 'eager'; }));
+  await page.waitForFunction(() => [...document.querySelectorAll('.blog-page img')].every((img) => img.complete && img.naturalWidth > 0));
+}
+async function closeWithEscape(page) {
+  await page.keyboard.press('Escape');
+  await page.waitForFunction(() => !document.querySelector('.article-dialog'));
+}
+async function openArticle(page, index = 0) {
+  const button = page.locator('.article-row__open').nth(index);
+  await button.click();
+  await page.locator('.article-dialog[open]').waitFor();
+  await page.waitForFunction(() => {
+    const image = document.querySelector('.article-dialog__image');
+    return image?.complete && image.naturalWidth > 0;
+  });
+  return button;
+}
+
+for (const [name, engine] of Object.entries({ chromium, webkit })) {
+  const browser = await engine.launch();
+  const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce' });
+  const page = await context.newPage();
+  const errors = [];
+  page.on('pageerror', (error) => errors.push(String(error)));
+  try {
+    for (const width of [320, 390, 700, 701, 900, 1100, 1101, 1280, 1440, 1920]) {
+      await page.setViewportSize({ width, height: width <= 700 ? 844 : 900 });
+      await ready(page);
+      assert.equal(await page.locator('h1').count(), 1);
+      assert.equal(await page.locator('.article-row').count(), 10);
+      assert.deepEqual(await page.locator('.article-row__open').allTextContents(), titles);
+      assert.equal(await page.locator('.article-list input, .article-list select').count(), 0);
+      const dates = await page.locator('.article-row__date').evaluateAll((nodes) => nodes.map((n) => n.dateTime));
+      assert.deepEqual(dates, [...dates].sort().reverse());
+      const layout = await page.evaluate(() => ({
+        width: innerWidth,
+        scrollWidth: document.documentElement.scrollWidth,
+        clientWidth: document.documentElement.clientWidth,
+        row: (() => { const b = document.querySelector('.article-row').getBoundingClientRect(); return { width: b.width, height: b.height }; })(),
+        image: (() => { const b = document.querySelector('.article-row__image').getBoundingClientRect(); return { width: b.width, height: b.height }; })(),
+        overflowing: [...document.querySelectorAll('.blog-page h1, .article-row__title, .article-row__summary')].filter((el) => el.scrollWidth > el.clientWidth + 1).map((el) => el.className),
+      }));
+      assert(layout.scrollWidth <= layout.clientWidth + 1, `${name} overflow at ${width}`);
+      assert.deepEqual(layout.overflowing, []);
+      if (width === 1440) {
+        assert(Math.abs(layout.row.height - 256) < 1, 'desktop row height');
+        assert(Math.abs(layout.image.width - 320) < 1, 'desktop photo width');
+        assert(Math.abs(layout.image.height - 208) < 1, 'desktop photo height');
+      }
+      report.layouts.push({ browser: name, ...layout });
+      if ([390, 900, 1440].includes(width)) {
+        await page.screenshot({ path: path.join(out, `${name}-blog-${width}.png`), fullPage: true });
+      }
+      await openArticle(page);
+      const dialogLayout = await page.locator('.article-dialog').evaluate((dialog) => {
+        const b = dialog.getBoundingClientRect();
+        const scroll = dialog.querySelector('.article-dialog__scroll');
+        return { x: b.x, y: b.y, right: b.right, bottom: b.bottom, width: b.width, scrollWidth: scroll.scrollWidth, clientWidth: scroll.clientWidth, scrollHeight: scroll.scrollHeight, clientHeight: scroll.clientHeight };
+      });
+      assert(dialogLayout.x >= 0 && dialogLayout.y >= 0 && dialogLayout.right <= width + 1);
+      assert(dialogLayout.bottom <= (width <= 700 ? 844 : 900) + 1);
+      assert(dialogLayout.scrollWidth <= dialogLayout.clientWidth + 1);
+      assert(dialogLayout.scrollHeight > dialogLayout.clientHeight);
+      if ([390, 1440].includes(width)) {
+        await page.screenshot({ path: path.join(out, `${name}-article-${width}.png`) });
+      }
+      const toolbarTop = (await page.locator('.article-dialog__toolbar').boundingBox()).y;
+      await page.locator('.article-dialog__scroll').evaluate((el) => { el.scrollTop = el.scrollHeight; });
+      assert.equal((await page.locator('.article-dialog__toolbar').boundingBox()).y, toolbarTop);
+      await page.locator('.article-dialog__cta').scrollIntoViewIfNeeded();
+      assert(await page.locator('.article-dialog__cta').isVisible());
+      if (width === 390) await page.screenshot({ path: path.join(out, `${name}-article-390-bottom.png`) });
+      await closeWithEscape(page);
+      assert.equal(await page.evaluate(() => document.body.style.position), '');
+      report.checks.push(`${name}: page + modal geometry, image loading, fixed toolbar at ${width}px`);
+    }
+
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await ready(page);
+    for (let index = 0; index < 10; index++) {
+      const button = page.locator('.article-row__open').nth(index);
+      await button.scrollIntoViewIfNeeded();
+      const y = await page.evaluate(() => scrollY);
+      const buttonId = await button.getAttribute('id');
+      const cover = await page.locator('.article-row__image').nth(index).getAttribute('src');
+      await openArticle(page, index);
+      assert.equal(await page.locator('.article-dialog__title').textContent(), titles[index]);
+      assert.equal(await page.locator('.article-dialog__image').getAttribute('src'), cover);
+      assert.equal(await page.locator('.article-dialog__section').count(), 3);
+      const words = (await page.locator('.article-dialog__section p').allTextContents()).join(' ').split(/\s+/).length;
+      assert(words >= 150, 'complete approved article text');
+      assert((await page.locator('.article-dialog__source a').getAttribute('href')).startsWith('https://'));
+      assert.equal(await page.locator('.article-dialog__source a').getAttribute('rel'), 'noopener noreferrer');
+      await closeWithEscape(page);
+      assert.equal(await page.evaluate(() => document.activeElement.id), buttonId, 'opener focus restored');
+      assert(Math.abs((await page.evaluate(() => scrollY)) - y) < 2, 'list scroll restored');
+      report.checks.push(`${name}: article ${index + 1} full content, asset, source, Escape and focus/scroll return`);
+    }
+
+    await ready(page);
+    await page.locator('.article-row__image').first().click();
+    await page.locator('.article-dialog[open]').waitFor();
+    assert.equal(await page.locator('.article-dialog__title').textContent(), titles[0]);
+    await page.getByRole('button', { name: 'Close article', exact: true }).click();
+    await page.waitForFunction(() => !document.querySelector('.article-dialog'));
+    report.checks.push(`${name}: whole-row image click and close button`);
+
+    await openArticle(page);
+    await page.getByRole('button', { name: 'Close article', exact: true }).focus();
+    await page.keyboard.press('Shift+Tab');
+    assert(await page.locator('.article-dialog__cta').evaluate((el) => el === document.activeElement));
+    await page.keyboard.press('Tab');
+    assert(await page.locator('.article-dialog__close').evaluate((el) => el === document.activeElement));
+    await page.keyboard.press('Tab');
+    assert(await page.locator('.article-dialog__scroll').evaluate((el) => el === document.activeElement));
+    await page.keyboard.press('PageDown');
+    await page.waitForFunction(() => document.querySelector('.article-dialog__scroll').scrollTop > 0);
+    await closeWithEscape(page);
+    report.checks.push(`${name}: keyboard focus loop and keyboard article scrolling`);
+
+    await openArticle(page);
+    await page.mouse.click(5, 5);
+    await page.waitForFunction(() => !document.querySelector('.article-dialog'));
+    await openArticle(page);
+    await page.mouse.move(500, 200); await page.mouse.down();
+    await page.mouse.move(5, 5); await page.mouse.up();
+    assert(await page.locator('.article-dialog[open]').isVisible(), 'drag outside must not dismiss');
+    await closeWithEscape(page);
+    report.checks.push(`${name}: backdrop click closes, drag originating inside does not`);
+
+    await ready(page);
+    await page.getByRole('link', { name: 'Read the Latest', exact: true }).click();
+    await page.waitForFunction(() => location.hash === '#articles' && document.activeElement.id === 'articles');
+    await ready(page, `${base}/blog#articles`);
+    await page.waitForFunction(() => document.activeElement.id === 'articles');
+    report.checks.push(`${name}: in-page CTA and direct hash navigation`);
+
+    await openArticle(page, 2);
+    await page.locator('.article-dialog__cta').click();
+    await page.waitForURL('**/contact');
+    assert.equal(await page.evaluate(() => document.body.style.position), '');
+    assert.equal(await page.evaluate(() => window.history.state.usr.articleId), 'roof-repair-or-replacement');
+    assert.equal(await page.locator('dialog[open]').count(), 0);
+    assert.equal(await page.evaluate(() => scrollY), 0);
+    report.checks.push(`${name}: Contact routing, article context and scroll-lock cleanup`);
+
+    await ready(page, 'http://127.0.0.1:4193/blog');
+    await openArticle(page);
+    await page.waitForTimeout(200);
+    assert(await page.locator('.article-dialog[open]').isVisible(), 'StrictMode keeps the dialog open');
+    await closeWithEscape(page);
+    report.checks.push(`${name}: React StrictMode open and close`);
+
+    await context.close();
+    const touch = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+    const phone = await touch.newPage();
+    await ready(phone);
+    await phone.locator('.article-row__open').first().tap();
+    await phone.locator('.article-dialog[open]').waitFor();
+    assert.equal(await phone.evaluate(() => document.body.style.position), 'fixed');
+    await phone.locator('.article-dialog__scroll').evaluate((el) => { el.scrollTop = el.scrollHeight; });
+    await phone.locator('.article-dialog__close').tap();
+    await phone.waitForFunction(() => !document.querySelector('.article-dialog'));
+    assert.equal(await phone.evaluate(() => document.body.style.position), '');
+    await touch.close();
+    report.checks.push(`${name}: touch viewport open, read and close`);
+    assert.deepEqual(errors, [], `${name} runtime errors`);
+  } catch (error) {
+    report.failures.push({ browser: name, message: String(error), stack: error.stack });
+    try { await page.screenshot({ path: path.join(out, `${name}-failure.png`) }); } catch {}
+  } finally {
+    await browser.close();
+  }
+}
+await fs.writeFile(path.join(out, 'report.json'), JSON.stringify(report, null, 2));
+console.log(JSON.stringify({ checks: report.checks.length, layouts: report.layouts.length, failures: report.failures, assetBytes: report.assets.reduce((n, a) => n + a.bytes, 0) }, null, 2));
+if (report.failures.length) process.exitCode = 1;

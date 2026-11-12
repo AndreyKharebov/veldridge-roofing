@@ -1,0 +1,46 @@
+name: Verify Blog page
+on:
+  push:
+    branches: ['verify/blog-page-20261112']
+permissions:
+  contents: read
+jobs:
+  blog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install existing dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Lint the entire application
+        run: npm run lint
+      - name: Build the entire application
+        run: npm run build
+      - name: Install isolated browser tools
+        run: |
+          npm install --prefix "$RUNNER_TEMP/blog-browser" playwright@1.56.1 --no-audit --no-fund
+          "$RUNNER_TEMP/blog-browser/node_modules/.bin/playwright" install --with-deps chromium webkit
+      - name: Verify Blog layouts, all articles and modal behavior
+        env:
+          PLAYWRIGHT_MODULE: ${{ runner.temp }}/blog-browser/node_modules/playwright/index.mjs
+          QA_OUTPUT: ${{ runner.temp }}/blog-qa
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > "$RUNNER_TEMP/blog-preview.log" 2>&1 &
+          npm run dev -- --host 127.0.0.1 --port 4193 > "$RUNNER_TEMP/blog-dev.log" 2>&1 &
+          for n in $(seq 1 60); do curl -fsS http://127.0.0.1:4173/blog >/dev/null && curl -fsS http://127.0.0.1:4193/blog >/dev/null && break; sleep 1; done
+          cp .github/qa/blog-check.txt "$RUNNER_TEMP/blog-browser/check.mjs"
+          node "$RUNNER_TEMP/blog-browser/check.mjs"
+      - name: Upload screenshots and report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: blog-page-verification
+          path: |
+            ${{ runner.temp }}/blog-qa
+            ${{ runner.temp }}/blog-preview.log
+            ${{ runner.temp }}/blog-dev.log
+          retention-days: 7
