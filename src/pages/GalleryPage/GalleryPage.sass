@@ -1,0 +1,11 @@
+@use '../../styles/abstracts/variables' as vars
+
+.gallery-page
+  color: vars.$color-text
+
+  // An anchored heading can receive focus without adding a tab stop.
+  [data-gallery-anchor]
+    scroll-margin-top: 24px
+
+    &:focus
+      outline: none
