@@ -1,6 +1,6 @@
 import PageHero from '../../../../components/sections/PageHero/PageHero.jsx';
 
-import servicesHeroImage from './assets/services-hero.png';
+import servicesHeroImage from './assets/services-hero.webp';
 import { heroHighlights } from './heroHighlights.js';
 
 const ServicesHero = () => (

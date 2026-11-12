@@ -1,11 +1,11 @@
-import inspectionImage from './components/ServiceDetail/assets/inspection.png';
-import replacementImage from './components/ServiceDetail/assets/replacement.png';
-import repairsImage from './components/ServiceDetail/assets/repairs.png';
-import renovationImage from './components/ServiceDetail/assets/renovation.png';
-import commercialImage from './components/ServiceDetail/assets/commercial.png';
-import solarImage from './components/ServiceDetail/assets/solar.png';
-import maintenanceImage from './components/ServiceCare/assets/maintenance.png';
-import guttersImage from './components/ServiceCare/assets/gutters.png';
+import inspectionImage from './components/ServiceDetail/assets/inspection.webp';
+import replacementImage from './components/ServiceDetail/assets/replacement.webp';
+import repairsImage from './components/ServiceDetail/assets/repairs.webp';
+import renovationImage from './components/ServiceDetail/assets/renovation.webp';
+import commercialImage from './components/ServiceDetail/assets/commercial.webp';
+import solarImage from './components/ServiceDetail/assets/solar.webp';
+import maintenanceImage from './components/ServiceCare/assets/maintenance.webp';
+import guttersImage from './components/ServiceCare/assets/gutters.webp';
 
 // One source for the detail sections and the service finder's anchor links.
 export const mainServices = [

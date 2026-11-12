@@ -1,6 +1,6 @@
 import PageCTA from '../../../../components/sections/PageCTA/PageCTA.jsx';
 
-import servicesCtaImage from './assets/services-cta.png';
+import servicesCtaImage from './assets/services-cta.webp';
 
 const ServicesCTA = () => (
   <PageCTA
