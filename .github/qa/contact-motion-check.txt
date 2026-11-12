@@ -1,0 +1,309 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { createRequire } from 'node:module';
+const { chromium, webkit } = await import(process.env.PLAYWRIGHT_MODULE);
+const { PNG } = createRequire(import.meta.url)(process.env.PNG_MODULE);
+const out = process.env.QA_OUTPUT;
+await fs.mkdir(out, { recursive: true });
+const report = { checks: [], runtimeErrors: [], submissions: [], comparisons: [] };
+const APP = 'http://127.0.0.1:4173';
+const BASE = 'http://127.0.0.1:4174';
+const DEV = 'http://127.0.0.1:4193';
+const targets = '[data-contact-reveal]';
+const pending = '[data-contact-reveal-state="pending"]';
+const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jvHsAAAAASUVORK5CYII=', 'base64');
+
+async function mount(page, route = '/contact', origin = APP) {
+  await page.goto(origin + route, { waitUntil: 'domcontentloaded' });
+  await page.locator('main h1').waitFor();
+  await page.evaluate(() => document.fonts.ready);
+}
+async function finish(page) {
+  await page.evaluate(async () => {
+    const images = [...document.images];
+    images.forEach((img) => { img.loading = 'eager'; });
+    await Promise.all(images.map((img) => img.decode()));
+  });
+  const height = await page.evaluate(() => document.documentElement.scrollHeight);
+  for (let y = 0; y < height; y += 480) {
+    await page.evaluate((top) => window.scrollTo({ top, behavior: 'instant' }), y);
+    await page.waitForTimeout(35);
+  }
+  await page.waitForTimeout(750);
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+  await page.waitForTimeout(180);
+}
+async function assertFormStatic(page) {
+  assert.equal(await page.locator('.inquiry-form [data-contact-reveal]').count(), 0);
+  assert.deepEqual(await page.locator('.inquiry-form').evaluate((el) => {
+    const chain = [];
+    for (let n = el; n; n = n.parentElement) {
+      const css = getComputedStyle(n);
+      chain.push(css.opacity === '1' && css.transform === 'none' && css.visibility === 'visible' && css.pointerEvents !== 'none');
+    }
+    return chain.every(Boolean);
+  }), true);
+}
+async function assertRevealed(page) {
+  assert.equal(await page.locator(pending).count(), 0);
+  assert.equal(await page.locator(targets).evaluateAll((els) => els.every((el) => {
+    const css = getComputedStyle(el);
+    return css.opacity === '1' && css.transform === 'none';
+  })), true);
+}
+async function check(browser, engine, name, fn, options = {}) {
+  const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, reducedMotion: 'no-preference', ...options });
+  const page = await context.newPage();
+  page.setDefaultTimeout(12000);
+  page.setDefaultNavigationTimeout(20000);
+  const errors = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  page.on('request', (request) => {
+    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method())) report.submissions.push({ engine, name, url: request.url(), method: request.method() });
+  });
+  try {
+    await fn(page);
+    assert.deepEqual(errors, []);
+    report.checks.push({ engine, name, passed: true });
+    console.log('PASS', engine, name);
+  } catch (error) {
+    const screenshot = `${engine}-failure-${report.checks.length}.png`;
+    await page.screenshot({ path: path.join(out, screenshot) }).catch(() => {});
+    report.checks.push({ engine, name, passed: false, error: String(error.stack || error), screenshot });
+    console.error('FAIL', engine, name, error.message);
+  } finally {
+    report.runtimeErrors.push(...errors.map((message) => ({ engine, name, message })));
+    await context.close();
+  }
+}
+
+for (const [engine, type] of Object.entries({ chromium, webkit })) {
+  const browser = await type.launch();
+  for (const width of [320, 390, 700, 701, 768, 900, 1100, 1101, 1440, 1920]) {
+    await check(browser, engine, `layout-${width}`, async (page) => {
+      await mount(page);
+      await page.waitForSelector(targets, { state: 'attached' });
+      assert.equal(await page.locator(targets).count(), 9);
+      await assertFormStatic(page);
+      assert.equal(await page.locator('h1').count(), 1);
+      assert.equal(await page.locator('.header').count(), 1);
+      assert.equal(await page.locator('.footer').count(), 1);
+      const timing = await page.locator('.contact-page').evaluate((el) => {
+        const css = getComputedStyle(el);
+        return ['--contact-reveal-duration', '--contact-reveal-stagger', '--contact-reveal-distance'].map((key) => css.getPropertyValue(key).trim());
+      });
+      const seconds = (value) => parseFloat(value) / (value.endsWith('ms') ? 1000 : 1);
+      assert.equal(seconds(timing[0]), width <= 700 ? 0.36 : width <= 1100 ? 0.42 : 0.48);
+      assert.equal(seconds(timing[1]), width <= 700 ? 0 : width <= 1100 ? 0.04 : 0.06);
+      assert.equal(parseFloat(timing[2]), width <= 700 ? 10 : width <= 1100 ? 14 : 18);
+      await finish(page);
+      await assertRevealed(page);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+      assert.equal(await page.evaluate(() => [...document.images].every((img) => img.complete && img.naturalWidth > 0)), true);
+      if ([390, 1440].includes(width)) await page.screenshot({ path: path.join(out, `${engine}-contact-${width}.png`), fullPage: true });
+    }, { viewport: { width, height: width <= 700 ? 844 : 1000 } });
+  }
+
+  await check(browser, engine, '15-percent-threshold-real-motion-and-no-resize-replay', async (page) => {
+    await mount(page);
+    const figure = page.locator('.contact-map__figure');
+    assert.equal(await figure.getAttribute('data-contact-reveal-state'), 'pending');
+    const showFraction = async (fraction) => {
+      await figure.evaluate((el, ratio) => {
+        const box = el.getBoundingClientRect();
+        window.scrollTo({ top: scrollY + box.top - innerHeight + box.height * ratio, behavior: 'instant' });
+      }, fraction);
+    };
+    await showFraction(0.1);
+    await page.waitForTimeout(180);
+    assert.equal(await figure.getAttribute('data-contact-reveal-state'), 'pending');
+    await showFraction(0.35);
+    await page.waitForFunction(() => document.querySelector('.contact-map__figure').dataset.contactRevealState === 'visible');
+    await page.waitForTimeout(70);
+    const middle = await figure.evaluate((el) => ({ opacity: Number(getComputedStyle(el).opacity), transform: getComputedStyle(el).transform, running: el.getAnimations().length }));
+    assert(middle.opacity > 0 && middle.opacity < 1, JSON.stringify(middle));
+    assert.notEqual(middle.transform, 'none');
+    assert(middle.running > 0);
+    await page.waitForTimeout(600);
+    for (const width of [900, 390, 1440]) {
+      await page.setViewportSize({ width, height: 1000 });
+      await page.waitForTimeout(80);
+      assert.equal(await figure.evaluate((el) => getComputedStyle(el).opacity === '1' && getComputedStyle(el).transform === 'none'), true);
+    }
+  });
+
+  await check(browser, engine, 'form-validation-files-console-submit-and-return', async (page) => {
+    await mount(page);
+    await assertFormStatic(page);
+    await page.locator('#contact-name').fill('');
+    await page.getByRole('button', { name: 'Send Message', exact: true }).click();
+    await page.locator('.inquiry-form__error-summary').waitFor();
+    assert.equal(await page.locator('#contact-name').evaluate((el) => el === document.activeElement), true);
+    assert.equal(await page.locator('#contact-name').getAttribute('aria-invalid'), 'true');
+    await page.locator('#contact-name').fill('Alex Morgan');
+    await page.locator('#contact-email').fill('alex@example.com');
+    await page.locator('#contact-message').fill('Please discuss my roof.');
+    const input = page.locator('.photo-picker input[type="file"]');
+    await input.setInputFiles({ name: 'not-a-photo.txt', mimeType: 'text/plain', buffer: Buffer.from('test') });
+    await page.locator('#contact-photos-error').waitFor();
+    await page.getByRole('button', { name: 'Dismiss file error' }).click();
+    await input.setInputFiles([
+      { name: 'roof.png', mimeType: 'image/png', buffer: png },
+      { name: 'detail.png', mimeType: 'image/png', buffer: png },
+    ]);
+    assert.equal(await page.locator('.photo-picker__file').count(), 2);
+    await page.getByRole('button', { name: 'Remove detail.png', exact: true }).click();
+    assert.equal(await page.locator('.photo-picker__file').count(), 1);
+    await finish(page);
+    const before = await page.locator(targets).evaluateAll((els) => els.map((el) => el.dataset.contactRevealState));
+    await page.locator('#contact-form').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: path.join(out, `${engine}-filled-form.png`) });
+    const message = page.waitForEvent('console', (event) => event.text().startsWith('[Veldridge Contact demo'));
+    await page.getByRole('button', { name: 'Send Message', exact: true }).click();
+    const payload = await (await message).args()[1].jsonValue();
+    assert.equal(payload.mode, 'demo');
+    assert.equal(payload.name, 'Alex Morgan');
+    assert.equal(payload.email, 'alex@example.com');
+    assert.equal(payload.photos.length, 1);
+    assert.equal(payload.photos[0].name, 'roof.png');
+    assert.deepEqual(Object.keys(payload.photos[0]).sort(), ['lastModified', 'name', 'size', 'type']);
+    await page.locator('.inquiry-form__result').waitFor();
+    assert.equal(await page.locator('.inquiry-form__result').evaluate((el) => el === document.activeElement), true);
+    await assertFormStatic(page);
+    await page.getByRole('button', { name: 'Back to Form' }).click();
+    assert.equal(await page.locator('#contact-name').inputValue(), 'Alex Morgan');
+    assert.equal(await page.locator('#contact-message').inputValue(), 'Please discuss my roof.');
+    assert.equal(await page.locator('.photo-picker__file').count(), 1);
+    assert.deepEqual(await page.locator(targets).evaluateAll((els) => els.map((el) => el.dataset.contactRevealState)), before);
+  });
+
+  await check(browser, engine, 'initial-reduced-motion', async (page) => {
+    await mount(page);
+    assert.equal(await page.locator(targets).count(), 0);
+    assert.equal(await page.locator('.contact-map__figure').evaluate((el) => getComputedStyle(el).opacity), '1');
+    await assertFormStatic(page);
+  }, { reducedMotion: 'reduce' });
+
+  await check(browser, engine, 'live-reduced-motion-and-no-replay', async (page) => {
+    await mount(page);
+    assert(await page.locator(pending).count() > 0);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.waitForFunction(() => !document.querySelector('[data-contact-reveal-state="pending"]'));
+    await assertRevealed(page);
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await finish(page);
+    assert.equal(await page.locator('[data-contact-reveal-state="static"]').count(), 9);
+  });
+
+  await check(browser, engine, 'missing-observer-fallback', async (page) => {
+    await page.addInitScript(() => { window.IntersectionObserver = undefined; });
+    await mount(page);
+    assert.equal(await page.locator(targets).count(), 0);
+    await assertFormStatic(page);
+    assert.equal(await page.locator('.contact-map__figure').evaluate((el) => getComputedStyle(el).opacity), '1');
+  });
+
+  await check(browser, engine, 'keyboard-focus-immediately-reveals-supporting-content', async (page) => {
+    await mount(page);
+    const row = page.locator('.contact-details__row').last();
+    assert.equal(await row.getAttribute('data-contact-reveal-state'), 'pending');
+    // Production contact links are disabled while details are marked as demo.
+    // Simulate a focusable real contact item without changing production code.
+    await row.evaluate((el) => { el.tabIndex = 0; el.focus({ preventScroll: true }); });
+    assert.equal(await row.getAttribute('data-contact-reveal-state'), 'static');
+    assert.equal(await row.evaluate((el) => getComputedStyle(el).opacity), '1');
+  }, { viewport: { width: 1440, height: 400 } });
+
+  await check(browser, engine, 'fast-scroll-and-print', async (page) => {
+    await mount(page);
+    await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }));
+    await page.waitForTimeout(750);
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+    await page.waitForTimeout(100);
+    assert.equal(await page.locator('.contact-details__row[data-contact-reveal-state="pending"]').count(), 0);
+    await page.evaluate(() => window.dispatchEvent(new Event('beforeprint')));
+    await assertRevealed(page);
+    assert.equal(await page.locator('[data-contact-reveal-state="static"]').count(), 9);
+  });
+
+  await check(browser, engine, 'direct-form-anchor-immediate-input', async (page) => {
+    await mount(page, '/contact#contact-form');
+    await page.waitForFunction(() => document.activeElement?.id === 'contact-name');
+    await assertFormStatic(page);
+    await page.locator('#contact-name').fill('Anchor test');
+    assert.equal(await page.locator('#contact-name').inputValue(), 'Anchor test');
+  });
+
+  for (const from of ['gallery', 'blog']) {
+    await check(browser, engine, `${from}-contact-context-preserved`, async (page) => {
+      await mount(page, `/${from}`);
+      const opener = page.locator(from === 'gallery' ? '.project-card__button' : '.article-row__open').first();
+      const title = from === 'gallery'
+        ? (await page.locator('.project-card__title').first().textContent()).trim()
+        : (await opener.textContent()).trim();
+      await opener.click();
+      await page.locator(from === 'gallery' ? '.project-dialog__cta' : '.article-dialog__cta').click();
+      await page.locator('.contact-page').waitFor();
+      assert((await page.locator('#contact-message').inputValue()).includes(title));
+      await assertFormStatic(page);
+      await page.locator('#contact-message').fill('Edited request');
+      assert.equal(await page.locator('#contact-message').inputValue(), 'Edited request');
+    }, { reducedMotion: 'reduce' });
+  }
+
+  await check(browser, engine, 'strictmode-route-cleanup', async (page) => {
+    await mount(page, '/contact', DEV);
+    assert.equal(await page.locator(targets).count(), 9);
+    await page.locator('.header__nav-link[href="/about"]').click();
+    await page.locator('.about-page').waitFor();
+    assert.equal(await page.locator(targets).count(), 0);
+    await page.locator('.header__contact').click();
+    await page.locator('.contact-page').waitFor();
+    assert.equal(await page.locator(targets).count(), 9);
+    await page.locator('#contact-name').fill('Strict mode');
+    await assertFormStatic(page);
+  });
+
+  await check(browser, engine, 'mobile-touch-phone-only-submission', async (page) => {
+    await mount(page, '/contact#contact-form');
+    await page.locator('#contact-name').fill('Touch test');
+    await page.locator('#contact-phone').fill('2155550126');
+    await page.getByRole('button', { name: 'Send Message', exact: true }).tap();
+    await page.locator('.inquiry-form__result').waitFor();
+    await page.getByRole('button', { name: 'Back to Form' }).tap();
+    assert.equal(await page.locator('#contact-phone').inputValue(), '2155550126');
+    await assertFormStatic(page);
+  }, { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+
+  for (const width of [390, 1440]) {
+    await check(browser, engine, `unchanged-pixels-${width}`, async (page) => {
+      await mount(page);
+      await finish(page);
+      const current = await page.screenshot({ fullPage: true });
+      await mount(page, '/contact', BASE);
+      await finish(page);
+      const baseline = await page.screenshot({ fullPage: true });
+      const a = PNG.sync.read(current);
+      const b = PNG.sync.read(baseline);
+      assert.equal(a.width, b.width);
+      assert.equal(a.height, b.height);
+      let differences = 0;
+      for (let i = 0; i < a.data.length; i += 4) {
+        if (a.data[i] !== b.data[i] || a.data[i + 1] !== b.data[i + 1] || a.data[i + 2] !== b.data[i + 2] || a.data[i + 3] !== b.data[i + 3]) differences++;
+      }
+      report.comparisons.push({ engine, width, height: a.height, differentPixels: differences });
+      if (differences) {
+        await fs.writeFile(path.join(out, `${engine}-${width}-current.png`), current);
+        await fs.writeFile(path.join(out, `${engine}-${width}-baseline.png`), baseline);
+      }
+      assert.equal(differences, 0);
+    }, { viewport: { width, height: width === 390 ? 844 : 1000 } });
+  }
+  await browser.close();
+}
+report.passed = report.checks.filter((item) => item.passed).length;
+report.failed = report.checks.filter((item) => !item.passed).length;
+await fs.writeFile(path.join(out, 'report.json'), JSON.stringify(report, null, 2));
+console.log(JSON.stringify({ passed: report.passed, failed: report.failed, runtimeErrors: report.runtimeErrors.length, submissions: report.submissions.length, comparisons: report.comparisons }, null, 2));
+if (report.failed || report.runtimeErrors.length || report.submissions.length) process.exitCode = 1;

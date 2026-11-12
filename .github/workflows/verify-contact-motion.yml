@@ -1,0 +1,61 @@
+name: Verify Contact motion
+on:
+  push:
+    branches: [verify/contact-motion-20261112]
+permissions:
+  contents: read
+jobs:
+  contact-motion:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install, lint and build the application
+        run: |
+          npm ci --no-audit --no-fund
+          npm run lint
+          npm run build
+      - name: Install isolated browser verification tools
+        run: |
+          npm install --prefix "$RUNNER_TEMP/contact-motion-browser" playwright@1.56.1 pngjs@7.0.0 --no-audit --no-fund
+          "$RUNNER_TEMP/contact-motion-browser/node_modules/.bin/playwright" install --with-deps chromium webkit
+      - name: Prepare unchanged Contact baseline
+        run: |
+          git fetch --no-tags --depth 1 origin 35f1ebd09eb5b75fa667a8f341d8b2114714e442
+          git worktree add --detach "$RUNNER_TEMP/contact-motion-baseline" 35f1ebd09eb5b75fa667a8f341d8b2114714e442
+          ln -s "$GITHUB_WORKSPACE/node_modules" "$RUNNER_TEMP/contact-motion-baseline/node_modules"
+          (cd "$RUNNER_TEMP/contact-motion-baseline" && npm run build)
+      - name: Verify motion, form interactions, accessibility and unchanged layout
+        env:
+          PLAYWRIGHT_MODULE: ${{ runner.temp }}/contact-motion-browser/node_modules/playwright/index.mjs
+          PNG_MODULE: ${{ runner.temp }}/contact-motion-browser/node_modules/pngjs/lib/png.js
+          QA_OUTPUT: ${{ runner.temp }}/contact-motion-qa
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > "$RUNNER_TEMP/contact-motion-preview.log" 2>&1 &
+          (cd "$RUNNER_TEMP/contact-motion-baseline" && npm run preview -- --host 127.0.0.1 --port 4174) > "$RUNNER_TEMP/contact-motion-baseline.log" 2>&1 &
+          npm run dev -- --host 127.0.0.1 --port 4193 > "$RUNNER_TEMP/contact-motion-dev.log" 2>&1 &
+          for port in 4173 4174 4193; do
+            for attempt in $(seq 1 40); do
+              if curl -fsS "http://127.0.0.1:$port/contact" > /dev/null; then break; fi
+              sleep 1
+            done
+          done
+          cp .github/qa/contact-motion-check.txt "$RUNNER_TEMP/contact-motion-check.mjs"
+          node --check "$RUNNER_TEMP/contact-motion-check.mjs"
+          node "$RUNNER_TEMP/contact-motion-check.mjs"
+      - name: Upload verification report and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: contact-motion-verification
+          path: |
+            ${{ runner.temp }}/contact-motion-qa
+            ${{ runner.temp }}/contact-motion-preview.log
+            ${{ runner.temp }}/contact-motion-dev.log
+          retention-days: 7
