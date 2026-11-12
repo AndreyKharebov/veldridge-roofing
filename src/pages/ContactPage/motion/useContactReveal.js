@@ -30,7 +30,7 @@ export const useContactReveal = () => {
     let disposed = false;
     let firstFrame = 0;
     let secondFrame = 0;
-    let passedFrame = 0;
+    let viewportFrame = 0;
 
     const reveal = (element, immediate = false) => {
       if (disposed || !pending.delete(element)) return;
@@ -50,18 +50,29 @@ export const useContactReveal = () => {
       });
     }, { threshold: [0, 0.15] });
 
-    // Fast scrolling can skip an intersection. Once all nine targets have been
-    // revealed, this passive handler performs no further geometry reads.
-    const revealPassed = () => {
-      passedFrame = 0;
+    // Fast scrolls can skip observer notifications in WebKit. Check only the
+    // remaining supporting elements, at most once per frame, using the same
+    // 15% viewport-area threshold. Nothing is measured after all are revealed.
+    const checkPending = () => {
+      viewportFrame = 0;
       if (disposed) return;
+      const width = document.documentElement.clientWidth;
+      const height = document.documentElement.clientHeight;
       pending.forEach((element) => {
-        if (element.getBoundingClientRect().bottom <= 0) reveal(element, true);
+        const box = element.getBoundingClientRect();
+        if (box.bottom <= 0) {
+          reveal(element, true);
+          return;
+        }
+        const area = box.width * box.height;
+        const visibleWidth = Math.max(0, Math.min(box.right, width) - Math.max(box.left, 0));
+        const visibleHeight = Math.max(0, Math.min(box.bottom, height) - Math.max(box.top, 0));
+        if (area > 0 && visibleWidth * visibleHeight / area >= 0.15) reveal(element);
       });
     };
-    const onScroll = () => {
-      if (!disposed && pending.size > 0 && !passedFrame) {
-        passedFrame = window.requestAnimationFrame(revealPassed);
+    const onViewportChange = () => {
+      if (!disposed && pending.size > 0 && !viewportFrame) {
+        viewportFrame = window.requestAnimationFrame(checkPending);
       }
     };
 
@@ -74,8 +85,8 @@ export const useContactReveal = () => {
     const revealAll = () => {
       window.cancelAnimationFrame(firstFrame);
       window.cancelAnimationFrame(secondFrame);
-      window.cancelAnimationFrame(passedFrame);
-      passedFrame = 0;
+      window.cancelAnimationFrame(viewportFrame);
+      viewportFrame = 0;
       [...pending].forEach((element) => reveal(element, true));
       // Also finish transitions already in progress. Do not replay them later.
       targets.forEach(({ element }) => { element.dataset.contactRevealState = 'static'; });
@@ -96,14 +107,15 @@ export const useContactReveal = () => {
     root.addEventListener('focusin', onFocus);
     preference.addEventListener('change', onPreferenceChange);
     window.addEventListener('beforeprint', revealAll);
-    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('scroll', onViewportChange, { passive: true });
+    window.addEventListener('resize', onViewportChange);
     onFocus({ target: document.activeElement });
 
     // Establish a painted start state, including on a direct /contact visit.
     firstFrame = window.requestAnimationFrame(() => {
       secondFrame = window.requestAnimationFrame(() => {
         if (disposed) return;
-        revealPassed();
+        checkPending();
         pending.forEach((element) => observer.observe(element));
       });
     });
@@ -112,12 +124,13 @@ export const useContactReveal = () => {
       disposed = true;
       window.cancelAnimationFrame(firstFrame);
       window.cancelAnimationFrame(secondFrame);
-      window.cancelAnimationFrame(passedFrame);
+      window.cancelAnimationFrame(viewportFrame);
       observer.disconnect();
       root.removeEventListener('focusin', onFocus);
       preference.removeEventListener('change', onPreferenceChange);
       window.removeEventListener('beforeprint', revealAll);
-      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('scroll', onViewportChange);
+      window.removeEventListener('resize', onViewportChange);
       targets.forEach(({ element }) => {
         delete element.dataset.contactReveal;
         delete element.dataset.contactRevealState;

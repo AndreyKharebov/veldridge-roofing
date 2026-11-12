@@ -1,0 +1,37 @@
+from pathlib import Path
+p = Path('.github/qa/contact-motion-check.txt')
+s = p.read_text()
+old = 'assert.equal(await page.locator(pending).count(), 0);'
+new = '''assert.equal(await page.locator(pending).count(), 0, JSON.stringify(await page.locator(pending).evaluateAll((els) => els.map((el) => ({ className: el.className, bounds: el.getBoundingClientRect().toJSON(), viewport: [innerWidth, innerHeight], scrollY })))));'''
+assert s.count(old) == 1
+s = s.replace(old, new)
+marker = '  for (const width of [390, 1440]) {'
+extra = '''  await check(browser, engine, 'missed-observer-notification-fallback', async (page) => {
+    await page.addInitScript(() => {
+      window.IntersectionObserver = class {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      };
+    });
+    await mount(page);
+    const figure = page.locator('.contact-map__figure');
+    await figure.evaluate((el) => {
+      const box = el.getBoundingClientRect();
+      window.scrollTo({ top: scrollY + box.top - innerHeight + box.height * 0.1, behavior: 'instant' });
+    });
+    await page.waitForTimeout(180);
+    assert.equal(await figure.getAttribute('data-contact-reveal-state'), 'pending');
+    await figure.evaluate((el) => {
+      const box = el.getBoundingClientRect();
+      window.scrollTo({ top: scrollY + box.top - innerHeight + box.height * 0.35, behavior: 'instant' });
+    });
+    await page.waitForFunction(() => document.querySelector('.contact-map__figure').dataset.contactRevealState === 'visible');
+    await page.waitForTimeout(600);
+    assert.equal(await figure.evaluate((el) => getComputedStyle(el).opacity), '1');
+    await assertFormStatic(page);
+  });
+
+'''
+assert s.count(marker) == 1
+p.write_text(s.replace(marker, extra + marker))

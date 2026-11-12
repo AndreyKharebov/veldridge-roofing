@@ -46,6 +46,7 @@ jobs:
               sleep 1
             done
           done
+          python3 .github/qa/prepare-contact-motion-check.txt
           cp .github/qa/contact-motion-check.txt "$RUNNER_TEMP/contact-motion-check.mjs"
           node --check "$RUNNER_TEMP/contact-motion-check.mjs"
           node "$RUNNER_TEMP/contact-motion-check.mjs"
