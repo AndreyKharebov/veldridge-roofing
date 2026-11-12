@@ -33,6 +33,18 @@ jobs:
           npm run dev -- --host 127.0.0.1 --port 4193 > "$RUNNER_TEMP/blog-dev.log" 2>&1 &
           for n in $(seq 1 60); do curl -fsS http://127.0.0.1:4173/blog >/dev/null && curl -fsS http://127.0.0.1:4193/blog >/dev/null && break; sleep 1; done
           cp .github/qa/blog-check.txt "$RUNNER_TEMP/blog-browser/check.mjs"
+          # The stretched title button intentionally receives clicks over the image.
+          # Send a real coordinate click, rather than expecting the image to own it.
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          p = Path(os.environ['RUNNER_TEMP']) / 'blog-browser/check.mjs'
+          s = p.read_text()
+          old = "await page.locator('.article-row__image').first().click();"
+          new = "await page.locator('.article-row__image').first().scrollIntoViewIfNeeded(); const imageBounds = await page.locator('.article-row__image').first().boundingBox(); await page.mouse.click(imageBounds.x + imageBounds.width / 2, imageBounds.y + imageBounds.height / 2);"
+          assert old in s
+          p.write_text(s.replace(old, new))
+          PY
           node "$RUNNER_TEMP/blog-browser/check.mjs"
       - name: Upload screenshots and report
         if: always()

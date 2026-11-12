@@ -19,6 +19,12 @@ const titles = [
   'Planning Solar? Start With Your Roof',
   'Understanding Attic Ventilation',
 ];
+// Load the approved data as JavaScript, replacing only Vite image imports.
+// Compare every rendered paragraph exactly instead of estimating a word count.
+const dataSource = (await fs.readFile('src/pages/BlogPage/data/blogArticles.js', 'utf8'))
+  .replace(/^import\s+(\w+)\s+from\s+('[^']+');$/gm, 'const $1 = $2;');
+const { blogArticles: expectedArticles } = await import(`data:text/javascript;base64,${Buffer.from(dataSource).toString('base64')}`);
+assert.deepEqual(expectedArticles.map((article) => article.title), titles);
 const expectedBlobs = [
   '2eb5ed275eaa075e54f08596e773742b33d11d62', '5ffd7cc7c270a0cd5665f2e5cef2dfd112f838b1',
   'ea7d29989a7125c954873eb396be41239fd019db', '1f7728a8987ab876bef8d2b0e262125e67a84458',
@@ -132,14 +138,14 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) {
       assert.equal(await page.locator('.article-dialog__title').textContent(), titles[index]);
       assert.equal(await page.locator('.article-dialog__image').getAttribute('src'), cover);
       assert.equal(await page.locator('.article-dialog__section').count(), 3);
-      const words = (await page.locator('.article-dialog__section p').allTextContents()).join(' ').split(/\s+/).length;
-      assert(words >= 150, 'complete approved article text');
-      assert((await page.locator('.article-dialog__source a').getAttribute('href')).startsWith('https://'));
+      assert.deepEqual(await page.locator('.article-dialog__section h3').allTextContents(), expectedArticles[index].sections.map((section) => section.heading));
+      assert.deepEqual(await page.locator('.article-dialog__section p').allTextContents(), expectedArticles[index].sections.map((section) => section.body));
+      assert.equal(await page.locator('.article-dialog__source a').getAttribute('href'), expectedArticles[index].source.url);
       assert.equal(await page.locator('.article-dialog__source a').getAttribute('rel'), 'noopener noreferrer');
       await closeWithEscape(page);
       assert.equal(await page.evaluate(() => document.activeElement.id), buttonId, 'opener focus restored');
       assert(Math.abs((await page.evaluate(() => scrollY)) - y) < 2, 'list scroll restored');
-      report.checks.push(`${name}: article ${index + 1} full content, asset, source, Escape and focus/scroll return`);
+      report.checks.push(`${name}: article ${index + 1} exact full content, asset, source, Escape and focus/scroll return`);
     }
 
     await ready(page);
