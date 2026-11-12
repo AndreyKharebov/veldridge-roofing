@@ -5,9 +5,12 @@ import ContactDetails from './components/ContactDetails/ContactDetails.jsx';
 import InquiryForm from './components/InquiryForm/InquiryForm.jsx';
 import ContactMap from './components/ContactMap/ContactMap.jsx';
 import { getInquiryContext } from './data/inquiry.js';
+import { useContactReveal } from './motion/useContactReveal.js';
 import './ContactPage.sass';
+import './motion/ContactMotion.sass';
 
 const ContactPage = () => {
+  const pageRef = useContactReveal();
   const { state, hash, key } = useLocation();
   const navigationType = useNavigationType();
   const context = getInquiryContext(state);
@@ -32,7 +35,7 @@ const ContactPage = () => {
   }, [hash, key, navigationType]);
 
   return (
-    <div className='contact-page'>
+    <div className='contact-page' ref={pageRef}>
       <ContactIntro />
       <section className='contact-page__main' aria-label='Contact information and inquiry form'>
         <div className='container contact-page__columns'>
