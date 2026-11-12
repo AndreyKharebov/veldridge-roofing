@@ -1,0 +1,55 @@
+// About only: no changes to shared section styles or Home's animations.
+.about-page
+  --about-reveal-distance: 28px
+  --about-reveal-duration: 0.56s
+  --about-reveal-stagger: 0.08s
+  overflow-x: clip
+
+  [data-about-reveal]
+    opacity: 1
+    transform: none
+
+  // Pending items retain their layout footprint. No transition into hiding.
+  [data-about-reveal-state='pending']
+    opacity: 0
+    transform: translate3d(0, var(--about-reveal-distance), 0)
+    pointer-events: none
+
+  [data-about-reveal='left'][data-about-reveal-state='pending']
+    transform: translate3d(calc(-1 * var(--about-reveal-distance)), 0, 0)
+
+  [data-about-reveal='right'][data-about-reveal-state='pending']
+    transform: translate3d(var(--about-reveal-distance), 0, 0)
+
+  // One-way transition: never switch animation-name or reset visible state.
+  [data-about-reveal-state='visible']
+    transition-property: opacity, transform
+    transition-duration: var(--about-reveal-duration)
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1)
+    transition-delay: calc(var(--about-reveal-order, 0) * var(--about-reveal-stagger))
+
+  [data-about-reveal-state='static']
+    transition: none
+
+@media (min-width: 701px) and (max-width: 1100px)
+  .about-page
+    --about-reveal-distance: 22px
+    --about-reveal-duration: 0.48s
+    --about-reveal-stagger: 0.05s
+
+@media (max-width: 700px)
+  .about-page
+    --about-reveal-distance: 16px
+    --about-reveal-duration: 0.4s
+    --about-reveal-stagger: 0s
+
+    // Small upward motion for every item; no sideways travel on phones.
+    [data-about-reveal][data-about-reveal-state='pending']
+      transform: translate3d(0, var(--about-reveal-distance), 0)
+
+@media (prefers-reduced-motion: reduce), print
+  .about-page [data-about-reveal][data-about-reveal-state]
+    opacity: 1
+    transform: none
+    transition: none
+    pointer-events: auto

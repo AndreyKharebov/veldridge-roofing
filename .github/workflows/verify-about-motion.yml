@@ -1,0 +1,46 @@
+name: Verify About motion
+on:
+  push:
+    branches: [verify/about-motion-20261112]
+permissions:
+  contents: read
+jobs:
+  about-motion:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install existing application dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Lint the entire application
+        run: npm run lint
+      - name: Build the entire application
+        run: npm run build
+      - name: Install isolated browser verification tools
+        run: |
+          npm install --prefix "$RUNNER_TEMP/about-browser" playwright@1.56.1 --no-audit --no-fund
+          "$RUNNER_TEMP/about-browser/node_modules/.bin/playwright" install --with-deps chromium webkit
+      - name: Verify actual scroll motion and accessibility
+        env:
+          PLAYWRIGHT_MODULE: ${{ runner.temp }}/about-browser/node_modules/playwright/index.mjs
+          QA_OUTPUT: ${{ runner.temp }}/about-motion-qa
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > "$RUNNER_TEMP/about-preview.log" 2>&1 &
+          npm run dev -- --host 127.0.0.1 --port 4193 > "$RUNNER_TEMP/about-dev.log" 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:4173/about >/dev/null && curl -sf http://127.0.0.1:4193/about >/dev/null && break; sleep 1; done
+          cp .github/qa/about-motion-check.txt "$RUNNER_TEMP/about-motion-check.mjs"
+          node "$RUNNER_TEMP/about-motion-check.mjs"
+      - name: Upload motion screenshots and verification report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: about-motion-verification
+          path: |
+            ${{ runner.temp }}/about-motion-qa
+            ${{ runner.temp }}/about-preview.log
+            ${{ runner.temp }}/about-dev.log
+          retention-days: 7
