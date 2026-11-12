@@ -48,13 +48,16 @@ jobs:
               sleep 1
             done
           done
-          # Compare time values numerically: minified CSS serializes 0.4s as .4s.
-          sed \
-            -e 's/assert.equal(layout.duration,/assert.equal(Number.parseFloat(layout.duration),/' \
-            -e "s/width <= 700 ? '0.4s' : width <= 1100 ? '0.48s' : '0.56s'/width <= 700 ? 0.4 : width <= 1100 ? 0.48 : 0.56/" \
-            -e 's/assert.equal(layout.stagger,/assert.equal(Number.parseFloat(layout.stagger),/' \
-            -e "s/width <= 700 ? '0s' : width <= 1100 ? '0.05s' : '0.08s'/width <= 700 ? 0 : width <= 1100 ? 0.05 : 0.08/" \
-            .github/qa/services-motion-check.txt > "$RUNNER_TEMP/services-motion-check.mjs"
+          # Normalize both .4s and 50ms without changing the tested durations.
+          {
+            printf '%s\n' "const seconds = value => Number.parseFloat(value) / (value.endsWith('ms') ? 1000 : 1);"
+            sed \
+              -e 's/assert.equal(layout.duration,/assert.equal(seconds(layout.duration),/' \
+              -e "s/width <= 700 ? '0.4s' : width <= 1100 ? '0.48s' : '0.56s'/width <= 700 ? 0.4 : width <= 1100 ? 0.48 : 0.56/" \
+              -e 's/assert.equal(layout.stagger,/assert.equal(seconds(layout.stagger),/' \
+              -e "s/width <= 700 ? '0s' : width <= 1100 ? '0.05s' : '0.08s'/width <= 700 ? 0 : width <= 1100 ? 0.05 : 0.08/" \
+              .github/qa/services-motion-check.txt
+          } > "$RUNNER_TEMP/services-motion-check.mjs"
           node "$RUNNER_TEMP/services-motion-check.mjs"
       - name: Upload screenshots and verification report
         if: always()
