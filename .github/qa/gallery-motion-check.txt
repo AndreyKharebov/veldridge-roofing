@@ -1,0 +1,263 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { createRequire } from 'node:module';
+const { chromium, webkit } = await import(process.env.PLAYWRIGHT_MODULE);
+const { PNG } = createRequire(import.meta.url)(process.env.PNG_MODULE);
+const out = process.env.QA_OUTPUT;
+await fs.mkdir(out, { recursive: true });
+const report = { checks: [], failures: [], layouts: [], comparisons: [] };
+const base = 'http://127.0.0.1:4173';
+const revealSelector = '[data-gallery-reveal]';
+const pendingSelector = '[data-gallery-reveal-state="pending"]';
+const pause = (page, ms) => page.waitForTimeout(ms);
+async function ready(page, url = `${base}/gallery`) {
+  await page.goto(url, { waitUntil: 'domcontentloaded' });
+  await page.locator('.gallery-page').waitFor();
+  await page.evaluate(() => document.fonts.ready);
+  await page.locator('.gallery-page img').evaluateAll((imgs) => imgs.forEach((img) => { img.loading = 'eager'; }));
+  await page.waitForFunction(() => [...document.querySelectorAll('.gallery-page img')].every((img) => img.complete && img.naturalWidth > 0));
+}
+async function overflow(page) {
+  assert(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1), 'no horizontal overflow');
+}
+async function visitAll(page) {
+  const height = await page.evaluate(() => document.documentElement.scrollHeight);
+  const step = await page.evaluate(() => innerHeight * 0.65);
+  for (let y = 0; y < height; y += step) {
+    await page.evaluate((top) => window.scrollTo({ top, behavior: 'instant' }), y);
+    await pause(page, 90);
+  }
+  await page.waitForFunction(() => !document.querySelector('.gallery-page [data-gallery-reveal-state="pending"]'));
+  await pause(page, 850);
+}
+async function openProject(page, index = 0) {
+  const button = page.locator('.project-card__button').nth(index);
+  await button.scrollIntoViewIfNeeded();
+  await button.click();
+  await page.locator('.project-dialog[open]').waitFor();
+  return button;
+}
+async function closeProject(page) {
+  await page.keyboard.press('Escape');
+  await page.waitForFunction(() => !document.querySelector('.project-dialog') && document.body.style.position !== 'fixed');
+}
+async function pixels(a, b) {
+  const x = PNG.sync.read(a); const y = PNG.sync.read(b);
+  assert.equal(x.width, y.width); assert.equal(x.height, y.height);
+  let changed = 0;
+  for (let i = 0; i < x.data.length; i += 4) {
+    if (x.data[i] !== y.data[i] || x.data[i + 1] !== y.data[i + 1] || x.data[i + 2] !== y.data[i + 2] || x.data[i + 3] !== y.data[i + 3]) changed++;
+  }
+  return changed;
+}
+for (const [engineName, engine] of Object.entries({ chromium, webkit })) {
+  const browser = await engine.launch();
+  async function check(name, fn, options = {}, init = null) {
+    const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: 'no-preference', ...options });
+    const page = await context.newPage();
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(String(error)));
+    try {
+      if (init) await page.addInitScript(init);
+      await fn(page, context);
+      assert.deepEqual(errors, [], 'no browser runtime errors');
+      report.checks.push(`${engineName}: ${name}`);
+    } catch (error) {
+      report.failures.push({ browser: engineName, name, message: String(error), stack: error.stack });
+      try { await page.screenshot({ path: path.join(out, `${engineName}-failure-${report.failures.length}.png`) }); } catch {}
+    } finally { await context.close(); }
+  }
+  for (const width of [320, 390, 700, 701, 900, 1100, 1101, 1280, 1440, 1920]) {
+    await check(`responsive reveals at ${width}px`, async (page) => {
+      await ready(page);
+      assert.equal(await page.locator('h1').count(), 1);
+      assert.equal(await page.locator('.project-card').count(), 12);
+      assert.equal(await page.locator(revealSelector).count(), 20);
+      await overflow(page);
+      const settings = await page.locator('.gallery-page').evaluate((el) => ({
+        duration: getComputedStyle(el).getPropertyValue('--gallery-reveal-duration').trim(),
+        distance: getComputedStyle(el).getPropertyValue('--gallery-reveal-distance').trim(),
+      }));
+      const millis = settings.duration.endsWith('ms') ? parseFloat(settings.duration) : parseFloat(settings.duration) * 1000;
+      assert.equal(Math.round(millis), width <= 700 ? 400 : width <= 1100 ? 480 : 560);
+      assert.equal(parseFloat(settings.distance), width <= 700 ? 16 : width <= 1100 ? 22 : 28);
+      assert(await page.locator('.project-card').last().evaluate((el) => getComputedStyle(el).opacity === '0'));
+      assert.equal(await page.locator('.project-gallery__filters, .project-gallery__load-more').evaluateAll((els) => els.every((el) => getComputedStyle(el).opacity === '1' && !el.closest('[data-gallery-reveal]'))), true);
+      await visitAll(page);
+      await overflow(page);
+      assert(await page.locator(revealSelector).evaluateAll((els) => els.every((el) => getComputedStyle(el).opacity === '1' && getComputedStyle(el).transform === 'none')));
+      const states = await page.locator(revealSelector).evaluateAll((els) => els.map((el) => el.dataset.galleryRevealState));
+      await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+      await pause(page, 100);
+      assert.deepEqual(await page.locator(revealSelector).evaluateAll((els) => els.map((el) => el.dataset.galleryRevealState)), states);
+      report.layouts.push({ browser: engineName, width, ...settings, horizontalOverflow: false });
+      if ([390, 900, 1440].includes(width)) await page.screenshot({ path: path.join(out, `${engineName}-gallery-${width}.png`), fullPage: true });
+      if ([390, 1440].includes(width)) {
+        await openProject(page);
+        await pause(page, 260);
+        const box = await page.locator('.project-dialog').boundingBox();
+        assert(box.x >= 0 && box.y >= 0 && box.x + box.width <= width + 1);
+        await page.screenshot({ path: path.join(out, `${engineName}-project-${width}.png`) });
+        await closeProject(page);
+      }
+    }, { viewport: { width, height: width <= 700 ? 844 : 900 } });
+  }
+  await check('15% threshold, real intermediate movement and row stagger', async (page) => {
+    await ready(page);
+    const card = page.locator('.project-card').first();
+    const pos = await card.evaluate((el) => { const b = el.getBoundingClientRect(); return { top: b.top + scrollY, height: b.height }; });
+    await page.evaluate(({ top, height }) => scrollTo({ top: top - innerHeight + height * 0.1, behavior: 'instant' }), pos);
+    await pause(page, 140);
+    assert.equal(await card.getAttribute('data-gallery-reveal-state'), 'pending');
+    await page.evaluate(({ top, height }) => scrollTo({ top: top - innerHeight + height * 0.3, behavior: 'instant' }), pos);
+    await page.waitForFunction(() => document.querySelector('.project-card').dataset.galleryRevealState === 'visible');
+    await pause(page, 50);
+    const mid = await card.evaluate((el) => ({ opacity: Number(getComputedStyle(el).opacity), transform: getComputedStyle(el).transform }));
+    assert(mid.opacity > 0 && mid.opacity < 1, 'actual fade underway');
+    assert.notEqual(mid.transform, 'none', 'actual movement underway');
+    const orders = await page.locator('.project-card').evaluateAll((els) => els.map((el) => Number(el.style.getPropertyValue('--gallery-reveal-order'))));
+    assert.deepEqual(orders, [0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2]);
+    await visitAll(page);
+    for (const width of [900, 390, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      assert.equal(await page.locator(pendingSelector).count(), 0, 'resize does not reset reveals');
+      assert(await page.locator(revealSelector).evaluateAll((els) => els.every((el) => getComputedStyle(el).opacity === '1' && getComputedStyle(el).transform === 'none')));
+    }
+  });
+  await check('all filters remember seen IDs and Load More reveals new cards only', async (page) => {
+    await ready(page); await visitAll(page);
+    const initialIds = await page.locator('.project-card').evaluateAll((els) => els.map((el) => el.dataset.galleryProject));
+    const categories = await page.locator('.project-gallery__filter').count();
+    for (let i = 1; i < categories; i++) {
+      await page.locator('.project-gallery__filter').nth(i).click();
+      await pause(page, 80);
+      assert.equal(await page.locator('.project-gallery__filter[aria-pressed="true"]').count(), 1);
+      const reused = await page.locator('.project-card').evaluateAll((els, seen) => els.filter((el) => seen.includes(el.dataset.galleryProject)).map((el) => ({ state: el.dataset.galleryRevealState, opacity: getComputedStyle(el).opacity })), initialIds);
+      assert(reused.every((item) => item.state !== 'pending' && item.opacity === '1'));
+    }
+    await page.locator('.project-gallery__filter').first().click();
+    await page.waitForFunction(() => document.querySelectorAll('.project-card').length === 12);
+    assert(await page.locator('.project-card').evaluateAll((els) => els.every((el) => getComputedStyle(el).opacity === '1')));
+    await page.locator('.project-gallery__load-more').click();
+    await page.waitForFunction(() => document.querySelectorAll('.project-card').length === 18);
+    await page.waitForFunction(() => document.querySelectorAll('.project-card[data-gallery-reveal]').length === 18);
+    assert.equal(await page.locator('.project-gallery__load-more').count(), 0);
+    assert(await page.locator('.project-card').nth(12).evaluate((el) => el.contains(document.activeElement) && getComputedStyle(el).opacity === '1'));
+    await visitAll(page); await overflow(page);
+    assert.equal(await page.locator(pendingSelector).count(), 0);
+  });
+  await check('dialog entrance, photo controls, immediate dismissal and list focus/scroll return', async (page) => {
+    await ready(page); await visitAll(page);
+    const card = page.locator('.project-card__button').nth(4);
+    await card.scrollIntoViewIfNeeded();
+    const y = await page.evaluate(() => scrollY);
+    await card.click(); await page.locator('.project-dialog[open]').waitFor();
+    assert.equal(await page.locator('.project-dialog').evaluate((el) => getComputedStyle(el).animationName), 'gallery-dialog-enter');
+    assert.equal(await page.evaluate(() => document.body.style.position), 'fixed');
+    await pause(page, 260);
+    await page.locator('.project-dialog__next').click();
+    assert.match(await page.locator('.project-dialog__counter').textContent(), /02/);
+    await page.keyboard.press('ArrowRight');
+    assert.match(await page.locator('.project-dialog__counter').textContent(), /03/);
+    await page.locator('.project-dialog__thumbnail').first().click();
+    assert.match(await page.locator('.project-dialog__counter').textContent(), /01/);
+    await closeProject(page);
+    assert(await card.evaluate((el) => document.activeElement === el));
+    assert(Math.abs((await page.evaluate(() => scrollY)) - y) < 2);
+    assert.equal(await page.locator(pendingSelector).count(), 0);
+    await openProject(page); await pause(page, 260); await page.mouse.click(2, 2);
+    await page.waitForFunction(() => !document.querySelector('.project-dialog'));
+    await openProject(page); await pause(page, 260);
+    await page.mouse.move(600, 100); await page.mouse.down(); await page.mouse.move(2, 2); await page.mouse.up();
+    assert(await page.locator('.project-dialog[open]').isVisible());
+    await closeProject(page);
+    await openProject(page); await page.getByRole('button', { name: 'Close project', exact: true }).click();
+    await page.waitForFunction(() => !document.querySelector('.project-dialog'));
+  });
+  await check('direct anchor and keyboard focus expose targets immediately', async (page) => {
+    await ready(page, `${base}/gallery#projects`);
+    await page.waitForFunction(() => document.activeElement.id === 'projects');
+    assert.equal(await page.locator('#projects').getAttribute('data-gallery-reveal-state'), 'static');
+    const button = page.locator('.project-card__button').last();
+    await button.focus();
+    assert(await button.evaluate((el) => getComputedStyle(el.closest('.project-card')).opacity === '1'));
+  });
+  await check('Contact navigation preserves project context and clears body locking', async (page) => {
+    await ready(page); await openProject(page);
+    await page.locator('.project-dialog__cta').click();
+    await page.locator('.contact-page').waitFor();
+    await page.waitForFunction(() => document.body.style.position !== 'fixed');
+    assert.equal(await page.locator('.project-dialog').count(), 0);
+    assert.equal(await page.locator('[data-gallery-reveal]').count(), 0);
+    assert(await page.evaluate(() => Boolean(history.state.usr.projectId)));
+    assert.equal(await page.evaluate(() => scrollY), 0);
+  });
+  await check('initial reduced motion has no hidden targets or modal animation', async (page) => {
+    await ready(page);
+    assert.equal(await page.locator(revealSelector).count(), 0);
+    await openProject(page);
+    assert.equal(await page.locator('.project-dialog').evaluate((el) => getComputedStyle(el).animationName), 'none');
+    await closeProject(page);
+  }, { reducedMotion: 'reduce' });
+  await check('live reduced motion also applies to newly loaded cards and never replays', async (page) => {
+    await ready(page);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.waitForFunction(() => !document.querySelector('[data-gallery-reveal-state="pending"]'));
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.locator('.project-gallery__load-more').click();
+    await page.waitForFunction(() => document.querySelectorAll('.project-card').length === 18);
+    assert(await page.locator('.project-card').evaluateAll((els) => els.every((el) => getComputedStyle(el).opacity === '1')));
+  });
+  await check('print exposes all mounted content without motion', async (page) => {
+    await ready(page); await page.emulateMedia({ media: 'print' });
+    assert(await page.locator(revealSelector).evaluateAll((els) => els.every((el) => getComputedStyle(el).opacity === '1' && getComputedStyle(el).transform === 'none')));
+    await page.evaluate(() => dispatchEvent(new Event('beforeprint')));
+    await page.emulateMedia({ media: 'screen' });
+    assert.equal(await page.locator(pendingSelector).count(), 0);
+  });
+  for (const api of ['IntersectionObserver', 'MutationObserver']) {
+    await check(`visible fallback without ${api}`, async (page) => {
+      await ready(page); assert.equal(await page.locator(revealSelector).count(), 0);
+      assert(await page.locator('.project-card').last().evaluate((el) => getComputedStyle(el).opacity === '1'));
+    }, {}, `window.${api} = undefined;`);
+  }
+  await check('StrictMode open, filter and modal close remain functional', async (page) => {
+    await ready(page, 'http://127.0.0.1:4193/gallery');
+    await page.locator('.project-gallery__filter').nth(1).click();
+    await openProject(page); await pause(page, 300);
+    assert(await page.locator('.project-dialog[open]').isVisible());
+    await closeProject(page);
+    assert.equal(await page.evaluate(() => document.body.style.position), '');
+  });
+  await check('touch viewport has upward-only movement and usable project controls', async (page) => {
+    await ready(page);
+    const transform = await page.locator('.project-card').last().evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).m41);
+    assert.equal(transform, 0);
+    await page.locator('.project-card__button').first().tap();
+    await page.locator('.project-dialog[open]').waitFor();
+    await page.getByRole('button', { name: 'Next photo', exact: true }).tap();
+    assert.match(await page.locator('.project-dialog__counter').textContent(), /02/);
+    await page.getByRole('button', { name: 'Close project', exact: true }).tap();
+    await page.waitForFunction(() => !document.querySelector('.project-dialog'));
+    await overflow(page);
+  }, { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  for (const width of [390, 1440]) {
+    await check(`final geometry matches unchanged Gallery at ${width}px`, async (page, context) => {
+      await ready(page); await visitAll(page);
+      await page.evaluate(() => scrollTo({ top: 0, behavior: 'instant' }));
+      await pause(page, 150);
+      const actual = await page.screenshot({ fullPage: true });
+      const baseline = await context.newPage();
+      await ready(baseline, 'http://127.0.0.1:4174/gallery');
+      const expected = await baseline.screenshot({ fullPage: true });
+      const changed = await pixels(actual, expected);
+      report.comparisons.push({ browser: engineName, width, changedPixels: changed });
+      assert.equal(changed, 0, 'no final layout or visual change');
+    }, { viewport: { width, height: width === 390 ? 844 : 900 } });
+  }
+  await browser.close();
+}
+await fs.writeFile(path.join(out, 'report.json'), JSON.stringify(report, null, 2));
+console.log(JSON.stringify({ checks: report.checks.length, failures: report.failures, comparisons: report.comparisons }, null, 2));
+if (report.failures.length) process.exitCode = 1;
