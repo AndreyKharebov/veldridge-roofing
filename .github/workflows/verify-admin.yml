@@ -8,43 +8,25 @@ permissions:
 jobs:
   prepare:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    outputs:
-      tested_sha: ${{ steps.record.outputs.sha }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Apply reviewed compatibility and feedback fixes
-        run: |
-          python .verify/apply-recovery.py
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add src .verify/admin-qa.py
-          if ! git diff --cached --quiet; then
-            git commit -m 'Fix WebKit image persistence and truthful save feedback [skip ci]'
-            git push origin HEAD:verify/admin-workspace-20261113
-          fi
       - name: Lint and production build
         run: npm ci && npm run lint && npm run build
-      - name: Record exact source to verify
-        id: record
-        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
   verify:
     needs: prepare
-    name: Browser verification (${{ matrix.mode }})
+    name: Browser verification (${{ matrix.mode }}, ${{ matrix.browser }})
     strategy:
       fail-fast: false
       matrix:
         mode: [development, production]
+        browser: [chromium, webkit]
     runs-on: ubuntu-latest
-    timeout-minutes: 18
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ needs.prepare.outputs.tested_sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -64,12 +46,13 @@ jobs:
           for port in 5173 4173; do
             for i in $(seq 1 40); do curl -fsS http://127.0.0.1:$port/ >/dev/null && break || sleep 1; done
           done
-      - name: Verify complete workspace workflows in Chromium and WebKit
+      - name: Verify complete workspace workflows
         env:
           BASE_URL: ${{ matrix.mode == 'production' && 'http://127.0.0.1:4173' || 'http://127.0.0.1:5173' }}
-        run: python .verify/admin-qa.py
+          QA_BROWSERS: ${{ matrix.browser }}
+        run: python .verify/final-admin-qa.py
       - name: Verify development-to-production asset references
-        if: matrix.mode == 'production'
+        if: matrix.mode == 'production' && matrix.browser == 'chromium'
         run: python .verify/stable-assets.py
       - name: Record tested tree
         if: always()
@@ -83,6 +66,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: admin-${{ matrix.mode }}-verification
+          name: admin-${{ matrix.mode }}-${{ matrix.browser }}-verification
           path: admin-qa/
           retention-days: 7
