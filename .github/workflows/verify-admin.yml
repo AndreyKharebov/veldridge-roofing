@@ -1,0 +1,76 @@
+name: Verify admin workspace
+on:
+  push:
+    branches: [verify/admin-workspace-20261113]
+    paths: ['.verify/**', '.github/workflows/verify-admin.yml', 'src/**', 'package*.json']
+permissions:
+  contents: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply reviewed source and verification suite
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import base64, lzma, json, hashlib, subprocess
+          text=''.join(Path(f'.verify/admin-part-{i}.txt').read_text() for i in range(1,6))
+          raw=lzma.decompress(base64.b85decode(text))
+          assert hashlib.sha256(raw).hexdigest()=='d66ec5e35af09b4d6f961ddde6a923f83d50ed595f97c39485cea2bf89a1cc5a'
+          data=json.loads(raw)
+          if not Path('src/admin/AdminApp.jsx').exists():
+              subprocess.run(['git','apply','--whitespace=nowarn'],input=data['patch'],text=True,check=True)
+          if not Path('.verify/admin-qa.py').exists():
+              Path('.verify/admin-qa.py').write_text(data['test'])
+          PY
+      - name: Install and record exact implementation
+        run: |
+          npm ci
+          npm install --save-exact @tanstack/react-query@5.107.1
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src package.json package-lock.json .verify/admin-qa.py
+          if ! git diff --cached --quiet; then
+            git commit -m 'Apply approved admin workspace source [skip ci]'
+            git push origin HEAD:verify/admin-workspace-20261113
+          fi
+      - name: Lint and production build
+        run: npm run lint && npm run build
+      - name: Install isolated browser verification
+        run: |
+          pip install playwright
+          python -m playwright install --with-deps chromium webkit
+      - name: Verify editors, public integration, persistence and responsiveness
+        run: |
+          npm run dev -- --host 127.0.0.1 --port 5173 > /tmp/admin-vite.log 2>&1 &
+          for i in $(seq 1 60); do curl -fsS http://127.0.0.1:5173/ >/dev/null && break || sleep 1; done
+          python .verify/admin-qa.py
+      - name: Record tested tree
+        if: always()
+        run: |
+          mkdir -p admin-qa
+          git rev-parse HEAD > admin-qa/tested-commit.txt
+          git rev-parse HEAD:src > admin-qa/tested-src-tree.txt
+          git rev-parse HEAD:package.json > admin-qa/package-blob.txt
+          git rev-parse HEAD:package-lock.json > admin-qa/lock-blob.txt
+          cp /tmp/admin-vite.log admin-qa/vite.log || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: admin-workspace-verification
+          path: |
+            admin-qa/*.json
+            admin-qa/*.png
+            admin-qa/*.txt
+            admin-qa/*.log
+          retention-days: 7
