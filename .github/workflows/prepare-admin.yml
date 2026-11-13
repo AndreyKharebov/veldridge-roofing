@@ -1,0 +1,31 @@
+name: Prepare admin implementation
+on:
+  push:
+    branches: [verify/admin-workspace-20261113]
+    paths: ['.github/workflows/prepare-admin.yml']
+permissions:
+  contents: read
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci && npm install --save-exact @tanstack/react-query@5
+      - name: Download exact Figma navigation icons
+        run: |
+          mkdir -p src/admin/assets
+          curl --fail -L 'https://www.figma.com/api/mcp/asset/afcc3237-0d33-49ad-83e7-0407f91784c6.svg' -o src/admin/assets/settings.svg
+          curl --fail -L 'https://www.figma.com/api/mcp/asset/b1141ee4-dd8c-4dd9-b5e2-07ff48ae5cd7.svg' -o src/admin/assets/inquiries.svg
+          curl --fail -L 'https://www.figma.com/api/mcp/asset/dee56d6c-fec8-412e-ba2e-8cdb3ebff704.svg' -o src/admin/assets/projects.svg
+          curl --fail -L 'https://www.figma.com/api/mcp/asset/1ff3bc1a-441d-484b-a473-a985f01605af.svg' -o src/admin/assets/news.svg
+          curl --fail -L 'https://www.figma.com/api/mcp/asset/2982c1d5-a648-4580-803b-f91929f4a3cd.svg' -o src/admin/assets/services.svg
+          curl --fail -L 'https://www.figma.com/api/mcp/asset/37fb4c10-0e4a-4184-9fd1-dad2b10d28e7.svg' -o src/admin/assets/overview.svg
+      - run: tar czf admin-environment.tar.gz node_modules package.json package-lock.json eslint.config.js vite.config.js index.html public src/admin/assets
+      - uses: actions/upload-artifact@v4
+        with:
+          name: admin-environment
+          path: admin-environment.tar.gz
+          retention-days: 2
