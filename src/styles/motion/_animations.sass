@@ -1,0 +1,183 @@
+@use '../abstracts/variables' as vars
+
+// One shared state machine. Content is visible until JS opts an element in.
+.motion-root
+  overflow-x: clip
+
+  [data-motion-reveal]
+    opacity: 1
+    transform: none
+
+  [data-motion-reveal='left']
+    --motion-x: calc(-1 * var(--motion-reveal-distance))
+    --motion-y: 0px
+
+  [data-motion-reveal='right']
+    --motion-x: var(--motion-reveal-distance)
+    --motion-y: 0px
+
+  [data-motion-state='pending']
+    opacity: 0
+    transform: translate3d(var(--motion-x, 0px), var(--motion-y, var(--motion-reveal-distance)), 0)
+    pointer-events: none
+
+  [data-motion-state='visible']
+    transition-property: opacity, transform
+    transition-duration: var(--motion-reveal-duration)
+    transition-timing-function: var(--motion-opacity-easing, var(--motion-reveal-easing)), var(--motion-reveal-easing)
+    transition-delay: var(--motion-delay, calc(var(--motion-order, 0) * var(--motion-reveal-stagger)))
+
+  [data-motion-state='static']
+    transition: none
+
+@media (min-width: 701px) and (max-width: 1100px)
+  .motion-root [data-motion-state='visible']
+    transition-delay: var(--motion-delay, calc(var(--motion-tablet-order, 0) * var(--motion-reveal-stagger)))
+
+@media (max-width: 700px)
+  .motion-root [data-motion-reveal]
+    --motion-x: 0px
+    --motion-y: var(--motion-reveal-distance)
+
+// Home's existing choreography is kept separate from the default profile.
+// Local aliases are intentional: root-level aliases would resolve too early
+// for page/element overrides to be inherited correctly.
+.home-page
+  .hero__left-card,
+  .hero__right-card,
+  .hero__bottom-card,
+  .hero__insurance
+    --motion-reveal-duration: var(--motion-home-hero-duration)
+
+  .hero__left-card
+    --motion-reveal-distance: var(--motion-home-hero-side-distance)
+    --motion-delay: var(--motion-home-hero-left-delay)
+
+  .hero__right-card
+    --motion-reveal-distance: var(--motion-home-hero-side-distance)
+    --motion-delay: var(--motion-home-hero-right-delay)
+
+  .hero__bottom-card
+    --motion-reveal-distance: var(--motion-home-hero-bottom-distance)
+    --motion-delay: var(--motion-home-hero-bottom-delay)
+
+  .hero__insurance
+    --motion-reveal-distance: var(--motion-home-hero-insurance-distance)
+    --motion-delay: var(--motion-home-hero-insurance-delay)
+
+  .about__photo
+    --motion-reveal-duration: var(--motion-home-about-duration)
+    --motion-reveal-distance: var(--motion-home-about-distance)
+
+  .about__photo--secondary
+    --motion-delay: var(--motion-home-about-detail-delay)
+
+  .service-card
+    --motion-reveal-duration: var(--motion-home-services-duration)
+    --motion-reveal-distance: var(--motion-home-services-distance)
+    --motion-opacity-easing: var(--motion-enter-easing)
+
+    &:nth-child(3n + 2)
+      --motion-delay: var(--motion-home-services-second-delay)
+
+    &:nth-child(3n)
+      --motion-delay: var(--motion-home-services-third-delay)
+
+  .why-choose-us__benefit
+    --motion-reveal-duration: var(--motion-home-benefit-duration)
+    --motion-reveal-distance: var(--motion-home-benefit-distance)
+
+    &:nth-child(2)
+      --motion-delay: var(--motion-home-benefit-second-delay)
+
+    &:nth-child(3)
+      --motion-delay: var(--motion-home-benefit-third-delay)
+
+    &:nth-child(4)
+      --motion-delay: var(--motion-home-benefit-fourth-delay)
+
+@media (min-width: 701px) and (max-width: 1100px)
+  .home-page
+    .hero__left-card,
+    .hero__right-card,
+    .hero__bottom-card,
+    .hero__insurance
+      --motion-x: 0px
+      --motion-y: var(--motion-reveal-distance)
+
+    .about__photo--secondary
+      --motion-x: var(--motion-reveal-distance)
+      --motion-y: 0px
+
+@media (max-width: 700px)
+  .home-page
+    .hero__left-card,
+    .hero__bottom-card,
+    .why-choose-us__benefit:nth-child(odd)
+      --motion-x: calc(-1 * var(--motion-reveal-distance))
+      --motion-y: 0px
+
+    .hero__right-card,
+    .why-choose-us__benefit:nth-child(even)
+      --motion-x: var(--motion-reveal-distance)
+      --motion-y: 0px
+
+@media (min-width: 1101px) and (hover: hover) and (pointer: fine)
+  // Keep the existing inherited Home Services hover duration and delay.
+  .home-page .service-card:not([data-motion-state='pending']):hover
+    transform: translateY(calc(-1 * var(--motion-card-hover-distance)))
+
+  .service-card:hover .service-card__link
+    color: vars.$color-primary
+
+// Both native dialogs are rendered in a body portal, not in a page root.
+.article-dialog[open],
+.project-dialog[open]
+  animation: motion-dialog-enter var(--motion-dialog-duration) var(--motion-enter-easing)
+
+  &::backdrop
+    animation: motion-backdrop-enter var(--motion-backdrop-duration) var(--motion-enter-easing)
+
+@keyframes motion-dialog-enter
+  from
+    opacity: 0
+    transform: translateY(var(--motion-dialog-distance))
+
+  to
+    opacity: 1
+    transform: none
+
+// Opacity preserves each dialog's existing, different backdrop color.
+@keyframes motion-backdrop-enter
+  from
+    opacity: 0
+
+  to
+    opacity: 1
+
+@keyframes testimonial-appear
+  from
+    opacity: 0
+    transform: translateX(var(--motion-testimonial-distance))
+
+  to
+    opacity: 1
+    transform: translateX(0)
+
+@media (prefers-reduced-motion: reduce), print
+  .motion-root [data-motion-reveal][data-motion-state]
+    opacity: 1
+    transform: none
+    transition: none
+    pointer-events: auto
+
+  .article-dialog[open],
+  .article-dialog[open]::backdrop,
+  .project-dialog[open],
+  .project-dialog[open]::backdrop
+    animation: none
+
+@media (prefers-reduced-motion: reduce)
+  .services__button,
+  .service-card__link
+    transition: none
