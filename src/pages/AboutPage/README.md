@@ -47,3 +47,10 @@ content; this page does not implement them.
 
 Run `npm run lint` and `npm run build`. Inspect `/about` at 1101, 1280, 1440, and
 1920px and check keyboard focus, image loading, and shared navigation.
+
+## Animation settings
+
+All timing and motion distances: `src/styles/motion/_settings.sass`.
+Trigger/carousel configuration: `src/config/motion.js`.
+Shared behavior: `src/hooks/useMotionReveal.js`. Page-specific target selectors
+are in `motion/aboutMotion.js`. See `src/styles/motion/README.md`.

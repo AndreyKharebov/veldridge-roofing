@@ -1,3 +1,4 @@
+import { motionConfig } from '../../../../config/motion.js';
 import { useEffect, useState } from 'react';
 
 import { Link } from 'react-router';
@@ -21,8 +22,8 @@ const Hero = () => {
 
       intervalId = window.setInterval(() => {
         setActiveIndex((current) => (current + 1) % heroImages.length);
-      }, 5000);
-    }, 3300);
+      }, motionConfig.carousel.intervalMs);
+    }, motionConfig.carousel.heroInitialDelayMs);
 
     return () => {
       window.clearTimeout(timeoutId);

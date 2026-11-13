@@ -60,3 +60,10 @@ There are no new entrance/scroll animations.
 Run `npm run lint` and `npm run build`. Verify images, all nine anchor links,
 Contact actions and keyboard focus at 1101, 1280, 1440 and 1920px; also check
 900, 700, 390 and 320px. Compare About against its pre-extraction layout.
+
+## Animation settings
+
+All timing and motion distances: `src/styles/motion/_settings.sass`.
+Trigger/carousel configuration: `src/config/motion.js`.
+Shared behavior: `src/hooks/useMotionReveal.js`. Page-specific target selectors
+are in `motion/servicesMotion.js`. See `src/styles/motion/README.md`.

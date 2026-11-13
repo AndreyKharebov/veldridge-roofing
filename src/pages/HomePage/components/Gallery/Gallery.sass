@@ -66,10 +66,10 @@
     width: 100%
     height: 100%
     object-fit: cover
-    transition: transform 0.4s ease
+    transition: transform var(--motion-image-zoom-duration) var(--motion-interaction-easing)
 
   &__item:hover &__image
-    transform: scale(1.05)
+    transform: scale(var(--motion-image-zoom-scale))
 
   &__button
     display: flex
@@ -86,7 +86,7 @@
     font-weight: vars.$font-bold
     line-height: 1.5
     text-decoration: none
-    transition: background-color 0.2s ease
+    transition: background-color var(--motion-color-duration) var(--motion-interaction-easing)
 
     &:hover
       background-color: #d97700

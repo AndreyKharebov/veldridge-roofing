@@ -33,3 +33,10 @@ The Gallery router state `{ projectId, projectTitle }` and Blog state `{ article
 ## Checks
 
 Run `npm run lint` and `npm run build`. Verify name + email only, name + phone only, invalid optional values, zero files, duplicate/invalid/oversized/excess files, removal/reselection, keyboard access, mobile form layout, context from Gallery/Blog, and absence of network submissions. Assets are downloaded from Figma and stored locally; no temporary asset URLs are used at runtime.
+
+## Animation settings
+
+All timing and motion distances: `src/styles/motion/_settings.sass`.
+Trigger/carousel configuration: `src/config/motion.js`.
+Shared behavior: `src/hooks/useMotionReveal.js`. Page-specific target selectors
+are in `motion/contactMotion.js`. See `src/styles/motion/README.md`.

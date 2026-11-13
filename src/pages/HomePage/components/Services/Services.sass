@@ -56,7 +56,7 @@
     font-size: 16px
     font-weight: vars.$font-bold
     text-decoration: none
-    transition: background-color 0.2s ease
+    transition: background-color var(--motion-color-duration) var(--motion-interaction-easing)
 
     &:hover
       background-color: #d97700
@@ -156,7 +156,7 @@
     line-height: 1.5
     text-decoration: underline
     text-underline-offset: 5px
-    transition: color 0.2s ease
+    transition: color var(--motion-color-duration) var(--motion-interaction-easing)
 
     &::after
       content: ''
@@ -317,78 +317,3 @@
       margin-top: auto
       font-size: 14px
 
-// ========================================
-// Scroll Reveal
-// ========================================
-
-.service-card
-  opacity: 0
-  transform: translateY(24px)
-  transition: opacity 0.55s ease-out, transform 0.55s cubic-bezier(0.22, 1, 0.36, 1)
-
-  // Slight stagger within each desktop row
-
-  &:nth-child(3n + 2)
-    transition-delay: 0.08s
-
-  &:nth-child(3n)
-    transition-delay: 0.16s
-
-  &.is-revealed
-    opacity: 1
-    transform: translateY(0)
-
-// ========================================
-// Desktop hover (mouse and trackpad)
-// ========================================
-
-@media (min-width: 1101px) and (hover: hover) and (pointer: fine)
-  .service-card.is-revealed:hover
-    transform: translateY(-6px)
-
-  .service-card:hover .service-card__link
-    color: vars.$color-primary
-
-// ========================================
-// Tablet Scroll Reveal
-// ========================================
-
-@media (min-width: 701px) and (max-width: 1100px)
-  .service-card
-    transform: translateY(20px)
-    transition-delay: 0s
-
-// ========================================
-// Mobile Scroll Reveal
-// ========================================
-
-@media (max-width: 700px)
-  .service-card
-    transform: translateY(16px)
-    transition-duration: 0.45s
-    transition-delay: 0s
-
-// ========================================
-// Revealed State
-// Always after responsive transforms
-// ========================================
-
-.service-card.is-revealed
-  opacity: 1
-  transform: none
-
-// ========================================
-// Reduced Motion
-// ========================================
-
-@media (prefers-reduced-motion: reduce)
-  .services__button
-    transition: none
-
-  .service-card
-    opacity: 1
-    transform: none
-    transition: none
-
-    &__link
-      transition: none

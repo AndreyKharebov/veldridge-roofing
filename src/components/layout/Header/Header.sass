@@ -60,7 +60,7 @@
     font-weight: vars.$font-medium
     line-height: 24px
     text-decoration: none
-    transition: background-color 0.2s ease
+    transition: background-color var(--motion-color-duration) var(--motion-interaction-easing)
 
     &:hover
       background-color: vars.$color-accent-light
@@ -89,7 +89,7 @@
     font-weight: vars.$font-bold
     line-height: 27px
     text-decoration: none
-    transition: background-color 0.2s ease
+    transition: background-color var(--motion-color-duration) var(--motion-interaction-easing)
 
     &:hover
       background-color: #d97700
@@ -133,7 +133,7 @@
     border-radius: 1px
     background-color: vars.$color-text
     transform-origin: center
-    transition: transform 0.3s ease, width 0.3s ease
+    transition: transform var(--motion-menu-duration) var(--motion-interaction-easing), width var(--motion-menu-duration) var(--motion-interaction-easing)
 
     &:last-child
       width: 14px
@@ -164,7 +164,7 @@
       opacity: 0
       visibility: hidden
       pointer-events: none
-      transform: translateY(-20px)
+      transform: translateY(calc(-1 * var(--motion-menu-distance)))
 
       &--open
         opacity: 1
@@ -173,7 +173,7 @@
         transform: translateY(0)
 
       &--animated
-        transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s
+        transition: opacity var(--motion-menu-duration) var(--motion-interaction-easing), transform var(--motion-menu-duration) var(--motion-interaction-easing), visibility var(--motion-menu-duration)
 
     &__nav-list
       display: flex

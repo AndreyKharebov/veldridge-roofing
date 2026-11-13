@@ -1,3 +1,4 @@
+import { motionConfig } from '../../config/motion.js';
 import { useEffect } from 'react';
 import { useLocation, useNavigationType } from 'react-router';
 
@@ -7,13 +8,13 @@ import ServiceDetail from './components/ServiceDetail/ServiceDetail.jsx';
 import ServiceCare from './components/ServiceCare/ServiceCare.jsx';
 import ServicesCTA from './components/ServicesCTA/ServicesCTA.jsx';
 import { mainServices, supportingServices, serviceNavigation } from './servicesData.js';
-import { useServicesReveal } from './motion/useServicesReveal.js';
+import { useMotionReveal } from '../../hooks/useMotionReveal.js';
+import { servicesMotion, servicesMotionOptions } from './motion/servicesMotion.js';
 
 import './ServicesPage.sass';
-import './motion/ServicesMotion.sass';
 
 const ServicesPage = () => {
-  const pageRef = useServicesReveal();
+  const pageRef = useMotionReveal(servicesMotion, servicesMotionOptions);
   const { hash, key } = useLocation();
   const navigationType = useNavigationType();
 
@@ -44,7 +45,7 @@ const ServicesPage = () => {
       const target = document.getElementById(targetId);
       if (!target?.matches('[data-service-anchor]')) return;
 
-      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const reduceMotion = window.matchMedia(motionConfig.reducedMotionQuery).matches;
       // Focus reveals the destination immediately, before scroll geometry is
       // measured. This also keeps the animated care-card anchors accurate.
       target.focus({ preventScroll: true });
@@ -58,7 +59,7 @@ const ServicesPage = () => {
   }, [hash, key, navigationType]);
 
   return (
-    <div className='services-page' ref={pageRef}>
+    <div className='services-page motion-root' ref={pageRef}>
       <ServicesHero />
       <ServiceFinder services={serviceNavigation} />
       {mainServices.map((service, index) => (

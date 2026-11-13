@@ -52,3 +52,10 @@ Run `npm run lint` and `npm run build`. Check `/blog` at 320, 390, 700, 701, 900
 1100, 1101, 1280, 1440 and 1920px; open every article and verify keyboard access,
 scroll/focus restoration, source links, the end-of-article CTA and direct anchor
 navigation. Existing pages, shared styles and package dependencies are unchanged.
+
+## Animation settings
+
+All timing and motion distances: `src/styles/motion/_settings.sass`.
+Trigger/carousel configuration: `src/config/motion.js`.
+Shared behavior: `src/hooks/useMotionReveal.js`. Page-specific target selectors
+are in `motion/blogMotion.js`. See `src/styles/motion/README.md`.

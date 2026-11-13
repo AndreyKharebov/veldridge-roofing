@@ -1,5 +1,4 @@
 import { Link } from 'react-router';
-import { useScrollReveal } from '../../../../hooks/useScrollReveal.js';
 
 import aboutMain from './assets/about-main.webp';
 import aboutSecondary from './assets/about-secondary.webp';
@@ -9,9 +8,6 @@ import aboutSecondaryFrame from './assets/about-secondary-frame.svg';
 import './About.sass';
 
 const About = () => {
-  const [mainRef, mainVisible] = useScrollReveal();
-  const [secondaryRef, secondaryVisible] = useScrollReveal();
-
   return (
     <section className='about'>
       <div className='container'>
@@ -47,10 +43,7 @@ const About = () => {
 
           <div className='about__visual'>
             <div
-              ref={mainRef}
-              className={`about__photo about__photo--main ${
-                mainVisible ? 'is-revealed' : ''
-              }`}
+              className='about__photo about__photo--main'
             >
               <img
                 className='about__image'
@@ -68,10 +61,7 @@ const About = () => {
             </div>
 
             <div
-              ref={secondaryRef}
-              className={`about__photo about__photo--secondary ${
-                secondaryVisible ? 'is-revealed' : ''
-              }`}
+              className='about__photo about__photo--secondary'
             >
               <img
                 className='about__image'

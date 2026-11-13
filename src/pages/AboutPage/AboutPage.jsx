@@ -7,14 +7,14 @@ import OurValues from './components/OurValues/OurValues.jsx';
 import HowWeWork from './components/HowWeWork/HowWeWork.jsx';
 import ServiceAreas from './components/ServiceAreas/ServiceAreas.jsx';
 import AboutCTA from './components/AboutCTA/AboutCTA.jsx';
-import { useAboutReveal } from './motion/useAboutReveal.js';
+import { useMotionReveal } from '../../hooks/useMotionReveal.js';
+import { aboutMotion } from './motion/aboutMotion.js';
 
 import './AboutPage.sass';
-import './motion/AboutMotion.sass';
 
 const AboutPage = () => {
   const navigationType = useNavigationType();
-  const pageRef = useAboutReveal();
+  const pageRef = useMotionReveal(aboutMotion);
 
   useEffect(() => {
     const previousTitle = document.title;
@@ -31,7 +31,7 @@ const AboutPage = () => {
   }, [navigationType]);
 
   return (
-    <div className='about-page' ref={pageRef}>
+    <div className='about-page motion-root' ref={pageRef}>
       <AboutHero />
       <OurApproach />
       <OurValues />

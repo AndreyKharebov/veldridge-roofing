@@ -70,7 +70,7 @@
     font-weight: vars.$font-regular
     line-height: 1.5
     text-decoration: none
-    transition: color 0.2s ease
+    transition: color var(--motion-color-duration) var(--motion-interaction-easing)
 
     &:hover,
     &.active
@@ -109,7 +109,7 @@
 
     a
       text-decoration: none
-      transition: color 0.2s ease
+      transition: color var(--motion-color-duration) var(--motion-interaction-easing)
 
       &:hover
         color: vars.$color-primary
@@ -145,7 +145,7 @@
     border-radius: 50%
     background-color: vars.$color-primary
     text-decoration: none
-    transition: background-color 0.2s ease, transform 0.2s ease
+    transition: background-color var(--motion-color-duration) var(--motion-interaction-easing), transform var(--motion-social-hover-duration) var(--motion-interaction-easing)
 
     img
       display: block
@@ -155,7 +155,7 @@
 
     &:is(a):hover
       background-color: #d97700
-      transform: translateY(-3px)
+      transform: translateY(calc(-1 * var(--motion-social-hover-distance)))
 
     &:is(a):focus-visible
       outline: 2px solid vars.$color-white

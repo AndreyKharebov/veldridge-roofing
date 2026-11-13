@@ -90,7 +90,7 @@
     &::after
       width: 2px
       height: 12px
-      transition: transform 0.3s ease, opacity 0.3s ease
+      transition: transform var(--motion-accordion-icon-duration) var(--motion-interaction-easing), opacity var(--motion-accordion-icon-duration) var(--motion-interaction-easing)
 
   &__item--open
     .faq__icon::after
@@ -102,7 +102,7 @@
     grid-template-rows: 0fr
     opacity: 0
     visibility: hidden
-    transition: grid-template-rows 0.35s ease, opacity 0.35s ease, visibility 0s linear 0.35s
+    transition: grid-template-rows var(--motion-accordion-duration) var(--motion-interaction-easing), opacity var(--motion-accordion-duration) var(--motion-interaction-easing), visibility 0s linear var(--motion-accordion-duration)
 
   &__panel-inner
     min-height: 0
@@ -120,7 +120,7 @@
       grid-template-rows: 1fr
       opacity: 1
       visibility: visible
-      transition: grid-template-rows 0.35s ease, opacity 0.35s ease, visibility 0s
+      transition: grid-template-rows var(--motion-accordion-duration) var(--motion-interaction-easing), opacity var(--motion-accordion-duration) var(--motion-interaction-easing), visibility 0s
 
 // Tablet: 701px - 1100px
 

@@ -1,0 +1,126 @@
+// =============================================================
+// MOTION CONTROL PANEL
+// Durations/delays: seconds. Distances: pixels. JS timers: config/motion.js.
+// These defaults preserve the previous site's effective timings.
+// =============================================================
+
+:root
+  // Common scroll reveals: About / Services / Gallery / Blog
+  --motion-reveal-duration: 0.56s
+  --motion-reveal-distance: 28px
+  --motion-reveal-stagger: 0.08s
+  --motion-reveal-easing: cubic-bezier(0.22, 1, 0.36, 1)
+
+  // Buttons, links and focus styling
+  --motion-color-duration: 0.2s
+  --motion-interaction-easing: ease
+  --motion-enter-easing: ease-out
+
+  // Card hover and photo zoom
+  --motion-card-hover-distance: 6px
+  --motion-news-hover-duration: 0.25s
+  --motion-project-hover-distance: 4px
+  --motion-project-hover-duration: 0.2s
+  --motion-social-hover-distance: 3px
+  --motion-social-hover-duration: 0.2s
+  --motion-image-zoom-duration: 0.4s
+  --motion-image-zoom-scale: 1.05
+
+  // Gallery / Blog modal opening (closing remains immediate)
+  --motion-dialog-duration: 0.22s
+  --motion-dialog-distance: 8px
+  --motion-backdrop-duration: 0.2s
+
+  // FAQ, WhyChooseUs accordion, mobile navigation
+  --motion-accordion-duration: 0.35s
+  --motion-accordion-icon-duration: 0.3s
+  --motion-menu-duration: 0.3s
+  --motion-menu-distance: 20px
+
+  // Home carousels: effect duration, NOT the autoplay interval
+  --motion-hero-crossfade-duration: 1.1s
+  --motion-testimonial-duration: 0.3s
+  --motion-testimonial-distance: 12px
+
+  // Home Hero cards — Desktop
+  --motion-home-hero-duration: 0.8s
+  --motion-home-hero-side-distance: 60px
+  --motion-home-hero-bottom-distance: 50px
+  --motion-home-hero-insurance-distance: 40px
+  --motion-home-hero-left-delay: 0.5s
+  --motion-home-hero-right-delay: 1s
+  --motion-home-hero-bottom-delay: 1.5s
+  --motion-home-hero-insurance-delay: 2s
+
+  // Home About photos — intentionally unchanged on tablet/mobile
+  --motion-home-about-duration: 0.7s
+  --motion-home-about-distance: 40px
+  --motion-home-about-detail-delay: 0.15s
+
+  // Home Services — preserve the old effective nth-child delays
+  --motion-home-services-duration: 0.55s
+  --motion-home-services-distance: 24px
+  --motion-home-services-second-delay: 0.08s
+  --motion-home-services-third-delay: 0.16s
+
+  // Home WhyChooseUs — preserve delays on ALL screen sizes
+  --motion-home-benefit-duration: 0.6s
+  --motion-home-benefit-distance: 36px
+  --motion-home-benefit-second-delay: 0.1s
+  --motion-home-benefit-third-delay: 0.2s
+  --motion-home-benefit-fourth-delay: 0.3s
+
+// Contact's quieter profile overrides only its own reveal settings.
+.contact-page
+  --motion-reveal-duration: 0.48s
+  --motion-reveal-distance: 18px
+  --motion-reveal-stagger: 0.06s
+
+@media (min-width: 701px) and (max-width: 1100px)
+  :root
+    --motion-reveal-duration: 0.48s
+    --motion-reveal-distance: 22px
+    --motion-reveal-stagger: 0.05s
+
+    --motion-home-hero-duration: 0.6s
+    --motion-home-hero-side-distance: 50px
+    --motion-home-hero-bottom-distance: 50px
+    --motion-home-hero-insurance-distance: 50px
+    --motion-home-hero-left-delay: 0.15s
+    --motion-home-hero-right-delay: 0.15s
+    --motion-home-hero-bottom-delay: 0.15s
+    --motion-home-hero-insurance-delay: 1.05s
+
+    --motion-home-services-distance: 20px
+    --motion-home-benefit-duration: 0.55s
+    --motion-home-benefit-distance: 28px
+
+  .contact-page
+    --motion-reveal-duration: 0.42s
+    --motion-reveal-distance: 14px
+    --motion-reveal-stagger: 0.04s
+
+@media (max-width: 700px)
+  :root
+    --motion-reveal-duration: 0.4s
+    --motion-reveal-distance: 16px
+    --motion-reveal-stagger: 0s
+
+    --motion-home-hero-duration: 0.6s
+    --motion-home-hero-side-distance: 40px
+    --motion-home-hero-bottom-distance: 40px
+    --motion-home-hero-insurance-distance: 40px
+    --motion-home-hero-left-delay: 0s
+    --motion-home-hero-right-delay: 0.15s
+    --motion-home-hero-bottom-delay: 0.3s
+    --motion-home-hero-insurance-delay: 0.45s
+
+    --motion-home-services-duration: 0.45s
+    --motion-home-services-distance: 16px
+    --motion-home-benefit-duration: 0.5s
+    --motion-home-benefit-distance: 28px
+
+  .contact-page
+    --motion-reveal-duration: 0.36s
+    --motion-reveal-distance: 10px
+    --motion-reveal-stagger: 0s
