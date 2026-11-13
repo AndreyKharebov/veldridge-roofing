@@ -1,0 +1,26 @@
+name: Verify Admin workspace
+on:
+  push:
+    branches: [verify/admin-20261113]
+permissions:
+  contents: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install workspace dependencies
+        run: npm install @tanstack/react-query@5
+      - name: Export exact source and dependency snapshot
+        run: |
+          mkdir -p /tmp/admin-bootstrap
+          tar -czf /tmp/admin-bootstrap/project.tar.gz --exclude=.git --exclude=.github --exclude=dist .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: admin-bootstrap
+          path: /tmp/admin-bootstrap
+          retention-days: 7
