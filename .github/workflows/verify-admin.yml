@@ -15,10 +15,19 @@ jobs:
           node-version: 22
       - name: Install workspace dependencies
         run: npm install @tanstack/react-query@5
+      - name: Download approved Figma navigation assets
+        run: |
+          mkdir -p src/admin/assets
+          curl -fL 'https://www.figma.com/api/mcp/asset/276c5817-e312-47b9-a8d3-03ab191ca57f.svg' -o src/admin/assets/settings.svg
+          curl -fL 'https://www.figma.com/api/mcp/asset/729de9e6-a1e9-4ea9-9a17-8e8ecc811b37.svg' -o src/admin/assets/inquiries.svg
+          curl -fL 'https://www.figma.com/api/mcp/asset/214da956-35f5-4a8e-aaf3-042a45a7c9d1.svg' -o src/admin/assets/projects.svg
+          curl -fL 'https://www.figma.com/api/mcp/asset/8b7dae21-e33c-4daa-931c-e9f9f8e498e1.svg' -o src/admin/assets/news.svg
+          curl -fL 'https://www.figma.com/api/mcp/asset/5dea4845-d977-4887-8278-b6cc25d4efe8.svg' -o src/admin/assets/services.svg
+          curl -fL 'https://www.figma.com/api/mcp/asset/05199475-f33d-43c5-ab24-888895dca9d6.svg' -o src/admin/assets/overview.svg
       - name: Export exact source and dependency snapshot
         run: |
           mkdir -p /tmp/admin-bootstrap
-          tar -czf /tmp/admin-bootstrap/project.tar.gz --exclude=.git --exclude=.github --exclude=dist .
+          tar -czf /tmp/admin-bootstrap/project.tar.gz --exclude=./.git --exclude=./.github --exclude=./dist .
       - uses: actions/upload-artifact@v4
         with:
           name: admin-bootstrap
