@@ -1,5 +1,5 @@
 import { createSeed } from '../data/seed.js';
-import { readStore, updateStore, replaceWorkspace, addMediaBatch } from './database.js';
+import { readStore, updateStore, replaceWorkspace, addMediaBatch, prepareInquiryForStorage } from './database.js';
 import { hydrateContent, newId, validateImage, releaseMediaUrls } from './media.js';
 import { normalizeRecord, normalizeSettings, ValidationError } from './validation.js';
 import { requireAdmin } from './auth.js';
@@ -83,7 +83,8 @@ export const workspaceApi = {
     const record = { ...normalizeInquiry(values), id:newId('INQ'), serviceLabel:options.find((s) => s.id === values.service).label,
       source, photos: photos.map((file) => ({ id:newId('attachment'), name:file.name, blob:file })),
       status:'new', notes:[], createdAt:new Date().toISOString(), revision:1, isDemo:true };
-    await updateStore('inquiries',record.id,() => record);
+    const storedRecord = await prepareInquiryForStorage(record);
+    await updateStore('inquiries',record.id,() => storedRecord);
     changed(); return { id:record.id };
   },
   async updateInquiry(id,{ status, note, revision }) {

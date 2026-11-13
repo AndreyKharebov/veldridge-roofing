@@ -55,7 +55,8 @@ projects remain available. Eight fictional inquiries demonstrate statuses.
 `src/api/workspace.js` is the asynchronous adapter. `src/api/database.js` commits
 IndexedDB transactions before reporting success. `src/content/` owns TanStack
 Query and invalidation; `src/api/media.js` resolves stable bundled asset IDs and
-local Blob URLs. Original Vite build hashes are not stored in the database.
+local Blob URLs. Uploaded files are persisted as byte buffers for WebKit compatibility;
+Blob URLs are rebuilt when records are read, never saved as durable addresses. Original Vite build hashes are not stored in the database.
 
 Records have stable IDs and revision numbers. Saving a stale record is rejected
 rather than overwriting another tab's changes. Invalid data leaves the editor
@@ -66,7 +67,8 @@ unsaved edits. Image batches are validated and committed atomically.
 
 Settings → Demo data → Demo testing → **Simulate next save error**. The next write
 fails without changing saved data; retry verifies recovery. `mockConfig.latencyMs`
-in `src/api/workspace.js` controls the local request delay. No random failures.
+in `src/api/workspace.js` controls the local request delay. No random failures. The failure switch applies within the current page session;
+use admin navigation after enabling it. A full page reload clears the switch.
 
 ### Backups
 

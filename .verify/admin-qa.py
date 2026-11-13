@@ -29,12 +29,20 @@ def choose_image(page):
 def api(page,code):
  return page.evaluate("async () => {const {workspaceApi} = await import('/src/api/workspace.js');"+code+"}")
 def read_bucket(page,name):
- return page.evaluate("async (store) => {const {readStore}=await import('/src/api/database.js');return readStore(store,store==='content'?'workspace':undefined)}",name)
+ return page.evaluate("""(store) => new Promise((resolve,reject) => {
+  const open=indexedDB.open('veldridge-workspace-v1',1);
+  open.onerror=()=>reject(open.error);
+  open.onsuccess=()=>{const db=open.result;const tx=db.transaction(store,'readonly');
+   const request=store==='content'?tx.objectStore(store).get('workspace'):tx.objectStore(store).getAll();
+   tx.oncomplete=()=>{db.close();resolve(request.result)};tx.onabort=()=>{db.close();reject(tx.error)};
+  };
+ })""",name)
 
 with sync_playwright() as pw:
  for browser_name in os.environ.get('QA_BROWSERS','chromium,webkit').split(','):
   browser=getattr(pw,browser_name).launch(headless=True)
   def run(name,fn,viewport=None):
+   if os.environ.get('QA_FILTER') and not re.search(os.environ['QA_FILTER'], name): return
    ctx=browser.new_context(viewport=viewport or {'width':1440,'height':1000},reduced_motion='reduce',accept_downloads=True)
    page=ctx.new_page();page.set_default_timeout(10000)
    errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
@@ -116,7 +124,7 @@ with sync_playwright() as pw:
    page.get_by_label('Residential',exact=True).check();choose_image(page);page.get_by_label('Image description *',exact=True).fill('Sample roof coating');page.get_by_label('Show on Home',exact=True).check()
    page.get_by_role('button',name='Save changes',exact=True).click();saved(page)
    expect(page.get_by_role('heading',name='Edit service',exact=True)).to_be_visible()
-   page.get_by_role('button',name='Archive service',exact=True).click();page.get_by_role('dialog').get_by_role('button',name='Archive service',exact=True).click();saved(page)
+   page.get_by_role('button',name='Archive service',exact=True).click();page.get_by_role('dialog').get_by_role('button',name='Archive service',exact=True).click();expect(page.get_by_role('dialog')).to_have_count(0);saved(page);expect(page.get_by_label('Visibility',exact=True)).to_have_value('archived')
    goto(page,'/services');assert not page.get_by_role('heading',name='Roof coating QA',exact=True).count()
    goto(page,'/contact');assert not page.locator('option').filter(has_text='Roof coating QA').count()
   run('Service CRUD, property checkboxes, persistence, shared Home/Services/Contact and archive',services)
@@ -190,8 +198,12 @@ with sync_playwright() as pw:
    login(page);goto(page,'/admin/settings');page.get_by_label('Phone *',exact=True).fill('(215) 555-0123');page.get_by_label('Email *',exact=True).fill('qa-office@example.com');page.get_by_label('Street address *',exact=True).fill('456 Demo Street');page.get_by_role('button',name='Save changes',exact=True).click();saved(page)
    goto(page,'/contact');expect(page.locator('.contact-details')).to_contain_text('qa-office@example.com');expect(page.locator('.footer')).to_contain_text('456 Demo Street')
    goto(page,'/admin/settings')
-   # An adapter-level fixture ensures uploaded bytes round-trip through backups.
-   api(page,"const bytes=Uint8Array.from(atob('"+base64.b64encode(PNG).decode()+"'),c=>c.charCodeAt(0));return workspaceApi.uploadMedia([new File([bytes],'backup-photo.png',{type:'image/png'})]);")
+   # Upload through the actual UI so the same test also exercises production bundles.
+   (OUT/'backup-photo.png').write_bytes(PNG)
+   goto(page,'/admin/projects/new');page.get_by_role('button',name='Upload photos',exact=True).click()
+   modal=page.locator('.admin-dialog--media');modal.get_by_label('Upload public images').set_input_files(str(OUT/'backup-photo.png'))
+   expect(modal.get_by_role('button',name='Use images',exact=True)).to_be_enabled(timeout=15000)
+   page.keyboard.press('Escape');goto(page,'/admin/settings')
    with page.expect_download() as event:page.get_by_role('button',name='Export content backup',exact=True).click()
    backup_file=OUT/(browser_name+'-backup.json');event.value.save_as(str(backup_file));data=json.loads(backup_file.read_text())
    assert 'inquiries' not in data and 'inquiries' not in data['content'];assert any(m.get('dataUrl') for m in data['media'])
@@ -210,7 +222,7 @@ with sync_playwright() as pw:
    page.get_by_role('navigation',name='Admin navigation').get_by_role('link',name='News',exact=True).click();page.get_by_role('dialog').get_by_role('button',name='Discard changes',exact=True).click();expect(page).to_have_url(re.compile('/admin/news$'))
    page.locator('tr').filter(has_text='Getting Your Roof Ready for Winter').get_by_role('link',name='Edit article →').click();page.get_by_label('Title *',exact=True).fill('Unsaved article preview');page.get_by_role('button',name='Preview article',exact=True).click();page.locator('.article-dialog__cta').click();expect(page.locator('.admin-dialog')).to_contain_text('Discard unsaved changes?');page.locator('.admin-dialog').get_by_role('button',name='Discard changes',exact=True).click();expect(page).to_have_url(re.compile('/contact$'))
    expect(page.locator('dialog[open]')).to_have_count(0);assert page.evaluate('document.body.style.position')=='';assert page.evaluate('document.body.style.overflow')==''
-   goto(page,'/admin/settings');page.get_by_text('Demo testing',exact=True).click();page.get_by_role('button',name='Simulate next save error').click();goto(page,'/admin/services/roof-replacement');page.get_by_label('Short description *',exact=True).fill('Retained after failure')
+   goto(page,'/admin/settings');page.get_by_text('Demo testing',exact=True).click();page.get_by_role('button',name='Simulate next save error').click();page.get_by_role('navigation',name='Admin navigation').get_by_role('link',name='Services',exact=True).click();page.locator('tr').filter(has_text='Roof Replacement').get_by_role('link',name='Edit service →').click();page.get_by_label('Short description *',exact=True).fill('Retained after failure')
    page.get_by_role('button',name='Save changes',exact=True).click();expect(page.get_by_role('alert')).to_contain_text('Simulated save failure');expect(page.get_by_label('Short description *',exact=True)).to_have_value('Retained after failure');page.get_by_role('button',name='Save changes',exact=True).click();saved(page)
   run('Unsaved-change routing, nested preview dismissal, scroll unlock and recoverable save error',guards)
 

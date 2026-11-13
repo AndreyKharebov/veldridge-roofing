@@ -8,7 +8,7 @@ export function useEditor(initial,save) {
   const formRef = useRef(null);
   const setFormElement = useCallback((element) => { formRef.current = element; },[]);
   const client = useQueryClient();
-  const mutation = useMutation({ mutationFn:save, onSuccess:async (result) => {
+  const mutation = useMutation({ mutationFn:save, onMutate:() => setSaved(false), onSuccess:async (result) => {
     setValues(result); setBaseline(JSON.stringify(result)); setSaved(true);
     await client.invalidateQueries({queryKey:['workspace']});
   }, onError:(error) => {
