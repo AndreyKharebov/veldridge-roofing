@@ -7,13 +7,18 @@ import ServiceFinder from './components/ServiceFinder/ServiceFinder.jsx';
 import ServiceDetail from './components/ServiceDetail/ServiceDetail.jsx';
 import ServiceCare from './components/ServiceCare/ServiceCare.jsx';
 import ServicesCTA from './components/ServicesCTA/ServicesCTA.jsx';
-import { mainServices, supportingServices, serviceNavigation } from './servicesData.js';
+import { useContent } from '../../content/context.js';
 import { useMotionReveal } from '../../hooks/useMotionReveal.js';
 import { servicesMotion, servicesMotionOptions } from './motion/servicesMotion.js';
 
 import './ServicesPage.sass';
 
 const ServicesPage = () => {
+  const { services } = useContent();
+  const activeServices = services.filter((service) => service.status === 'active');
+  const mainServices = activeServices.filter((service) => service.group === 'main');
+  const supportingServices = activeServices.filter((service) => service.group === 'supporting');
+  const serviceNavigation = activeServices.map(({ id, title, number }) => ({ id, title, number }));
   const pageRef = useMotionReveal(servicesMotion, servicesMotionOptions);
   const { hash, key } = useLocation();
   const navigationType = useNavigationType();
@@ -25,7 +30,7 @@ const ServicesPage = () => {
   }, []);
 
   useEffect(() => {
-    // Declarative BrowserRouter does not supply ScrollRestoration. Handle
+    // Preserve the existing explicit anchor and history behavior. Handle
     // in-page links, direct hash URLs and browser history on this page only.
     if (!hash) {
       if (navigationType !== 'POP') {
@@ -69,7 +74,7 @@ const ServicesPage = () => {
           imageRight={index % 2 === 1}
         />
       ))}
-      <ServiceCare services={supportingServices} />
+      {supportingServices.length > 0 && <ServiceCare services={supportingServices} />}
       <ServicesCTA />
     </div>
   );

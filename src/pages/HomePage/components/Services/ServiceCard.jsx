@@ -49,7 +49,7 @@ const ServiceCard = ({ service }) => {
 
         <Link
           className='service-card__link'
-          to='/services'
+          to={`/services#${service.id}`}
           aria-label={`Read more about ${title}`}
         >
           Read More

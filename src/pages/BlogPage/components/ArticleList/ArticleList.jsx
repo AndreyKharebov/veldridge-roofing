@@ -1,11 +1,15 @@
 import { useCallback, useId, useState } from 'react';
 import ArticleRow from '../ArticleRow/ArticleRow.jsx';
 import ArticleDialog from '../ArticleDialog/ArticleDialog.jsx';
-import { blogArticles } from '../../data/blogArticles.js';
+import { useContent } from '../../../../content/context.js';
+import { useLocation } from 'react-router';
 import './ArticleList.sass';
 
 const ArticleList = () => {
-  const [activeArticle, setActiveArticle] = useState(null);
+  const { articles } = useContent();
+  const { state } = useLocation();
+  const blogArticles = articles.filter((article) => article.status === 'published');
+  const [activeArticle, setActiveArticle] = useState(() => blogArticles.find((article) => article.id === state?.articleId) || null);
   const dialogId = useId();
   const closeArticle = useCallback(() => setActiveArticle(null), []);
 
@@ -33,6 +37,7 @@ const ArticleList = () => {
             />
           ))}
         </ol>
+        {!blogArticles.length && <p>New articles are on the way. Please check back soon.</p>}
       </div>
       {activeArticle && (
         <ArticleDialog

@@ -6,13 +6,13 @@ import BlogHero from './components/BlogHero/BlogHero.jsx';
 import ArticleList from './components/ArticleList/ArticleList.jsx';
 import BlogCTA from './components/BlogCTA/BlogCTA.jsx';
 import { useMotionReveal } from '../../hooks/useMotionReveal.js';
-import { blogMotion } from './motion/blogMotion.js';
+import { blogMotion, blogMotionOptions } from './motion/blogMotion.js';
 import './BlogPage.sass';
 
 const BlogPage = () => {
   const { hash, key } = useLocation();
   const navigationType = useNavigationType();
-  const pageRef = useMotionReveal(blogMotion);
+  const pageRef = useMotionReveal(blogMotion, blogMotionOptions);
 
   useEffect(() => {
     const previousTitle = document.title;

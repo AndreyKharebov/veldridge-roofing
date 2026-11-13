@@ -15,4 +15,4 @@ export const servicesMotion = [
   { selector: '.page-cta__image', direction: 'right', offset: 1 },
 ];
 
-export const servicesMotionOptions = { anchorSelector: '[data-service-anchor]' };
+export const servicesMotionOptions = { dynamic: true, anchorSelector: '[data-service-anchor]' };

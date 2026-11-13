@@ -1,4 +1,4 @@
-import { contactData } from '../../data/contactData.js';
+import { useContent } from '../../../../content/context.js';
 import waterway from './assets/waterway.svg';
 import pinBackground from './assets/pin-background.svg';
 import pinIcon from './assets/pin.svg';
@@ -11,7 +11,9 @@ const blocks = Array.from({ length: 13 }, (_, col) =>
   })),
 ).flat();
 
-const ContactMap = () => (
+const ContactMap = () => {
+  const { settings:contactData } = useContent();
+  return (
   <section className='contact-map' aria-labelledby='contact-map-title'>
     <div className='container contact-map__inner'>
       <div className='contact-map__heading'>
@@ -19,7 +21,7 @@ const ContactMap = () => (
           <p className='contact-map__eyebrow'>Nearby, when you need us</p>
           <h2 id='contact-map-title'>Local Team. Regional Reach.</h2>
         </div>
-        <p className='contact-map__description'>Serving homes and businesses across<br />Pennsylvania, New Jersey and Delaware.</p>
+        <p className='contact-map__description'>Serving homes and businesses across<br />{contactData.serviceArea}.</p>
       </div>
       <figure className='contact-map__figure'>
         <div className='contact-map__canvas' aria-label='Illustrative map with a sample office marker, not for directions'>
@@ -39,7 +41,7 @@ const ContactMap = () => (
               <img className='contact-map__pin-icon' src={pinIcon} alt='' />
             </div>
             <div className='contact-map__card'>
-              <h3>{contactData.company}</h3>
+              <h3>{contactData.map.label || contactData.company}</h3>
               <p>{contactData.street}<br />{contactData.locality}</p>
               <p className='contact-map__pin-note'>Sample pin · not for directions</p>
             </div>
@@ -49,5 +51,6 @@ const ContactMap = () => (
       </figure>
     </div>
   </section>
-);
+  );
+};
 export default ContactMap;

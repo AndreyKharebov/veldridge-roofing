@@ -10,6 +10,7 @@ import instagramIcon from './assets/instagram.svg';
 import youtubeIcon from './assets/youtube.svg';
 
 import './Footer.sass';
+import { useContent } from '../../../content/context.js';
 
 const navLinks = [
   { label: 'Home', path: '/' },
@@ -19,13 +20,7 @@ const navLinks = [
   { label: 'Blog', path: '/blog' },
 ];
 
-const contacts = {
-  phone: '',
-  email: '',
-  location: 'Philadelphia, PA',
-};
-
-const socialLinks = [
+const socialIcons = [
   { id: 'facebook', label: 'Facebook', icon: facebookIcon, url: null },
   { id: 'linkedin', label: 'LinkedIn', icon: linkedinIcon, url: null },
   { id: 'instagram', label: 'Instagram', icon: instagramIcon, url: null },
@@ -33,6 +28,9 @@ const socialLinks = [
 ];
 
 const Footer = () => {
+  const { settings } = useContent();
+  const contacts = {phone:settings.phone,email:settings.email,location:`${settings.street}, ${settings.locality}`};
+  const socialLinks = socialIcons.map((item) => ({...item,url:settings.socials[item.id] || null}));
   return (
     <footer className='footer'>
       <div className='container'>
@@ -71,22 +69,22 @@ const Footer = () => {
             <div className='footer__contact'>
               <img className='footer__contact-icon' src={phoneIcon} alt='' />
 
-              {contacts.phone ? (
+              {contacts.phone && !settings.isDemo ? (
                 <a href={`tel:${contacts.phone.replace(/[^\d+]/g, '')}`}>
                   {contacts.phone}
                 </a>
               ) : (
-                <Link to='/contact'>Contact our team</Link>
+                <span>{contacts.phone || 'Contact our team'}</span>
               )}
             </div>
 
             <div className='footer__contact'>
               <img className='footer__contact-icon' src={mailIcon} alt='' />
 
-              {contacts.email ? (
+              {contacts.email && !settings.isDemo ? (
                 <a href={`mailto:${contacts.email}`}>{contacts.email}</a>
               ) : (
-                <Link to='/contact'>Send an inquiry</Link>
+                <span>{contacts.email || 'Send an inquiry'}</span>
               )}
             </div>
 
@@ -97,6 +95,7 @@ const Footer = () => {
             </div>
           </div>
 
+          {settings.isDemo && <p className='footer__demo-note'>Demo contact details · Not for calls or directions</p>}
           <div className='footer__socials'>
             {socialLinks.map(({ id, label, icon, url }) =>
               url ? (

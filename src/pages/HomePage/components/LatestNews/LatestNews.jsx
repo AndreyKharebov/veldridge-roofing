@@ -1,11 +1,14 @@
 import { Link } from 'react-router';
 
-import { latestNews } from './latestNews';
+import { useContent } from '../../../../content/context.js';
 
 import './LatestNews.sass';
 
 
 const LatestNews = () => {
+  const { articles } = useContent();
+  const latestNews = articles.filter((article) => article.status === 'published').slice(0,3).map((article) => ({...article,date:article.publishedAt}));
+  if (!latestNews.length) return null;
   return (
     <section className='latest-news'>
       <div className='container'>
@@ -75,6 +78,7 @@ const LatestNews = () => {
                 <Link
                   className='latest-news__read-more'
                   to='/blog'
+                  state={{articleId:article.id}}
                   aria-label={`Read more: ${article.title}`}
                 >
                   Read More

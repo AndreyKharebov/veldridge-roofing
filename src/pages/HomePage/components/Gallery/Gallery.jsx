@@ -1,36 +1,14 @@
 import { Link } from 'react-router';
 
-import gallery1 from './assets/gallery-1.webp';
-import gallery2 from './assets/gallery-2.webp';
-import gallery3 from './assets/gallery-3.webp';
-import gallery4 from './assets/gallery-4.webp';
+import { useContent } from '../../../../content/context.js';
 
 import './Gallery.sass';
-
-const galleryImages = [
-  {
-    id: 1,
-    image: gallery1,
-    alt: 'Residential roofing project with dark shingles',
-  },
-  {
-    id: 2,
-    image: gallery2,
-    alt: 'Modern residential roof with multiple gables',
-  },
-  {
-    id: 3,
-    image: gallery3,
-    alt: 'Newly installed residential roofing shingles',
-  },
-  {
-    id: 4,
-    image: gallery4,
-    alt: 'Completed pitched roof on a residential property',
-  },
-];
+import ProjectPhoto from '../../../GalleryPage/components/ProjectPhoto/ProjectPhoto.jsx';
 
 const Gallery = () => {
+  const { projects } = useContent();
+  const galleryImages = projects.filter((project) => project.status === 'published').slice(0,4).map((project) => ({...project,alt:project.imageAlt}));
+  if (!galleryImages.length) return null;
   return (
     <section className='gallery'>
       <div className='container'>
@@ -50,15 +28,11 @@ const Gallery = () => {
             <Link
               className={`gallery__item gallery__item--${index + 1}`}
               to='/gallery'
+              state={{projectId:item.id}}
               key={item.id}
               aria-label={`View gallery: ${item.alt}`}
             >
-              <img
-                className='gallery__image'
-                src={item.image}
-                alt={item.alt}
-                loading='lazy'
-              />
+              <ProjectPhoto className='gallery__image' photo={item.coverPhoto || item.photos[0]} />
             </Link>
           ))}
         </div>

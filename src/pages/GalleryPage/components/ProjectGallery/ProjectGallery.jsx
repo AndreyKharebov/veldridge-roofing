@@ -1,13 +1,19 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import ProjectCard from '../ProjectCard/ProjectCard.jsx';
 import ProjectDialog from '../ProjectDialog/ProjectDialog.jsx';
-import { galleryProjects, projectCategories, INITIAL_PROJECT_COUNT, PROJECT_BATCH_SIZE } from '../../data/galleryProjects.js';
+import { INITIAL_PROJECT_COUNT, PROJECT_BATCH_SIZE } from '../../data/galleryProjects.js';
 import './ProjectGallery.sass';
+import { useContent } from '../../../../content/context.js';
+import { useLocation } from 'react-router';
 
 const ProjectGallery = () => {
+  const { projects,services } = useContent();
+  const { state } = useLocation();
+  const galleryProjects = projects.filter((project) => project.status === 'published');
+  const projectCategories = [{id:'all',label:'All Projects'},...services.filter((service) => galleryProjects.some((project) => project.serviceId === service.id)).map((service) => ({id:service.id,label:service.title}))];
   const [category, setCategory] = useState('all');
   const [visibleCount, setVisibleCount] = useState(INITIAL_PROJECT_COUNT);
-  const [activeProject, setActiveProject] = useState(null);
+  const [activeProject, setActiveProject] = useState(() => galleryProjects.find((project) => project.id === state?.projectId) || null);
   const focusAfterLoad = useRef(null);
   const dialogId = useId();
   const closeProject = useCallback(() => setActiveProject(null), []);
@@ -61,9 +67,9 @@ const ProjectGallery = () => {
           ))}
         </div>
 
-        <p className='project-gallery__disclosure'>Portfolio preview · Illustrative projects and sample details</p>
+        {galleryProjects.some((project) => project.isDemo) && <p className='project-gallery__disclosure'>Portfolio preview · Illustrative projects and sample details</p>}
         <p className='project-gallery__status' role='status' aria-live='polite' aria-atomic='true'>
-          Showing {visibleProjects.length} of {filtered.length} {category === 'all' ? 'projects' : `${projectCategories.find(({ id }) => id === category).label.toLowerCase()} projects`}.
+          Showing {visibleProjects.length} of {filtered.length} {category === 'all' ? 'projects' : `${(projectCategories.find(({ id }) => id === category)?.label || 'selected').toLowerCase()} projects`}.
         </p>
         <ul className='project-gallery__grid' id='project-grid'>
           {visibleProjects.map((project) => (

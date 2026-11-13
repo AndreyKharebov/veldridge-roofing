@@ -2,11 +2,14 @@ import { Link } from 'react-router';
 
 import ServiceCard from './ServiceCard';
 
-import { servicesData } from './servicesData';
+import { useContent } from '../../../../content/context.js';
 
 import './Services.sass';
 
 const Services = () => {
+  const { services } = useContent();
+  const servicesData = services.filter((service) => service.status === 'active' && service.showOnHome).map((service) => ({...service, image:service.homeImage, description:service.summary}));
+  if (!servicesData.length) return null;
   return (
     <section className='services'>
       <div className='container'>

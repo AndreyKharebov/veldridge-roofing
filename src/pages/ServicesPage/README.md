@@ -1,3 +1,8 @@
+> **Admin integration:** Live content now comes from the shared local workspace.
+> Edit it through `/admin`; the original data modules below are seed inputs only.
+> See `src/admin/README.md` for demo credentials, persistence and backend limitations.
+> Contact submissions are now saved to this browser’s demo inbox, not just logged.
+
 # Services page
 
 Implementation of **Services — Desktop 1440**, Figma node `145:324` in the

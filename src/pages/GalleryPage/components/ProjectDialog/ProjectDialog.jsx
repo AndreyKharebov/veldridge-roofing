@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router';
+import { lockBodyScroll } from '../../../../utils/lockBodyScroll.js';
 import ProjectPhoto from '../ProjectPhoto/ProjectPhoto.jsx';
 import closeIcon from '../../assets/icons/close.svg';
 import previousIcon from '../../assets/icons/arrow-left.svg';
@@ -20,34 +21,17 @@ const ProjectDialog = ({ id, project, onClose }) => {
 
   useEffect(() => {
     const dialog = dialogRef.current;
-    const scrollX = window.scrollX;
-    const scrollY = window.scrollY;
+    const opener = document.activeElement;
     const pathname = window.location.pathname;
-    const body = document.body;
-    const properties = ['position', 'top', 'left', 'right', 'width', 'padding-right', 'overflow'];
-    const original = properties.map((property) => [property, body.style.getPropertyValue(property), body.style.getPropertyPriority(property)]);
-    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-    const paddingRight = Number.parseFloat(getComputedStyle(body).paddingRight) || 0;
-
-    // Fixed-body locking also prevents background movement on touch devices.
-    body.style.position = 'fixed';
-    body.style.top = `-${scrollY}px`;
-    body.style.left = '0';
-    body.style.right = '0';
-    body.style.width = '100%';
-    body.style.overflow = 'hidden';
-    if (scrollbarWidth > 0) body.style.paddingRight = `${paddingRight + scrollbarWidth}px`;
+    const unlock = lockBodyScroll();
     dialog.showModal();
     closeRef.current?.focus({ preventScroll: true });
-
     return () => {
       if (dialog.open) dialog.close();
-      original.forEach(([property, value, priority]) => {
-        if (value) body.style.setProperty(property, value, priority);
-        else body.style.removeProperty(property);
-      });
-      // Do not restore the old Gallery scroll position on the Contact route.
-      window.scrollTo({ left: window.location.pathname === pathname ? scrollX : 0, top: window.location.pathname === pathname ? scrollY : 0, behavior: 'instant' });
+      unlock();
+      if (window.location.pathname === pathname && opener instanceof HTMLElement && opener.isConnected) {
+        opener.focus({ preventScroll: true });
+      }
     };
   }, []);
 
@@ -140,7 +124,7 @@ const ProjectDialog = ({ id, project, onClose }) => {
           </dl>
           <div className='project-dialog__work'>
             <h3>What we did</h3>
-            <ul>{project.work.map((item) => <li key={item}>{item}</li>)}</ul>
+            <ul>{project.work.map((item,index) => <li key={index}>{item}</li>)}</ul>
           </div>
           <Link className='project-dialog__cta' to='/contact' state={{ projectId: project.id, projectTitle: project.title }}>Discuss a Similar Project</Link>
           {project.isDemo && <p className='project-dialog__disclosure'>*Illustrative case study. Materials, duration and project details are sample content for this design.</p>}

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router';
+import { lockBodyScroll } from '../../../../utils/lockBodyScroll.js';
 
 import closeIcon from '../../assets/icons/close.svg';
 import { formatArticleDate } from '../../data/articleDate.js';
@@ -16,43 +17,14 @@ const ArticleDialog = ({ id, article, onClose }) => {
   useEffect(() => {
     const dialog = dialogRef.current;
     const opener = document.activeElement;
-    const scrollX = window.scrollX;
-    const scrollY = window.scrollY;
     const pathname = window.location.pathname;
-    const body = document.body;
-    const properties = ['position', 'top', 'left', 'right', 'width', 'padding-right', 'overflow'];
-    const original = properties.map((property) => [
-      property,
-      body.style.getPropertyValue(property),
-      body.style.getPropertyPriority(property),
-    ]);
-    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-    const paddingRight = Number.parseFloat(getComputedStyle(body).paddingRight) || 0;
-
-    // Match the Gallery's touch-safe background lock without changing its code.
-    body.style.position = 'fixed';
-    body.style.top = `-${scrollY}px`;
-    body.style.left = '0';
-    body.style.right = '0';
-    body.style.width = '100%';
-    body.style.overflow = 'hidden';
-    if (scrollbarWidth > 0) body.style.paddingRight = `${paddingRight + scrollbarWidth}px`;
+    const unlock = lockBodyScroll();
     dialog.showModal();
     closeRef.current?.focus({ preventScroll: true });
-
     return () => {
       if (dialog.open) dialog.close();
-      original.forEach(([property, value, priority]) => {
-        if (value) body.style.setProperty(property, value, priority);
-        else body.style.removeProperty(property);
-      });
-      const samePage = window.location.pathname === pathname;
-      window.scrollTo({
-        left: samePage ? scrollX : 0,
-        top: samePage ? scrollY : 0,
-        behavior: 'instant',
-      });
-      if (samePage && opener instanceof HTMLElement && opener.isConnected) {
+      unlock();
+      if (window.location.pathname === pathname && opener instanceof HTMLElement && opener.isConnected) {
         opener.focus({ preventScroll: true });
       }
     };
@@ -128,19 +100,19 @@ const ArticleDialog = ({ id, article, onClose }) => {
             height='260'
             decoding='async'
           />
-          {article.sections.map(({ heading, body }) => (
-            <section className='article-dialog__section' key={heading}>
+          {article.sections.map(({ id:sectionId, heading, body }, index) => (
+            <section className='article-dialog__section' key={sectionId || index}>
               <h3>{heading}</h3>
               <p>{body}</p>
             </section>
           ))}
-          <div className='article-dialog__source'>
+          {article.source?.url && <div className='article-dialog__source'>
             <p>Further Reading</p>
             <a href={article.source.url} target='_blank' rel='noopener noreferrer'>
               {article.source.label}
               <span className='article-dialog__sr-only'> (opens in a new tab)</span>
             </a>
-          </div>
+          </div>}
           <aside className='article-dialog__contact' aria-label='Contact our team'>
             <h3>Have a question about your roof?</h3>
             <p>Tell our team what you have noticed. We’ll help you discuss the next step.</p>
