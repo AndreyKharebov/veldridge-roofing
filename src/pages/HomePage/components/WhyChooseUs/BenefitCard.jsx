@@ -1,14 +1,11 @@
-import { useScrollReveal } from '../../../../hooks/useScrollReveal.js';
 
 const BenefitCard = ({ benefit, isOpen, onToggle }) => {
-  const [cardRef, cardVisible] = useScrollReveal();
 
   return (
     <article
-      ref={cardRef}
       className={`why-choose-us__benefit${
         isOpen ? ' why-choose-us__benefit--open' : ''
-      }${cardVisible ? ' is-revealed' : ''}`}
+      }`}
       role='button'
       tabIndex={0}
       aria-expanded={isOpen}

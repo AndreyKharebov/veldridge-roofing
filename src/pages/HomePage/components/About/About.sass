@@ -54,22 +54,6 @@
       width: 65%
       height: 55%
 
-  // Scroll reveal
-
-  &__photo--main,
-  &__photo--secondary
-    opacity: 0
-    transform: translateY(40px)
-    transition-property: opacity, transform
-    transition-duration: 0.7s
-    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1)
-
-  &__photo--main
-    transition-delay: 0s
-
-  &__photo--secondary
-    transition-delay: 0.15s
-
   &__image
     display: block
     width: 100%
@@ -105,7 +89,7 @@
     font-weight: vars.$font-bold
     line-height: 1.5
     text-decoration: none
-    transition: background-color 0.2s ease
+    transition: background-color var(--motion-color-duration) var(--motion-interaction-easing)
 
     &:hover
       background-color: #d97700
@@ -194,11 +178,6 @@
     &__benefit
       font-size: 15px
 
-    // Tablet scroll reveal
-
-    &__photo--secondary
-      transform: translateX(40px)
-
 @media (max-width: 700px)
   .about
     padding: 56px 0
@@ -244,20 +223,3 @@
       width: 65%
       height: 55%
 
-// Revealed state
-
-.about
-  &__photo--main.is-revealed,
-  &__photo--secondary.is-revealed
-    opacity: 1
-    transform: none
-
-// Reduced motion
-
-@media (prefers-reduced-motion: reduce)
-  .about
-    &__photo--main,
-    &__photo--secondary
-      opacity: 1
-      transform: none
-      transition: none

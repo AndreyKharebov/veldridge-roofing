@@ -41,7 +41,7 @@
     padding: 16px
     border-radius: 12px
     background-color: vars.$color-white
-    transition: transform 0.25s ease
+    transition: transform var(--motion-news-hover-duration) var(--motion-interaction-easing)
 
     &:focus-within
       outline: 2px solid vars.$color-primary
@@ -63,7 +63,7 @@
     width: 100%
     height: 100%
     object-fit: cover
-    transition: transform 0.4s ease
+    transition: transform var(--motion-image-zoom-duration) var(--motion-interaction-easing)
 
   &__image-placeholder
     display: block
@@ -106,7 +106,7 @@
     text-decoration: underline
     text-underline-offset: 5px
     text-decoration-thickness: 1px
-    transition: color 0.2s ease
+    transition: color var(--motion-color-duration) var(--motion-interaction-easing)
 
     &::after
       content: ''
@@ -129,7 +129,7 @@
     font-weight: vars.$font-bold
     line-height: 1.5
     text-decoration: none
-    transition: background-color 0.2s ease
+    transition: background-color var(--motion-color-duration) var(--motion-interaction-easing)
 
     &:hover
       background-color: #d97700
@@ -143,13 +143,13 @@
 @media (min-width: 1101px) and (hover: hover) and (pointer: fine)
   .latest-news
     &__card:hover
-      transform: translateY(-6px)
+      transform: translateY(calc(-1 * var(--motion-card-hover-distance)))
 
     &__card:hover &__read-more
       color: vars.$color-primary
 
     &__card:hover &__image
-      transform: scale(1.05)
+      transform: scale(var(--motion-image-zoom-scale))
 
 // Tablet: 701px - 1100px
 

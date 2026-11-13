@@ -1,3 +1,6 @@
+import { useMotionReveal } from '../../hooks/useMotionReveal.js';
+import { homeMotion } from './motion/homeMotion.js';
+
 import Hero from './components/Hero/Hero.jsx';
 import About from './components/About/About.jsx';
 import Services from './components/Services/Services.jsx';
@@ -9,8 +12,9 @@ import LatestNews from './components/LatestNews/LatestNews.jsx';
 import FAQ from './components/FAQ/FAQ.jsx';
 
 const HomePage = () => {
+  const pageRef = useMotionReveal(homeMotion);
   return (
-    <>
+    <div className='home-page motion-root' ref={pageRef}>
       <Hero />
       <About />
       <Services />
@@ -20,7 +24,7 @@ const HomePage = () => {
       <Testimonials />
       <LatestNews />
       <FAQ />
-    </>
+    </div>
   );
 };
 

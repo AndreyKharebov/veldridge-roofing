@@ -34,3 +34,10 @@ Desktop follows the Figma composition. Tablet uses two columns, Mobile one; the 
 ## Checks
 
 Run `npm run lint` and `npm run build`. Verify filtering, Load More, all project details, photo arrows/thumbnails, Escape, backdrop click, focus return, scroll restoration, Contact navigation and 320–1920px layouts. Browser verification is performed on a separate temporary GitHub verification branch; temporary asset URLs and CI preparation scripts are not part of the production page.
+
+## Animation settings
+
+All timing and motion distances: `src/styles/motion/_settings.sass`.
+Trigger/carousel configuration: `src/config/motion.js`.
+Shared behavior: `src/hooks/useMotionReveal.js`. Page-specific target selectors
+are in `motion/galleryMotion.js`. See `src/styles/motion/README.md`.

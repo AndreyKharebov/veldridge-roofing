@@ -1,17 +1,18 @@
+import { motionConfig } from '../../config/motion.js';
 import { useEffect } from 'react';
 import { useLocation, useNavigationType } from 'react-router';
 
 import BlogHero from './components/BlogHero/BlogHero.jsx';
 import ArticleList from './components/ArticleList/ArticleList.jsx';
 import BlogCTA from './components/BlogCTA/BlogCTA.jsx';
-import { useBlogReveal } from './motion/useBlogReveal.js';
+import { useMotionReveal } from '../../hooks/useMotionReveal.js';
+import { blogMotion } from './motion/blogMotion.js';
 import './BlogPage.sass';
-import './motion/BlogMotion.sass';
 
 const BlogPage = () => {
   const { hash, key } = useLocation();
   const navigationType = useNavigationType();
-  const pageRef = useBlogReveal();
+  const pageRef = useMotionReveal(blogMotion);
 
   useEffect(() => {
     const previousTitle = document.title;
@@ -30,7 +31,7 @@ const BlogPage = () => {
 
     const frameId = window.requestAnimationFrame(() => {
       const target = document.getElementById('articles');
-      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const reducedMotion = window.matchMedia(motionConfig.reducedMotionQuery).matches;
       // Reveal the focused heading before measuring its scroll destination.
       target?.focus({ preventScroll: true });
       target?.scrollIntoView({
@@ -42,7 +43,7 @@ const BlogPage = () => {
   }, [hash, key, navigationType]);
 
   return (
-    <div className='blog-page' ref={pageRef}>
+    <div className='blog-page motion-root' ref={pageRef}>
       <BlogHero />
       <ArticleList />
       <BlogCTA />

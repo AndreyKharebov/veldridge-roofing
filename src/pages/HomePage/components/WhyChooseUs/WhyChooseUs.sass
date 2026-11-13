@@ -117,7 +117,7 @@
     font-weight: vars.$font-bold
     line-height: 1.5
     text-decoration: none
-    transition: background-color 0.2s ease
+    transition: background-color var(--motion-color-duration) var(--motion-interaction-easing)
 
     &:hover
       background-color: #d97700
@@ -283,7 +283,7 @@
       display: grid
       grid-template-rows: 0fr
       opacity: 0
-      transition: grid-template-rows 0.35s ease, opacity 0.35s ease
+      transition: grid-template-rows var(--motion-accordion-duration) var(--motion-interaction-easing), opacity var(--motion-accordion-duration) var(--motion-interaction-easing)
 
     &__benefit-panel-inner
       min-height: 0
@@ -307,79 +307,8 @@
       width: 100%
       margin-top: 0
 
-// ========================================
-// Scroll Reveal - Desktop defaults
-// ========================================
-
-.why-choose-us__benefit
-  opacity: 0
-  transform: translateX(36px)
-  transition-property: opacity, transform
-  transition-duration: 0.6s
-  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1)
-  transition-delay: 0s
-
-  // Short stagger for cards visible together
-
-  &:nth-child(2)
-    transition-delay: 0.1s
-
-  &:nth-child(3)
-    transition-delay: 0.2s
-
-  &:nth-child(4)
-    transition-delay: 0.3s
-
-// ========================================
-// Tablet Scroll Reveal
-// ========================================
-
-@media (min-width: 701px) and (max-width: 1100px)
-  .why-choose-us__benefit
-    transform: translateX(28px)
-    transition-duration: 0.55s
-
-// ========================================
-// Mobile Scroll Reveal
-// ========================================
-
-@media (max-width: 700px)
-  .why-choose-us__benefit
-    transition-duration: 0.5s
-    transition-delay: 0s
-
-    // 1 and 3 - from left
-
-    &:nth-child(odd)
-      transform: translateX(-28px)
-
-    // 2 and 4 - from right
-
-    &:nth-child(even)
-      transform: translateX(28px)
-
-// ========================================
-// Revealed State
-// Must stay after responsive transforms
-// ========================================
-
-.why-choose-us__benefit.is-revealed
-  opacity: 1
-  transform: none
-
-// ========================================
-// Reduced Motion
-// ========================================
-
 @media (prefers-reduced-motion: reduce)
   .why-choose-us
-    &__button
-      transition: none
-
-    &__benefit
-      opacity: 1
-      transform: none
-      transition: none
-
+    &__button,
     &__benefit-panel
       transition: none

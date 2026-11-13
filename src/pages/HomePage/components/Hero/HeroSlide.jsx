@@ -1,4 +1,3 @@
-import { useScrollReveal } from '../../../../hooks/useScrollReveal.js';
 
 import heroFrame from './assets/hero-frame.svg';
 import heroRightFrame from './assets/hero-right-frame.svg';
@@ -14,10 +13,6 @@ const HeroSlide = ({
   topLeft,
   bottom,
 }) => {
-  const [leftRef, leftVisible] = useScrollReveal();
-  const [rightRef, rightVisible] = useScrollReveal();
-  const [bottomRef, bottomVisible] = useScrollReveal();
-  const [insuranceRef, insuranceVisible] = useScrollReveal();
 
   return (
     <div
@@ -46,8 +41,7 @@ const HeroSlide = ({
       </div>
 
       <div
-        ref={rightRef}
-        className={`hero__right-card ${rightVisible ? 'is-revealed' : ''}`}
+        className='hero__right-card'
       >
         <img
           className='hero__right-frame'
@@ -60,8 +54,7 @@ const HeroSlide = ({
       </div>
 
       <div
-        ref={leftRef}
-        className={`hero__left-card ${leftVisible ? 'is-revealed' : ''}`}
+        className='hero__left-card'
       >
         <img
           className='hero__left-frame'
@@ -86,8 +79,7 @@ const HeroSlide = ({
       </div>
 
       <div
-        ref={bottomRef}
-        className={`hero__bottom-card ${bottomVisible ? 'is-revealed' : ''}`}
+        className='hero__bottom-card'
       >
         <img
           className='hero__bottom-frame'
@@ -117,8 +109,7 @@ const HeroSlide = ({
       </div>
 
       <div
-        ref={insuranceRef}
-        className={`hero__insurance ${insuranceVisible ? 'is-revealed' : ''}`}
+        className='hero__insurance'
       >
         <img
           className='hero__insurance-icon'

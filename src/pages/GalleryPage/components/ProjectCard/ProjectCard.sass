@@ -18,7 +18,7 @@
     font: inherit
     text-align: left
     cursor: pointer
-    transition: transform 0.2s ease
+    transition: transform var(--motion-project-hover-duration) var(--motion-interaction-easing)
 
     &:focus-visible
       outline: 3px solid vars.$color-primary
@@ -65,7 +65,7 @@
     font-size: 14px
     font-weight: vars.$font-semibold
     line-height: 22px
-    transition: color 0.2s ease
+    transition: color var(--motion-color-duration) var(--motion-interaction-easing)
 
     img
       display: block
@@ -76,7 +76,7 @@
 
 @media (min-width: 1101px) and (hover: hover) and (pointer: fine)
   .project-card__button:hover
-    transform: translateY(-4px)
+    transform: translateY(calc(-1 * var(--motion-project-hover-distance)))
 
     .project-card__action
       color: vars.$color-primary

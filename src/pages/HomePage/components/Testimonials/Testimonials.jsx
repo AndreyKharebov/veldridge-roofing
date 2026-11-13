@@ -1,3 +1,4 @@
+import { motionConfig } from '../../../../config/motion.js';
 import { useEffect, useState } from 'react';
 
 import { testimonials } from './testimonials';
@@ -9,13 +10,13 @@ const Testimonials = () => {
 
   useEffect(() => {
     if (testimonials.length <= 1) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (window.matchMedia(motionConfig.reducedMotionQuery).matches) return;
 
     const intervalId = window.setInterval(() => {
       if (!document.hidden) {
         setActiveIndex((current) => (current + 1) % testimonials.length);
       }
-    }, 5000);
+    }, motionConfig.carousel.intervalMs);
 
     return () => window.clearInterval(intervalId);
   }, []);
