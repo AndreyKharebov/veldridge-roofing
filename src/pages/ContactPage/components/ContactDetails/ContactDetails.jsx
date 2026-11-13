@@ -1,4 +1,4 @@
-import { contactData } from '../../data/contactData.js';
+import { useContent } from '../../../../content/context.js';
 import phoneIcon from './assets/phone.svg';
 import emailIcon from './assets/mail.svg';
 import officeIcon from './assets/location.svg';
@@ -6,7 +6,7 @@ import clockIcon from './assets/clock.svg';
 import './ContactDetails.sass';
 
 const ContactDetails = () => {
-  const data = contactData;
+  const { settings:data } = useContent();
   const rows = [
     { id: 'phone', label: 'Phone', value: data.phone, hint: data.isDemo ? 'Sample phone number' : 'Call our team', icon: phoneIcon, href: data.isDemo ? null : data.phoneHref },
     { id: 'email', label: 'Email', value: data.email, hint: data.isDemo ? 'Sample email address' : 'Send an inquiry', icon: emailIcon, href: data.isDemo ? null : `mailto:${data.email}` },

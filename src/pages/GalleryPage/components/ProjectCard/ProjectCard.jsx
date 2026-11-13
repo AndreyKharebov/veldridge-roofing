@@ -1,5 +1,6 @@
 import arrowRight from '../../assets/icons/arrow-right.svg';
 import './ProjectCard.sass';
+import ProjectPhoto from '../ProjectPhoto/ProjectPhoto.jsx';
 
 const ProjectCard = ({ project, onOpen, dialogId }) => (
   <li className='project-card' data-gallery-project={project.id}>
@@ -17,7 +18,7 @@ const ProjectCard = ({ project, onOpen, dialogId }) => (
         onOpen(project);
       }}
     >
-      <img className='project-card__image' src={project.image} alt={project.imageAlt} width='612' height='408' loading='lazy' decoding='async' />
+      <span className='project-card__image'><ProjectPhoto photo={project.coverPhoto || project.photos[0]} /></span>
       <span className='project-card__content'>
         <span className='project-card__category'>{project.categoryLabel}</span>
         <span className='project-card__title'>{project.title}</span>

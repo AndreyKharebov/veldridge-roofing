@@ -5,13 +5,13 @@ import paperclip from './assets/paperclip.svg';
 import closeIcon from './assets/close.svg';
 import './PhotoPicker.sass';
 
-const PhotoPicker = ({ photos, onChange, error, onError }) => {
+const PhotoPicker = ({ photos, onChange, error, onError, disabled = false }) => {
   const inputRef = useRef(null);
   const chooseRef = useRef(null);
   const [dragging, setDragging] = useState(false);
 
   const addPhotos = (incoming) => {
-    if (!incoming.length) return;
+    if (disabled || !incoming.length) return;
     const result = selectPhotos(photos, incoming);
     onError(result.error);
     if (!result.error) onChange(result.files);
@@ -30,6 +30,7 @@ const PhotoPicker = ({ photos, onChange, error, onError }) => {
         type='file'
         accept={photoRules.accept}
         multiple
+        disabled={disabled}
         hidden
         aria-label='Choose roof photos'
         onChange={(event) => {
@@ -41,7 +42,7 @@ const PhotoPicker = ({ photos, onChange, error, onError }) => {
       <div
         className={`photo-picker__dropzone${dragging ? ' is-dragging' : ''}`}
         onDragOver={(event) => {
-          if (!Array.from(event.dataTransfer.types).includes('Files')) return;
+          if (disabled || !Array.from(event.dataTransfer.types).includes('Files')) return;
           event.preventDefault();
           event.dataTransfer.dropEffect = 'copy';
           setDragging(true);

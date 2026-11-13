@@ -1,3 +1,8 @@
+> **Admin integration:** Live content now comes from the shared local workspace.
+> Edit it through `/admin`; the original data modules below are seed inputs only.
+> See `src/admin/README.md` for demo credentials, persistence and backend limitations.
+> Contact submissions are now saved to this browser’s demo inbox, not just logged.
+
 # Blog
 
 Implementation of the approved **Blog — Desktop 1440** frame (`161:932`) and

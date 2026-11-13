@@ -1,3 +1,8 @@
+> **Admin integration:** Live content now comes from the shared local workspace.
+> Edit it through `/admin`; the original data modules below are seed inputs only.
+> See `src/admin/README.md` for demo credentials, persistence and backend limitations.
+> Contact submissions are now saved to this browser’s demo inbox, not just logged.
+
 # Contact page
 
 Implements the approved Contact — Desktop 1440 design (Figma node 170:1501) and form states (173:1389). All source is page-owned. Uses the existing route, layout, font, colors and interior-page Sass mixins; no new runtime dependencies.

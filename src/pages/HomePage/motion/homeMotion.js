@@ -9,3 +9,5 @@ export const homeMotion = [
   { selector: '.service-card', direction: 'up' },
   { selector: '.why-choose-us__benefit', direction: 'right' },
 ];
+
+export const homeMotionOptions = { dynamic: true };

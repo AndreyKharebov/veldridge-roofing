@@ -8,3 +8,5 @@ export const blogMotion = [
   { selector: '.page-cta__content', direction: 'up' },
   { selector: '.page-cta__image', direction: 'right', offset: 1 },
 ];
+
+export const blogMotionOptions = { dynamic: true };

@@ -1,0 +1,1005 @@
+@use '../styles/abstracts/variables' as site
+
+// Workspace styles are isolated from the public website and its reveal effects.
+.admin-shell,
+.admin-login,
+.admin-dialog
+  --admin-canvas: #f7f7f5
+  --admin-surface: #fff
+  --admin-subtle: #fafaf8
+  --admin-text: #171717
+  --admin-muted: #666662
+  --admin-border: #e3e1da
+  --admin-accent: #f58a00
+  --admin-accent-soft: #fff0d8
+  --admin-accent-ink: #854600
+  --admin-danger: #b42318
+  font-family: site.$font-primary
+  color: var(--admin-text)
+  font-size: 14px
+  line-height: 1.5715
+  text-align: left
+
+  *,
+  *::before,
+  *::after
+    box-sizing: border-box
+
+  h1, h2, h3, p
+    margin: 0
+
+  h1
+    font-size: 32px
+    line-height: 42px
+    font-weight: 600
+
+  h2
+    font-size: 18px
+    line-height: 26px
+    font-weight: 600
+
+  h3
+    font-size: 16px
+    line-height: 24px
+    font-weight: 600
+
+  button, input, textarea, select
+    font-family: inherit
+
+  a, button, input, textarea, select, summary
+    &:focus-visible
+      outline: 2px solid var(--admin-accent-ink)
+      outline-offset: 3px
+
+  button:disabled,
+  fieldset:disabled button
+    cursor: not-allowed
+    opacity: 0.55
+
+.admin-shell
+  min-height: 100vh
+  background-color: var(--admin-canvas)
+
+.admin-main
+  min-width: 0
+  margin-left: 240px
+
+.admin-sidebar
+  position: fixed
+  top: 0
+  bottom: 0
+  left: 0
+  z-index: 20
+  display: flex
+  flex-direction: column
+  gap: 8px
+  width: 240px
+  padding: 24px
+  overflow-y: auto
+  background-color: var(--admin-surface)
+
+  &__caption
+    font-size: 12px
+    line-height: 18px
+    letter-spacing: 1px
+    text-transform: uppercase
+    color: var(--admin-muted)
+
+  .admin-nav
+    margin-top: 40px
+
+  &__account
+    display: flex
+    flex-direction: column
+    gap: 6px
+    margin-top: auto
+    padding: 12px
+    border-radius: 8px
+    background-color: var(--admin-subtle)
+
+    strong
+      font-size: 13px
+      font-weight: 500
+
+    span
+      font-size: 12px
+      color: var(--admin-muted)
+
+.admin-wordmark
+  display: flex
+  flex-direction: column
+  align-items: center
+  gap: 2px
+  width: 168px
+  margin-bottom: 8px
+  text-align: center
+
+  strong
+    font-size: 22px
+    font-weight: 700
+    line-height: 28px
+
+  span
+    color: #f18500
+    font-size: 11px
+    line-height: 16px
+    letter-spacing: 4px
+
+.admin-nav
+  display: flex
+  flex-direction: column
+  gap: 8px
+  margin-bottom: 32px
+
+  &__link
+    display: flex
+    align-items: center
+    gap: 12px
+    min-height: 46px
+    padding: 12px 14px
+    border-radius: 8px
+    color: var(--admin-muted)
+    font-size: 13px
+    font-weight: 500
+    line-height: 20px
+    text-decoration: none
+    transition: background-color var(--motion-color-duration) ease
+
+    img
+      flex: none
+      display: block
+
+    &:hover,
+    &.is-active
+      background-color: var(--admin-accent-soft)
+      color: var(--admin-accent-ink)
+
+.admin-topbar
+  display: flex
+  align-items: center
+  gap: 16px
+  min-height: 80px
+  padding: 16px 44px
+  background-color: var(--admin-surface)
+
+  &__breadcrumb
+    flex: 1
+    color: var(--admin-muted)
+    font-size: 12px
+    line-height: 18px
+
+  &__compact
+    display: none
+
+.admin-avatar
+  display: inline-flex
+  align-items: center
+  justify-content: center
+  flex: 0 0 36px
+  width: 36px
+  height: 36px
+  border-radius: 50%
+  background-color: #f0f0ec
+  font-size: 13px
+
+.admin-content
+  display: flex
+  flex-direction: column
+  gap: 24px
+  max-width: 1600px
+  padding: 44px
+  margin-inline: auto
+
+  > form
+    min-width: 0
+    display: flex
+    flex-direction: column
+    gap: 20px
+
+.admin-demo
+  padding: 12px 16px
+  border-radius: 8px
+  background-color: var(--admin-accent-soft)
+  color: var(--admin-accent-ink)
+  font-size: 12px
+  line-height: 18px
+
+.admin-heading
+  display: flex
+  justify-content: space-between
+  align-items: center
+  gap: 24px
+  min-width: 0
+
+  > div:first-child
+    min-width: 0
+
+  p
+    margin-top: 8px
+    color: var(--admin-muted)
+
+  h1, p
+    overflow-wrap: anywhere
+
+.admin-panel
+  display: flex
+  flex-direction: column
+  align-items: stretch
+  gap: 20px
+  min-width: 0
+  padding: 24px
+  border: 1px solid var(--admin-border)
+  border-radius: 12px
+  background-color: var(--admin-surface)
+
+.admin-stack
+  display: flex
+  flex-direction: column
+  gap: 24px
+  min-width: 0
+
+.admin-editor,
+.admin-editor-grid
+  display: grid
+  grid-template-columns: minmax(0, 744fr) minmax(280px, 344fr)
+  align-items: start
+  gap: 24px
+  min-width: 0
+  margin: 0
+  padding: 0
+  border: 0
+
+.admin-field-row,
+.admin-two-columns
+  display: grid
+  grid-template-columns: repeat(2, minmax(0, 1fr))
+  align-items: start
+  gap: 24px
+  min-width: 0
+
+.admin-actions,
+.admin-filter-bar
+  display: flex
+  flex-wrap: wrap
+  align-items: center
+  gap: 12px
+
+.admin-actions--end
+  justify-content: flex-end
+
+.admin-spacer
+  flex: 1
+
+.admin-button
+  display: inline-flex
+  align-items: center
+  justify-content: center
+  gap: 8px
+  min-width: 44px
+  min-height: 44px
+  padding: 10px 24px
+  border: 1px solid var(--admin-border)
+  border-radius: 8px
+  background-color: var(--admin-surface)
+  color: var(--admin-text)
+  font-size: 14px
+  line-height: 22px
+  font-weight: 700
+  text-align: center
+  text-decoration: none
+  cursor: pointer
+  transition: background-color var(--motion-color-duration) ease
+
+  &:hover:not(:disabled)
+    background-color: var(--admin-subtle)
+
+  &[aria-pressed='true']
+    border-color: var(--admin-accent)
+    background-color: var(--admin-accent-soft)
+    color: var(--admin-accent-ink)
+
+  &--primary
+    border-color: transparent
+    background-color: var(--admin-accent)
+
+    &:hover:not(:disabled)
+      background-color: #e98200
+
+  &--danger
+    border-color: var(--admin-danger)
+    color: var(--admin-danger)
+
+    &:hover:not(:disabled)
+      background-color: #fff2f0
+
+.admin-menu-toggle
+  display: none
+
+.admin__field
+  display: flex
+  flex-direction: column
+  gap: 8px
+  min-width: 0
+
+  label
+    font-size: 13px
+    line-height: 20px
+    font-weight: 500
+
+.admin__control
+  width: 100%
+  min-width: 0
+  min-height: 40px
+  padding: 9px 14px
+  border: 1px solid var(--admin-border)
+  border-radius: 10px
+  background-color: var(--admin-surface)
+  color: var(--admin-text)
+  font-size: 14px
+  line-height: 22px
+  transition: border-color var(--motion-color-duration) ease
+
+  &::placeholder
+    color: #767672
+
+  &[aria-invalid='true']
+    border-color: var(--admin-danger)
+
+textarea.admin__control
+  display: block
+  resize: vertical
+  min-height: 80px
+
+select.admin__control
+  cursor: pointer
+
+.admin__field-error
+  color: var(--admin-danger)
+  font-size: 12px
+  line-height: 18px
+
+.admin-hint,
+.admin__hint
+  color: var(--admin-muted)
+  font-size: 12px
+  line-height: 18px
+  overflow-wrap: anywhere
+
+.admin-check-group,
+.admin-choice-group
+  min-width: 0
+  padding: 0
+  margin: 0
+  border: 0
+
+  legend
+    margin-bottom: 12px
+    font-size: 13px
+    line-height: 20px
+    font-weight: 500
+
+.admin-checkbox
+  display: inline-flex
+  align-items: center
+  gap: 10px
+  min-height: 44px
+  margin-right: 24px
+  cursor: pointer
+
+  input
+    appearance: auto
+    flex: 0 0 20px
+    width: 20px
+    height: 20px
+    accent-color: var(--admin-accent)
+
+.admin-notice
+  padding: 16px
+  border: 1px solid #cbe5d9
+  border-radius: 8px
+  background-color: #edf7f2
+  color: #226549
+  overflow-wrap: anywhere
+
+  &--error
+    background-color: #fff2f0
+    color: var(--admin-danger)
+    border-color: #f2c8c2
+
+.admin-metrics
+  display: grid
+  grid-template-columns: repeat(4,minmax(0,1fr))
+  gap: 16px
+
+  .admin-panel
+    gap: 8px
+
+  strong
+    display: block
+    font-size: 32px
+    line-height: 40px
+    font-weight: 600
+
+  span
+    color: var(--admin-muted)
+    font-size: 13px
+
+.admin-table-wrap
+  min-width: 0
+  overflow: auto
+  border: 1px solid var(--admin-border)
+  border-radius: 12px
+  background-color: var(--admin-surface)
+
+.admin-table
+  width: 100%
+  border-collapse: collapse
+  font-size: 13px
+  line-height: 20px
+
+  th
+    padding: 12px 16px
+    background-color: var(--admin-subtle)
+    color: var(--admin-muted)
+    font-size: 12px
+    line-height: 18px
+    font-weight: 400
+    text-align: left
+
+  td
+    padding: 16px
+    border-top: 1px solid var(--admin-border)
+    vertical-align: middle
+    overflow-wrap: anywhere
+
+    &:first-child
+      width: 32%
+
+  strong
+    display: block
+    font-weight: 500
+
+  small
+    display: block
+    max-width: 320px
+    margin-top: 4px
+    font-size: 12px
+    line-height: 18px
+    color: var(--admin-muted)
+
+  a
+    color: var(--admin-accent-ink)
+    display: inline-flex
+    align-items: center
+    min-height: 40px
+    text-decoration: none
+
+    &:hover
+      text-decoration: underline
+
+.admin-badge
+  display: inline-flex
+  align-self: flex-start
+  padding: 5px 10px
+  border-radius: 6px
+  background-color: #f0f0ec
+  color: var(--admin-muted)
+  font-size: 12px
+  line-height: 18px
+  white-space: nowrap
+
+  &--new
+    background-color: var(--admin-accent-soft)
+    color: var(--admin-accent-ink)
+
+  &--published,
+  &--active,
+  &--closed
+    background-color: #edf7f2
+    color: #226549
+
+  &--in-progress
+    background-color: #edf2fe
+    color: #3459a4
+
+  &--spam
+    background-color: #fff2f0
+    color: var(--admin-danger)
+
+.admin-projects
+  display: grid
+  grid-template-columns: repeat(3,minmax(0,1fr))
+  gap: 24px
+
+.admin-project-card
+  padding: 0
+  overflow: hidden
+  gap: 0
+
+  > img
+    display: block
+    width: 100%
+    aspect-ratio: 3 / 2
+    object-fit: cover
+
+  &__body
+    display: flex
+    flex-direction: column
+    gap: 12px
+    padding: 20px
+    flex: 1
+
+    h2
+      font-size: 18px
+      overflow-wrap: anywhere
+
+    .admin-button
+      margin-top: auto
+
+.admin-cover
+  width: 100%
+  aspect-ratio: 3 / 2
+  object-fit: cover
+  border-radius: 8px
+
+.admin-image-placeholder
+  display: flex
+  align-items: center
+  justify-content: center
+  min-height: 160px
+  padding: 24px
+  background-color: var(--admin-subtle)
+  border: 1px dashed var(--admin-border)
+  border-radius: 8px
+  color: var(--admin-muted)
+
+.admin-photo-grid,
+.admin-media-grid
+  display: grid
+  grid-template-columns: repeat(3,minmax(0,1fr))
+  gap: 16px
+
+.admin-photo-card
+  min-width: 0
+  padding: 10px
+  border: 1px solid var(--admin-border)
+  border-radius: 8px
+  display: flex
+  flex-direction: column
+  gap: 10px
+
+  &.is-cover
+    border: 2px solid var(--admin-accent)
+    padding: 9px
+
+  .admin-button
+    padding-inline: 10px
+
+  > .admin-button
+    width: 100%
+    padding-inline: 6px
+
+  .admin-actions
+    gap: 6px
+
+.admin-photo-select
+  display: block
+  width: 100%
+  padding: 0
+  border: 0
+  background: none
+  cursor: pointer
+  border-radius: 8px
+
+  &[aria-pressed='true']
+    outline: 2px solid var(--admin-accent-ink)
+    outline-offset: 2px
+
+.admin-panel .project-photo
+  display: block
+  aspect-ratio: 3 / 2
+  height: auto
+  min-width: 0
+  border-radius: 8px
+
+.admin-dropzone
+  padding: 20px
+  border: 1px dashed var(--admin-border)
+  border-radius: 8px
+  background-color: var(--admin-subtle)
+  display: flex
+  flex-direction: column
+  gap: 12px
+
+  &.is-dragging
+    border-color: var(--admin-accent)
+    background-color: var(--admin-accent-soft)
+
+.admin-media-choice
+  display: flex
+  flex-direction: column
+  gap: 12px
+  padding: 10px
+  min-width: 0
+  border: 1px solid var(--admin-border)
+  border-radius: 8px
+  background-color: var(--admin-surface)
+  color: var(--admin-text)
+  font-size: 14px
+  line-height: 22px
+  text-align: left
+  cursor: pointer
+  overflow-wrap: anywhere
+
+  &.is-selected
+    outline: 2px solid var(--admin-accent)
+    outline-offset: -2px
+    background-color: var(--admin-accent-soft)
+
+  img
+    width: 100%
+    aspect-ratio: 3 / 2
+    object-fit: cover
+    border-radius: 6px
+
+.admin-text-danger
+  min-height: 44px
+  padding: 4px
+  margin-left: auto
+  border: 0
+  background: none
+  color: var(--admin-danger)
+  cursor: pointer
+  font-size: 12px
+
+.admin-eyebrow,
+.admin-link
+  color: var(--admin-accent-ink)
+
+.admin-eyebrow
+  font-size: 11px
+  text-transform: uppercase
+  letter-spacing: 1px
+
+.admin-list-item
+  display: flex
+  flex-direction: column
+  gap: 12px
+
+.admin-facts
+  display: grid
+  grid-template-columns: repeat(2,minmax(0,1fr))
+  gap: 24px
+  margin: 0
+
+  dt
+    margin-bottom: 8px
+    color: var(--admin-muted)
+    font-size: 12px
+
+  dd
+    margin: 0
+    overflow-wrap: anywhere
+
+.admin-prose
+  white-space: pre-wrap
+  overflow-wrap: anywhere
+
+.admin-attachment
+  display: flex
+  flex-direction: column
+  gap: 8px
+  min-width: 0
+  padding: 10px
+  border: 1px solid var(--admin-border)
+  border-radius: 8px
+  background: white
+  color: var(--admin-text)
+  text-align: left
+  cursor: pointer
+  overflow-wrap: anywhere
+
+  img
+    width: 100%
+    aspect-ratio: 3 / 2
+    object-fit: cover
+    border-radius: 6px
+
+.admin-notes
+  list-style: none
+  margin: 0
+  padding: 0
+  display: flex
+  flex-direction: column
+  gap: 16px
+
+  li
+    border-radius: 8px
+    padding: 16px
+    background-color: var(--admin-subtle)
+
+  small
+    color: var(--admin-muted)
+
+.admin-demo-tools
+  summary
+    cursor: pointer
+    color: var(--admin-muted)
+
+  .admin-button
+    margin-block: 16px
+
+.admin-empty
+  align-items: flex-start
+
+.admin-login
+  display: flex
+  flex-direction: column
+  align-items: center
+  justify-content: center
+  gap: 28px
+  min-height: 100vh
+  padding: 40px 20px
+  background-color: var(--admin-canvas)
+
+  &__card
+    display: flex
+    flex-direction: column
+    gap: 24px
+    width: 448px
+    max-width: 100%
+    padding: 36px
+    border: 1px solid var(--admin-border)
+    border-radius: 16px
+    background-color: var(--admin-surface)
+
+.admin-dialog
+  position: fixed
+  inset: 0
+  margin: auto
+  width: 520px
+  max-width: calc(100vw - 32px)
+  max-height: calc(100dvh - 32px)
+  padding: 28px
+  overflow: auto
+  overscroll-behavior: contain
+  border: 1px solid var(--admin-border)
+  border-radius: 16px
+  background-color: var(--admin-surface)
+
+  &::backdrop
+    background-color: rgba(23,23,23,0.6)
+
+  &[open]
+    display: flex
+    flex-direction: column
+    gap: 24px
+
+  &__heading
+    display: flex
+    align-items: center
+    justify-content: space-between
+    gap: 20px
+
+    h2
+      overflow-wrap: anywhere
+
+    .admin-button
+      padding-inline: 12px
+      flex: none
+
+  &--media
+    width: 960px
+
+  &--photo
+    width: 1000px
+
+    > img
+      max-width: 100%
+      max-height: 75vh
+      object-fit: contain
+
+  &--menu
+    margin: 16px auto 16px 16px
+    max-width: 320px
+    width: calc(100vw - 32px)
+
+.admin-skip
+  position: fixed
+  top: -100px
+  left: 16px
+  z-index: 100
+  background: #fff
+  padding: 16px
+
+  &:focus
+    top: 16px
+
+@media (max-width: 1100px)
+  .admin-sidebar
+    display: none
+
+  .admin-main
+    margin-left: 0
+
+  .admin-topbar
+    padding: 16px 24px
+
+  .admin-menu-toggle
+    display: inline-flex
+    padding-inline: 14px
+
+  .admin-content
+    padding: 32px 24px
+
+  .admin-editor,
+  .admin-editor-grid
+    grid-template-columns: minmax(0,1fr)
+
+  .admin-projects
+    grid-template-columns: repeat(2,minmax(0,1fr))
+
+  .admin-metrics
+    grid-template-columns: repeat(2,minmax(0,1fr))
+
+@media (max-width: 700px)
+  .admin-content
+    padding: 20px
+    gap: 24px
+
+  .admin-topbar
+    padding: 20px
+
+    &__breadcrumb
+      display: none
+
+    &__compact
+      display: block
+      flex: 1
+      font-size: 18px
+
+  .admin-view-site
+    display: none
+
+  .admin-heading
+    align-items: flex-start
+    flex-direction: column
+    gap: 16px
+
+  .admin-panel
+    padding: 20px
+
+  .admin-metrics,
+  .admin-field-row,
+  .admin-two-columns,
+  .admin-projects,
+  .admin-facts
+    grid-template-columns: minmax(0,1fr)
+
+  .admin__control
+    font-size: 16px
+    min-height: 44px
+
+  .admin-check-group .admin-actions,
+  .admin-choice-group .admin-actions
+    flex-direction: column
+    align-items: flex-start
+
+  .admin-project-card
+    padding: 0
+
+  .admin-table-wrap
+    border: 0
+    border-radius: 0
+    overflow: visible
+    background: transparent
+
+  .admin-table
+    display: block
+
+    thead
+      position: absolute
+      width: 1px
+      height: 1px
+      overflow: hidden
+      clip-path: inset(50%)
+
+    tbody
+      display: flex
+      flex-direction: column
+      gap: 16px
+
+    tr
+      display: flex
+      flex-direction: column
+      padding: 20px
+      border: 1px solid var(--admin-border)
+      border-radius: 12px
+      background: var(--admin-surface)
+
+    td,
+    td:first-child
+      display: block
+      width: 100%
+      padding: 6px 0
+      border: 0
+
+    td::before
+      content: attr(data-label)
+      display: block
+      margin-bottom: 4px
+      font-size: 11px
+      color: var(--admin-muted)
+
+    td[data-label='Action']
+      margin-top: 8px
+
+      &::before
+        display: none
+
+      a
+        display: flex
+        align-items: center
+        justify-content: center
+        min-height: 44px
+        border: 1px solid var(--admin-border)
+        border-radius: 8px
+        font-weight: 600
+        color: var(--admin-text)
+
+  .admin-photo-grid,
+  .admin-media-grid
+    grid-template-columns: repeat(2,minmax(0,1fr))
+
+  .admin-photo-card
+    grid-column: 1 / -1
+
+  .admin-login__card
+    padding: 24px
+
+  .admin-dialog
+    padding: 20px
+    gap: 20px
+
+  .admin-button
+    padding-inline: 16px
+
+@media (prefers-reduced-motion: reduce)
+  .admin-shell *,
+  .admin-login *,
+  .admin-dialog *
+    transition: none !important
+
+@media print
+  .admin-sidebar,
+  .admin-topbar,
+  .admin-button,
+  .admin-demo-tools
+    display: none !important
+
+  .admin-main
+    margin-left: 0
+
+.admin-project-card__photo
+  width: 100%
+  aspect-ratio: 3 / 2
+
+.admin-project-card__photo .project-photo
+  height: 100%
+
+.admin-content form > fieldset
+  min-width: 0
+  margin: 0
+  padding: 0
+  border: 0
+
+.admin-metrics .admin-panel > p,
+.admin-metrics .admin-panel > small
+  color: var(--admin-muted)
+
+.admin-metrics .admin-panel > p
+  font-size: 13px
+
+.admin-metrics .admin-panel > small
+  font-size: 12px
+  line-height: 18px

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import './ProjectPhoto.sass';
 
-const ProjectPhoto = ({ photo, decorative = false }) => {
+const ProjectPhoto = ({ photo, decorative = false, className = '' }) => {
   const [failed, setFailed] = useState(false);
   const cropStyle = photo.crop ? {
     width: `${photo.crop.scale * 100}%`,
@@ -11,7 +11,7 @@ const ProjectPhoto = ({ photo, decorative = false }) => {
   } : undefined;
 
   return (
-    <span className='project-photo'>
+    <span className={`project-photo ${className}`}>
       {failed ? (
         <span className='project-photo__fallback' role={decorative ? undefined : 'status'}>
           {decorative ? 'Photo' : 'This photo is unavailable. Please try another view.'}

@@ -25,7 +25,7 @@ export const normalizeInquiry = (values) => Object.fromEntries(
 );
 
 // Syntax checks only: no claim that a phone number/email is reachable.
-export const validateInquiry = (values) => {
+export const validateInquiry = (values, options = serviceOptions) => {
   const data = normalizeInquiry(values);
   const errors = {};
   if (!data.name) errors.name = 'Enter your name.';
@@ -43,7 +43,7 @@ export const validateInquiry = (values) => {
       errors.email = 'Enter a valid email address, or leave it blank and use phone.';
     }
   }
-  if (!serviceOptions.some(({ id }) => id === data.service)) errors.service = 'Choose a service from the list.';
+  if (!options.some(({ id }) => id === data.service)) errors.service = 'Choose a service from the list.';
   if (data.message.length > 4000) errors.message = 'Use no more than 4,000 characters.';
   return errors;
 };
