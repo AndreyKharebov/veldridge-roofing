@@ -54,6 +54,7 @@ jobs:
               sleep 1
             done
           done
+          python3 .github/qa/prepare-motion-check.py
           cp .github/qa/motion-check.txt "$RUNNER_TEMP/motion-check.mjs"
           node "$RUNNER_TEMP/motion-check.mjs"
       - name: Record exact tested source tree
