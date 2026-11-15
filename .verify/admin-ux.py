@@ -38,6 +38,9 @@ def set_services(p, rows):
 
 def sequence(p, expected_count):
     goto(p,'/services')
+    # The loading screen also has an h1. Wait for the actual route and records.
+    expect(p.locator('.services-page')).to_be_visible()
+    expect(p.locator('.service-finder__number')).to_have_count(expected_count)
     nav=p.locator('.service-finder__number').all_text_contents()
     expected=[str(i+1).zfill(2) for i in range(expected_count)]
     assert nav==expected, (nav, expected)
