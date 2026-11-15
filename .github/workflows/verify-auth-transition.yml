@@ -1,0 +1,38 @@
+name: Verify backend auth transition
+on:
+  push:
+    branches: [verify/backend-auth-transition-20261115]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm ci && npm run lint && node --test tests/*.test.js && npm run build
+      - run: pip install playwright && python -m playwright install --with-deps ${{ matrix.browser }}
+      - name: Check public and admin navigation with mocked Express authentication
+        env:
+          QA_BROWSERS: ${{ matrix.browser }}
+          QA_OUTPUT: auth-qa
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/preview.log 2>&1 &
+          for i in $(seq 1 50); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break || sleep 1; done
+          python tests/not-found.browser.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: auth-qa-${{ matrix.browser }}
+          path: auth-qa/
+          retention-days: 3
