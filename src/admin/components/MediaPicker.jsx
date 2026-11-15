@@ -33,6 +33,7 @@ export default function MediaPicker({ multiple = false, onChoose, onClose }) {
         <Button variant='primary' disabled={upload.isPending} onClick={() => fileRef.current.click()}>{upload.isPending ? 'Validating images…' : 'Upload images'}</Button>
       </div>
       {upload.isError && <Notice error>{upload.error.message}</Notice>}
+      {!media.length && <p className='admin-hint' role='status'>No images yet. Upload your first image to continue.</p>}
       <div className='admin-media-grid'>
         {media.map((image) => <button className={`admin-media-choice${selected.includes(image.id) ? ' is-selected' : ''}`} type='button' key={image.id}
           aria-pressed={selected.includes(image.id)} onClick={() => choose(image.id)}>

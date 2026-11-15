@@ -14,3 +14,13 @@ The React Compiler is not enabled on this template because of its impact on dev 
 ## Expanding the ESLint configuration
 
 If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+
+## Backend preparation / empty content
+
+Dynamic content starts empty. Existing browser data is preserved until Settings → Workspace data → **Clear workspace** is confirmed. Hero, static site sections, assets and animation timings are unchanged.
+
+- [Entity fields, validation and relationships](docs/data-model.md)
+- [Approved MERN backend handoff](docs/backend-handoff.md)
+- [Cleanup, local reset and recovery](docs/content-cleanup.md)
+
+The pre-cleanup source is on `backup/pre-content-cleanup-20261115`. Run `node --test tests/content-baseline.test.js` for data-contract tests.

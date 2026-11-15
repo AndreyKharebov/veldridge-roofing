@@ -30,7 +30,11 @@ export function ProjectsList() {
   </>;
 }
 export function ProjectEditor() {
-  const { id } = useParams(); const { projects } = useContent();
+  const { id } = useParams(); const { projects,services } = useContent();
+  if (!id && !services.some((service) => service.status === 'active')) return <>
+    <PageHeading title='New project' description='Projects need a service category.' />
+    <Empty title='Create a service first.'><p>Add an active service with Residential or Commercial selected, then create your project.</p><Button to='/admin/services/new'>Create a service</Button><Button to='/admin/projects'>Back to projects</Button></Empty>
+  </>;
   const initial = id ? projects.find((p) => p.id === id) : {title:'',summary:'',serviceId:'',propertyType:'',property:'',duration:'',material:'',finish:'',photos:[],coverPhotoId:'',work:[''],status:'draft',order:projects.length+1,revision:0,isDemo:true};
   if (!initial) return <Empty title='Project not found.'><Button to='/admin/projects'>Back to projects</Button></Empty>;
   return <ProjectForm key={id || 'new'} initial={initial} />;
