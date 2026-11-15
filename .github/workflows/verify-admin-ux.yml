@@ -1,0 +1,48 @@
+name: Verify admin UX fixes
+on:
+  push:
+    branches: [verify/admin-ux-20261115]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install, lint and build exact source
+        run: npm ci && npm run lint && npm run build
+      - name: Install browser tests
+        run: |
+          pip install playwright==1.65.1
+          python -m playwright install --with-deps ${{ matrix.browser }}
+      - name: Verify numbering and media confirmation in production
+        env:
+          QA_BROWSER: ${{ matrix.browser }}
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/ux-preview.log 2>&1 &
+          for i in $(seq 1 45); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break || sleep 1; done
+          python .verify/admin-ux.py
+      - name: Record exact tested source
+        if: always()
+        run: |
+          mkdir -p ux-qa
+          git rev-parse HEAD:src > ux-qa/tested-src-tree.txt
+          git rev-parse HEAD:package-lock.json > ux-qa/tested-lock.txt
+          cp /tmp/ux-preview.log ux-qa/preview.log || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: admin-ux-${{ matrix.browser }}
+          path: ux-qa/
+          retention-days: 7
