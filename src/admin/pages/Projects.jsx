@@ -1,3 +1,4 @@
+import NotFound from '../../components/feedback/NotFound/NotFound.jsx';
 import { useState } from 'react';
 import { useParams } from 'react-router';
 import { useContent } from '../../content/context.js';
@@ -36,7 +37,7 @@ export function ProjectEditor() {
     <Empty title='Create a service first.'><p>Add an active service with Residential or Commercial selected, then create your project.</p><Button to='/admin/services/new'>Create a service</Button><Button to='/admin/projects'>Back to projects</Button></Empty>
   </>;
   const initial = id ? projects.find((p) => p.id === id) : {title:'',summary:'',serviceId:'',propertyType:'',property:'',duration:'',material:'',finish:'',photos:[],coverPhotoId:'',work:[''],status:'draft',order:projects.length+1,revision:0,isDemo:true};
-  if (!initial) return <Empty title='Project not found.'><Button to='/admin/projects'>Back to projects</Button></Empty>;
+  if (!initial) return <NotFound variant='admin' title='Project not found.' description='This project is not available in the current workspace. It may have been removed, or the link may be incorrect.' returnTo='/admin/projects' returnLabel='Back to projects' />;
   return <ProjectForm key={id || 'new'} initial={initial} />;
 }
 function ProjectForm({ initial }) {

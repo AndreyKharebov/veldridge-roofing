@@ -28,7 +28,8 @@ export default function AdminLayout() {
   const navigate = useNavigate();
   const [menu,setMenu] = useState(false);
   const [signOut,setSignOut] = useState(false);
-  const active = links.find(({path}) => path !== '/admin' && location.pathname.startsWith(path))?.name || 'Overview';
+  const active = links.find(({path}) => path !== '/admin' && (location.pathname === path || location.pathname.startsWith(`${path}/`)))?.name
+    || (/^\/admin\/?$/.test(location.pathname) ? 'Overview' : 'Page not found');
   useEffect(() => { document.title = `${active} | Veldridge Admin`; window.scrollTo({top:0,behavior:'instant'}); },[active,location.pathname]);
   return <div className='admin-shell'>
     <a className='admin-skip' href='#admin-content'>Skip to content</a>
