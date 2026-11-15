@@ -1,0 +1,74 @@
+name: Verify 404 routes
+on:
+  push:
+    branches: [verify/not-found-20261115]
+permissions:
+  contents: read
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      contents: write
+    outputs:
+      sha: ${{ steps.source.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply scoped route integration
+        run: |
+          if ! grep -q "element:<NotFound />" src/App.jsx; then python .verify/apply-404.py; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src
+          if ! git diff --cached --quiet; then
+            git commit -m 'Wire public and admin 404 recovery without changing workspace data [skip ci]'
+            git push origin HEAD:verify/not-found-20261115
+          fi
+      - id: source
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - run: npm ci
+      - run: npm run lint && node --test tests/*.test.js && npm run build
+  browser:
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm ci && npm run build
+      - run: pip install playwright && python -m playwright install --with-deps ${{ matrix.browser }}
+      - name: Test production routes, metadata and recovery
+        env:
+          QA_BROWSERS: ${{ matrix.browser }}
+          QA_OUTPUT: not-found-qa
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/404-preview.log 2>&1 &
+          for i in $(seq 1 40); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break || sleep 1; done
+          python tests/not-found.browser.py
+      - name: Record exact verified source
+        if: always()
+        run: |
+          mkdir -p not-found-qa
+          git rev-parse HEAD > not-found-qa/tested-commit.txt
+          git ls-tree HEAD > not-found-qa/tested-root-tree.txt
+          cp /tmp/404-preview.log not-found-qa/ || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: not-found-${{ matrix.browser }}
+          path: not-found-qa/
+          retention-days: 7
