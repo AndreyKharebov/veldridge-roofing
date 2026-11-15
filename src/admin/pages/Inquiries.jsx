@@ -1,3 +1,4 @@
+import NotFound from '../../components/feedback/NotFound/NotFound.jsx';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -46,7 +47,7 @@ export function InquiryDetail() {
   if (query.isPending) return <Notice>Loading inquiry…</Notice>;
   if (query.isError) return <Notice error>{query.error.message} <Button onClick={() => query.refetch()}>Try again</Button></Notice>;
   const record = query.data.find((row) => row.id === id);
-  return record ? <InquiryContent key={record.id} record={record} /> : <Empty title='Inquiry not found.'><Button to='/admin/inquiries'>Back to inquiries</Button></Empty>;
+  return record ? <InquiryContent key={record.id} record={record} /> : <NotFound variant='admin' title='Inquiry not found.' description='This inquiry is not available in the current workspace. It may have been removed, or the link may be incorrect.' returnTo='/admin/inquiries' returnLabel='Back to inquiries' />;
 }
 function InquiryContent({ record }) {
   const { projects,articles } = useContent();

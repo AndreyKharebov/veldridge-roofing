@@ -3,7 +3,7 @@ import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router';
 import { auth } from '../api/auth.js';
 import ContentProvider from '../content/ContentProvider.jsx';
 import AdminLayout from './components/AdminLayout.jsx';
-import { Button, Empty } from './components/UI.jsx';
+import NotFound from '../components/feedback/NotFound/NotFound.jsx';
 import Login from './pages/Login.jsx';
 import Overview from './pages/Overview.jsx';
 import { ServicesList, ServiceEditor } from './pages/Services.jsx';
@@ -34,7 +34,7 @@ export default function AdminApp() {
       <Route path='projects' element={<ProjectsList />} /><Route path='projects/new' element={<ProjectEditor />} /><Route path='projects/:id' element={<ProjectEditor />} />
       <Route path='inquiries' element={<InquiriesList />} /><Route path='inquiries/:id' element={<InquiryDetail />} />
       <Route path='settings' element={<Settings />} />
-      <Route path='*' element={<Empty title='Page not found.'><Button to='/admin'>Back to overview</Button></Empty>} />
+      <Route path='*' element={<NotFound variant='admin' description='This workspace page does not exist. Use the navigation or return to the overview.' />} />
     </Route></Route>
   </Routes>;
 }

@@ -1,3 +1,4 @@
+import NotFound from '../../components/feedback/NotFound/NotFound.jsx';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { useContent } from '../../content/context.js';
@@ -24,7 +25,7 @@ export function NewsList() {
 export function ArticleEditor() {
   const { id } = useParams(); const { articles } = useContent();
   const initial = id ? articles.find((a) => a.id === id) : { title:'',summary:'',imageId:null,imageAlt:'',publishedAt:new Date().toISOString().slice(0,10),categoryId:'',status:'draft',revision:0,sections:[{id:newId('section'),heading:'',body:''}],source:{label:'',url:''} };
-  if (!initial) return <Empty title='Article not found.'><Button to='/admin/news'>Back to news</Button></Empty>;
+  if (!initial) return <NotFound variant='admin' title='Article not found.' description='This article is not available in the current workspace. It may have been removed, or the link may be incorrect.' returnTo='/admin/news' returnLabel='Back to news' />;
   return <ArticleForm key={id || 'new'} initial={initial} />;
 }
 function ArticleForm({ initial }) {

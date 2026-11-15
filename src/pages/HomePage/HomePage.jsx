@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useMotionReveal } from '../../hooks/useMotionReveal.js';
 import { homeMotion, homeMotionOptions } from './motion/homeMotion.js';
 
@@ -13,6 +14,11 @@ import FAQ from './components/FAQ/FAQ.jsx';
 
 const HomePage = () => {
   const pageRef = useMotionReveal(homeMotion, homeMotionOptions);
+  useEffect(() => {
+    const previousTitle = document.title;
+    document.title = 'Veldridge Roofing | Professional Roofing Services';
+    return () => { document.title = previousTitle; };
+  }, []);
   return (
     <div className='home-page motion-root' ref={pageRef}>
       <Hero />

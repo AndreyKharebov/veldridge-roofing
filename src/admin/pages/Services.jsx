@@ -1,3 +1,4 @@
+import NotFound from '../../components/feedback/NotFound/NotFound.jsx';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { useContent } from '../../content/context.js';
@@ -27,7 +28,7 @@ export function ServiceEditor() {
     title:'',summary:'',description:'',propertyTypes:[],points:[''],imageId:null,homeImageId:null,imageAlt:'',
     showOnHome:false,group:'main',status:'active',order:services.length+1,revision:0,eyebrow:'',cta:'Discuss Your Project',tone:'white',
   };
-  if (!initial) return <Empty title='Service not found.'><Button to='/admin/services'>Back to services</Button></Empty>;
+  if (!initial) return <NotFound variant='admin' title='Service not found.' description='This service is not available in the current workspace. It may have been removed, or the link may be incorrect.' returnTo='/admin/services' returnLabel='Back to services' />;
   return <ServiceForm key={id || 'new'} initial={initial} />;
 }
 function ServiceForm({ initial }) {

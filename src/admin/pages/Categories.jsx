@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import NotFound from '../../components/feedback/NotFound/NotFound.jsx';
 import { useMutation } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router';
 import { useContent } from '../../content/context.js';
@@ -10,13 +11,14 @@ import { ConfirmDialog } from '../components/Dialog.jsx';
 export default function Categories() {
   const { id } = useParams(); const { categories,articles } = useContent();
   const editing = id === 'new' ? {name:'',description:'',revision:0} : categories.find((c) => c.id === id);
+  if (id && id !== 'new' && !editing) return <NotFound variant='admin' title='Category not found.' description='This news category is not available in the current workspace. Return to the category list to continue.' returnTo='/admin/news/categories' returnLabel='Back to categories' />;
   return <><PageHeading title='News categories' description='Organize articles in the workspace. Public Blog stays a simple newest-first list.'>
     <div className='admin-actions'><Button to='/admin/news'>← News</Button><Button to='/admin/news/categories/new' variant='primary'>+ Add category</Button></div>
   </PageHeading><div className='admin-editor'><div className='admin-table-wrap'><table className='admin-table'><thead><tr><th>Category</th><th>Articles</th><th>Action</th></tr></thead><tbody>
     {categories.map((category) => <tr key={category.id}><td data-label='Category'>{category.name}</td><td data-label='Articles'>{articles.filter((a) => a.categoryId === category.id).length}</td>
       <td data-label='Action'><Link to={`/admin/news/categories/${category.id}`}>Edit →</Link></td></tr>)}
   </tbody></table></div>
-    {editing ? <CategoryForm key={id} initial={editing} /> : <Empty title={id ? 'Category not found.' : 'Select a category.'}><p>Choose Edit or add a new category.</p></Empty>}
+    {editing ? <CategoryForm key={id} initial={editing} /> : <Empty title='Select a category.'><p>Choose Edit or add a new category.</p></Empty>}
   </div></>;
 }
 function CategoryForm({ initial }) {
