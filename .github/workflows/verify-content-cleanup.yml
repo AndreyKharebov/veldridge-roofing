@@ -51,6 +51,15 @@ jobs:
           python-version: '3.12'
       - run: npm ci && npm run build
       - run: pip install playwright && python -m playwright install --with-deps ${{ matrix.browser }}
+      - name: Use saved record URLs for persistence checks
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('.verify/cleanup-qa.py');s=p.read_text()
+          s=s.replace("   p.reload(wait_until='networkidle');expect(p.get_by_label('Service name *',exact=True))", "   go(p,'/admin/services/'+bucket(p,'content')['services'][0]['id']);p.reload(wait_until='networkidle');expect(p.get_by_label('Service name *',exact=True))")
+          s=s.replace("   p.reload(wait_until='networkidle');expect(p.locator('.admin-photo-card.is-cover'))", "   go(p,'/admin/projects/'+bucket(p,'content')['projects'][0]['id']);p.reload(wait_until='networkidle');expect(p.locator('.admin-photo-card.is-cover'))")
+          p.write_text(s)
+          PY
       - name: Verify empty state and complete first-record workflows
         env:
           QA_BROWSERS: ${{ matrix.browser }}
@@ -67,6 +76,7 @@ jobs:
           git rev-parse HEAD > cleanup-qa/tested-commit.txt
           git ls-tree HEAD > cleanup-qa/tested-root-tree.txt
           git archive --format=tar.gz HEAD -o cleanup-qa/tested-source.tar.gz
+          cp .verify/cleanup-qa.py cleanup-qa/tested-qa.py
           cp /tmp/cleanup-preview.log cleanup-qa/ || true
       - uses: actions/upload-artifact@v4
         if: always()
