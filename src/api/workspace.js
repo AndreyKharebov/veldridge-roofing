@@ -5,7 +5,7 @@ import { normalizeRecord, normalizeSettings, ValidationError } from './validatio
 import { requireAdmin } from './auth.js';
 import { validateInquiry, normalizeInquiry } from '../pages/ContactPage/data/inquiry.js';
 
-export const mockConfig = { latencyMs: 180, failNextWrite: false };
+const MOCK_LATENCY_MS = 180;
 const eventName = 'veldridge-workspace-change';
 const channel = typeof BroadcastChannel === 'function' ? new BroadcastChannel(eventName) : null;
 channel?.addEventListener('message', () => window.dispatchEvent(new Event(eventName)));
@@ -14,9 +14,8 @@ export function subscribeWorkspace(listener) {
   window.addEventListener(eventName,listener);
   return () => window.removeEventListener(eventName,listener);
 }
-async function latency(write = false) {
-  await new Promise((resolve) => setTimeout(resolve,mockConfig.latencyMs));
-  if (write && mockConfig.failNextWrite) { mockConfig.failNextWrite = false; throw new Error('Simulated save failure. Your edits are still here; please retry.'); }
+async function latency() {
+  await new Promise((resolve) => setTimeout(resolve, MOCK_LATENCY_MS));
 }
 const conflict = () => { throw new Error('This record changed in another tab. Copy your edits and reload before saving again.'); };
 export const workspaceApi = {

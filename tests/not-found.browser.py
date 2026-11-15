@@ -39,7 +39,7 @@ def login(page, path='/admin'):
     go(page, path)
     expect(page.get_by_role('button', name='Sign in', exact=True)).to_be_visible()
     page.get_by_label('Username', exact=True).fill('admin')
-    page.get_by_label('Password', exact=True).fill('demo-admin')
+    page.get_by_label('Password', exact=True).fill('qa-not-a-real-password')
     page.get_by_role('button', name='Sign in', exact=True).click()
     expect(page.locator('.admin-content')).to_be_visible()
 
@@ -88,6 +88,24 @@ with sync_playwright() as playwright:
             context = browser.new_context(viewport=viewport or {'width':1440,'height':1000}, **context_options)
             page = context.new_page()
             page.set_default_timeout(12000)
+            # Mock the Express endpoints without starting a backend in frontend QA.
+            auth_state = {'signed_in': False}
+            def respond_auth(route):
+                url = route.request.url
+                if url.endswith('/api/auth/me'):
+                    route.fulfill(status=200 if auth_state['signed_in'] else 401,
+                        content_type='application/json',
+                        body=json.dumps({'status':'success','admin':{'id':'qa-admin','username':'qa-admin'}} if auth_state['signed_in'] else {'status':'error','message':'Unauthorized'}))
+                elif url.endswith('/api/auth/login'):
+                    auth_state['signed_in'] = True
+                    route.fulfill(status=200,content_type='application/json',
+                        body=json.dumps({'status':'success','admin':{'id':'qa-admin','username':'qa-admin'}}))
+                elif url.endswith('/api/auth/logout'):
+                    auth_state['signed_in'] = False
+                    route.fulfill(status=200,content_type='application/json',body='{"status":"success"}')
+                else:
+                    route.continue_()
+            page.route('**/api/auth/**',respond_auth)
             errors = []
             page.on('pageerror', lambda error: errors.append(str(error)))
             started = time.monotonic()
@@ -214,7 +232,7 @@ with sync_playwright() as playwright:
         def storage_error(page,context):
             context.add_init_script("Object.defineProperty(window,'indexedDB',{value:undefined,configurable:true})")
             go(page,'/services')
-            expect(page.get_by_role('heading',name='Local content is unavailable.')).to_be_visible()
+            expect(page.get_by_role('heading',name='Browser content is unavailable.')).to_be_visible()
             expect(page.get_by_role('button',name='Try again',exact=True)).to_be_visible()
             expect(page.locator('.not-found')).to_have_count(0)
             expect(page.locator('meta[data-not-found]')).to_have_count(0)

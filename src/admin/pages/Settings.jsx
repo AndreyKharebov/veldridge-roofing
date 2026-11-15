@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useContent } from '../../content/context.js';
-import { workspaceApi, mockConfig } from '../../api/workspace.js';
+import { workspaceApi } from '../../api/workspace.js';
 import { downloadBackup, exportBackup, parseBackup, importBackup } from '../../api/backup.js';
 import { useEditor } from '../hooks/useEditor.js';
 import EditorFeedback from '../components/EditorFeedback.jsx';
@@ -11,7 +11,6 @@ import { ConfirmDialog } from '../components/Dialog.jsx';
 function DemoData({ onReplaced }) {
   const [confirmation,setConfirmation] = useState(null);
   const [message,setMessage] = useState('');
-  const [error,setError] = useState('');
   const fileRef = useRef(null);
   const client = useQueryClient();
   const backup = useMutation({mutationFn:exportBackup,onSuccess:(blob) => {downloadBackup(blob);setMessage('Content backup exported. Inquiries and their attachments are not included.');}});
@@ -29,7 +28,6 @@ function DemoData({ onReplaced }) {
     </div>
     {message && <Notice>{message}</Notice>}{[backup,parse].filter((mutation) => mutation.isError).map((mutation,i) => <Notice key={i} error>{mutation.error.message}</Notice>)}
     <p className='admin-hint'>JSON backup up to 100 MB. Uploaded public images are embedded; bundled images use stable references. Import replaces content but keeps your inbox. Clear workspace removes all content, contact details, public media and inquiries. It does not restore sample records.</p>
-    <details className='admin-demo-tools'><summary>Demo testing</summary><Button onClick={() => {mockConfig.failNextWrite = true;setError('The next save or form submission will simulate a failure. No existing data will be lost.');}}>Simulate next save error</Button>{error && <p role='status'>{error}</p>}</details>
     {confirmation && <ConfirmDialog title={confirmation.kind === 'reset' ? 'Clear this local workspace?' : 'Replace local content?'} action={confirmation.kind === 'reset' ? 'Clear workspace' : 'Import content'} danger pending={change.isPending} onClose={() => {setConfirmation(null);change.reset();}} onConfirm={() => change.mutate()}>
       <p>{confirmation.kind === 'reset' ? 'This permanently removes local services, news, projects, contact details, images, inquiries and private attachments. It starts an empty workspace; no sample records are restored. Content backups do not include inquiries. Cancel unless you are ready to lose those local messages.' : 'This replaces services, articles, projects, contact settings and public images. Your inquiry inbox and its attachments stay intact.'}</p>
       {change.isError && <Notice error>{change.error.message}</Notice>}
@@ -73,7 +71,7 @@ function SettingsForm({ initial, onReplaced }) {
         </div>
         <aside className='admin-stack'><Panel title='Save settings'><Button variant='primary' type='submit'>{editor.mutation.isPending ? 'Saving…' : 'Save changes'}</Button><Button to='/admin'>Cancel</Button><p className='admin-hint'>Shared by Contact and Footer. Hero content is not editable here.</p></Panel>
           <Panel title='Contact preview'><h3>{values.company}</h3><p className='admin-prose'>{values.phone || 'Phone not provided'}<br />{values.email || 'Email not provided'}<br />{values.street || 'Address not provided'}<br />{[values.city, [values.state,values.zip].filter(Boolean).join(' ')].filter(Boolean).join(', ')}</p><p className='admin-hint'>{values.hours}<br />{values.hoursNote}</p><p>{values.serviceStates.join(' · ')}</p></Panel>
-          <Panel title='Demo data reminder'><p>Use sample customer information only. A real backend is required for shared access, secure login and incoming inquiries from other visitors.</p></Panel>
+          <Panel title='Local content workspace'><p>Content, images and inquiries are currently stored in this browser only. Express authentication is connected; content endpoints will replace local storage in the next backend stages.</p></Panel>
         </aside>
       </fieldset>
     </form>

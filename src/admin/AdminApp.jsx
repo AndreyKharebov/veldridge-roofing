@@ -1,4 +1,4 @@
-import { useEffect, useSyncExternalStore } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router';
 import { auth } from '../api/auth.js';
 import ContentProvider from '../content/ContentProvider.jsx';
@@ -15,15 +15,19 @@ import Settings from './pages/Settings.jsx';
 import './Admin.sass';
 
 function RequireAdmin() {
-  const signedIn = useSyncExternalStore(auth.subscribe,auth.isSignedIn,() => false);
+  const state = useSyncExternalStore(auth.subscribe, auth.getSnapshot, () => 'checking');
   const location = useLocation();
-  return signedIn ? <ContentProvider><Outlet /></ContentProvider> : <Navigate to='/admin/login' state={{from:location.pathname}} replace />;
+  if (state === 'checking') return <main className='content-status'>Checking administrator session…</main>;
+  if (state === 'unavailable') return <main className='content-status'><h1>Cannot connect to the API.</h1><p>Start the Express server, then retry the connection.</p><button type='button' onClick={() => auth.bootstrap()}>Retry</button></main>;
+  return state === 'authenticated' ? <ContentProvider><Outlet /></ContentProvider> : <Navigate to='/admin/login' state={{from:location.pathname}} replace />;
 }
 function Logout() {
-  useEffect(() => {auth.signOut();},[]);
-  return <Navigate to='/admin/login' replace />;
+  const [finished, setFinished] = useState(false);
+  useEffect(() => { let active = true; auth.signOut().catch(() => {}).finally(() => { if (active) setFinished(true); }); return () => { active = false; }; }, []);
+  return finished ? <Navigate to='/admin/login' replace /> : <main className='content-status'>Signing out…</main>;
 }
 export default function AdminApp() {
+  useEffect(() => { auth.bootstrap(); }, []);
   return <Routes>
     <Route path='login' element={<Login />} /><Route path='logout' element={<Logout />} />
     <Route element={<RequireAdmin />}><Route element={<AdminLayout />}>
