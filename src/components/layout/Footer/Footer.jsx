@@ -29,7 +29,7 @@ const socialIcons = [
 
 const Footer = () => {
   const { settings } = useContent();
-  const contacts = {phone:settings.phone,email:settings.email,location:`${settings.street}, ${settings.locality}`};
+  const contacts = {phone:settings.phone,email:settings.email,location:[settings.street,settings.locality].filter(Boolean).join(', ')};
   const socialLinks = socialIcons.map((item) => ({...item,url:settings.socials[item.id] || null}));
   return (
     <footer className='footer'>
@@ -66,7 +66,7 @@ const Footer = () => {
           </nav>
 
           <div className='footer__contacts'>
-            <div className='footer__contact'>
+            {contacts.phone && <div className='footer__contact'>
               <img className='footer__contact-icon' src={phoneIcon} alt='' />
 
               {contacts.phone && !settings.isDemo ? (
@@ -76,9 +76,9 @@ const Footer = () => {
               ) : (
                 <span>{contacts.phone || 'Contact our team'}</span>
               )}
-            </div>
+            </div>}
 
-            <div className='footer__contact'>
+            {contacts.email && <div className='footer__contact'>
               <img className='footer__contact-icon' src={mailIcon} alt='' />
 
               {contacts.email && !settings.isDemo ? (
@@ -86,16 +86,16 @@ const Footer = () => {
               ) : (
                 <span>{contacts.email || 'Send an inquiry'}</span>
               )}
-            </div>
+            </div>}
 
-            <div className='footer__contact'>
+            {contacts.location && <div className='footer__contact'>
               <img className='footer__contact-icon' src={locationIcon} alt='' />
 
               <span>{contacts.location}</span>
-            </div>
+            </div>}
           </div>
 
-          {settings.isDemo && <p className='footer__demo-note'>Demo contact details · Not for calls or directions</p>}
+          {!contacts.phone && !contacts.email && !contacts.location ? <p className='footer__demo-note'>Contact details will be added soon.</p> : settings.isDemo && <p className='footer__demo-note'>Local demo contacts · Not for calls or directions</p>}
           <div className='footer__socials'>
             {socialLinks.map(({ id, label, icon, url }) =>
               url ? (

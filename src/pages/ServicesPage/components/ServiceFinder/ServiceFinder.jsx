@@ -19,12 +19,11 @@ const ServiceFinder = ({ services }) => (
           </h2>
         </div>
         <p className='services-page__text service-finder__description'>
-          Choose a service to jump to the details. Not sure where to start?
-          Begin with a free inspection.
+          {services.length ? 'Choose a service to jump to the details. Not sure where to start? Begin with a free inspection.' : 'Service details will be added soon. Contact our team to discuss your project.'}
         </p>
       </div>
 
-      <nav aria-label='Find a roofing service'>
+      {services.length > 0 ? <nav aria-label='Find a roofing service'>
         <ol className='service-finder__grid'>
           {services.map(({ id, number, title }) => (
             <li className='service-finder__item' key={id}>
@@ -36,7 +35,7 @@ const ServiceFinder = ({ services }) => (
             </li>
           ))}
         </ol>
-      </nav>
+      </nav> : <p className='services-page__text'>No services have been added yet.</p>}
     </div>
   </section>
 );

@@ -61,7 +61,7 @@ export async function parseBackup(file) {
       content[kind].push({ ...normalized, id:row.id, revision, updatedAt:new Date().toISOString() });
     }
   }
-  content.settings = { ...normalizeSettings(data.content.settings), revision };
+  content.settings = { ...normalizeSettings(data.content.settings, { allowUnconfigured: true }), revision };
   return { content, media };
 }
 export async function importBackup(validated) {

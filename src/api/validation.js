@@ -104,7 +104,7 @@ export function normalizeRecord(kind, input, content, mediaIds) {
   if (Object.keys(fields).length) throw new ValidationError(fields);
   return record;
 }
-export function normalizeSettings(input) {
+export function normalizeSettings(input, { allowUnconfigured = false } = {}) {
   const fields = {};
   const result = {
     company: trim(input.company,120), phone: trim(input.phone,40), email: trim(input.email,254),
@@ -113,13 +113,19 @@ export function normalizeSettings(input) {
     serviceStates: (Array.isArray(input.serviceStates) ? input.serviceStates : []).filter((v) => ['PA','NJ','DE'].includes(v)),
     isDemo: true,
   };
-  for (const key of ['company','phone','email','street','city','state','zip']) if (!result[key]) fields[key] = 'This field is required.';
+  const unconfigured = allowUnconfigured
+    && ['phone','email','street','city','state','zip','hours','hoursNote'].every((key) => !result[key])
+    && !result.serviceStates.length
+    && ['latitude','longitude','label'].every((key) => !input.map?.[key])
+    && ['facebook','instagram','linkedin','youtube'].every((key) => !input.socials?.[key]);
+  if (!result.company) fields.company = 'This field is required.';
+  for (const key of ['phone','email','street','city','state','zip']) if (!unconfigured && !result[key]) fields[key] = 'This field is required.';
   if (result.phone && result.phone.replace(/\D/g,'').length < 10) fields.phone = 'Enter a phone number with at least 10 digits.';
   if (result.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(result.email)) fields.email = 'Enter a valid email address.';
   if (result.zip && !/^\d{5}(-\d{4})?$/.test(result.zip)) fields.zip = 'Enter a valid ZIP code.';
   try { new Intl.DateTimeFormat('en-US',{timeZone:result.timeZone}).format(); } catch { fields.timeZone = 'Enter a valid time zone.'; }
-  result.locality = `${result.city}, ${result.state} ${result.zip}`;
-  result.phoneHref = `tel:${result.phone.replace(/[^\d+]/g,'')}`;
+  result.locality = [result.city, [result.state,result.zip].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+  result.phoneHref = result.phone ? `tel:${result.phone.replace(/[^\d+]/g,'')}` : '';
   const names = { PA: 'Pennsylvania', NJ: 'New Jersey', DE: 'Delaware' };
   result.serviceArea = result.serviceStates.map((s) => names[s]).join(' · ');
   result.map = { latitude: trim(input.map?.latitude,30), longitude: trim(input.map?.longitude,30), label: trim(input.map?.label,150) };

@@ -1,3 +1,5 @@
+> **Current baseline (2026-11-15):** editable demo records/contact values were removed. Counts/examples below describe the original design, not records seeded by the app. See [data model](../../../docs/data-model.md) and [cleanup/recovery](../../../docs/content-cleanup.md).
+
 > **Admin integration:** Live content now comes from the shared local workspace.
 > Edit it through `/admin`; the original data modules below are seed inputs only.
 > See `src/admin/README.md` for demo credentials, persistence and backend limitations.

@@ -30,7 +30,7 @@ or cleared/evicted by the browser. Same-origin tabs refresh via BroadcastChannel
   Home's Latest News shows the three newest published records.
 - **Projects**: up to 20 photographs, individual captions/alt text, one cover,
   reordering, service/property type, summary, materials, duration and work items.
-  Existing demonstration photographs/crops remain clearly marked as examples.
+  Imported illustrative projects remain flagged; no sample projects are seeded.
   Gallery and Home use published projects; archived records remain editable.
 - **Inquiries**: Contact creates a local inbox record, optionally with up to five
   photos. New / In progress / Closed / Spam, internal notes, source context and
@@ -47,10 +47,9 @@ preserved. Admin controls use the existing shared color-transition timing.
 
 ## Data and API
 
-`src/data/seed.js` adapts the original public data modules to one durable schema.
-They remain seed inputs, not live editing locations. First opening seeds once;
-refreshing does not overwrite edits. Existing 9 services, 10 articles and 18
-projects remain available. Eight fictional inquiries demonstrate statuses.
+`src/data/seed.js` creates an empty workspace. `src/data/defaultSettings.js` retains all settings fields with blank contacts. Existing browser data is not overwritten on refresh. Settings → Workspace data → Clear workspace explicitly clears it.
+
+See [data model](../../docs/data-model.md), [cleanup/recovery](../../docs/content-cleanup.md), and [MERN handoff](../../docs/backend-handoff.md).
 
 `src/api/workspace.js` is the asynchronous adapter. `src/api/database.js` commits
 IndexedDB transactions before reporting success. `src/content/` owns TanStack
@@ -65,7 +64,7 @@ unsaved edits. Image batches are validated and committed atomically.
 
 ### Mock failures
 
-Settings → Demo data → Demo testing → **Simulate next save error**. The next write
+Settings → Workspace data → Demo testing → **Simulate next save error**. The next write
 fails without changing saved data; retry verifies recovery. `mockConfig.latencyMs`
 in `src/api/workspace.js` controls the local request delay. No random failures. The failure switch applies within the current page session;
 use admin navigation after enabling it. A full page reload clears the switch.
@@ -78,8 +77,7 @@ stable source keys and require a compatible website build. Import validates all
 records, references and images before atomically replacing content/media.
 
 Content backups **exclude inquiries and their attachments**. Import preserves the
-inbox, including service-name snapshots. Reset restores all seed data, including
-the fictional inbox, only after confirmation. Export before resetting. A browser
+inbox, including service-name snapshots. Clear workspace explicitly removes all local data, including inquiries, and restores an empty baseline. Export content before clearing; that export does not preserve inquiries. A browser
 quota error is reported, not silently treated as a successful save.
 
 ## Replacing the mock adapter

@@ -1,29 +1,6 @@
-// All contact details are intentionally illustrative. Replace together before launch.
-export const contactData = {
-  isDemo: true,
-  company: 'Veldridge Roofing',
-  phone: '(215) 555-0148',
-  phoneHref: 'tel:+12155550148',
-  email: 'hello@veldridge.example',
-  street: '123 Example Street',
-  locality: 'Philadelphia, PA 19103',
-  hours: 'Mon–Fri, 8:00 AM–5:00 PM',
-  hoursNote: 'Saturday by appointment',
-  serviceArea: 'Pennsylvania · New Jersey · Delaware',
-};
-
-export const serviceOptions = [
-  { id: 'not-sure', label: 'Not sure yet' },
-  { id: 'free-inspection', label: 'Free Inspection' },
-  { id: 'roof-replacement', label: 'Roof Replacement' },
-  { id: 'damage-repairs', label: 'Damage Repairs' },
-  { id: 'roof-renovation', label: 'Roof Renovation' },
-  { id: 'commercial-roofing', label: 'Commercial Roofing' },
-  { id: 'solar-panels', label: 'Solar Panels' },
-  { id: 'roof-maintenance', label: 'Roof Maintenance' },
-  { id: 'storm-damage-restoration', label: 'Storm Damage Restoration' },
-  { id: 'gutters-drainage', label: 'Gutters & Drainage' },
-];
+// This fallback is valid even before the first service is created.
+// Live service choices come from the shared content API.
+export const serviceOptions = [{ id: 'not-sure', label: 'Not sure yet' }];
 
 export const photoRules = {
   maxCount: 5,

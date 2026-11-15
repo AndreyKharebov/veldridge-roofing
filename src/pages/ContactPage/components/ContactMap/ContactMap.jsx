@@ -13,6 +13,7 @@ const blocks = Array.from({ length: 13 }, (_, col) =>
 
 const ContactMap = () => {
   const { settings:contactData } = useContent();
+  const hasAddress = Boolean(contactData.street && contactData.locality);
   return (
   <section className='contact-map' aria-labelledby='contact-map-title'>
     <div className='container contact-map__inner'>
@@ -21,9 +22,9 @@ const ContactMap = () => {
           <p className='contact-map__eyebrow'>Nearby, when you need us</p>
           <h2 id='contact-map-title'>Local Team. Regional Reach.</h2>
         </div>
-        <p className='contact-map__description'>Serving homes and businesses across<br />{contactData.serviceArea}.</p>
+        <p className='contact-map__description'>{contactData.serviceArea ? <>Serving homes and businesses across<br />{contactData.serviceArea}.</> : 'Service area information will be added soon.'}</p>
       </div>
-      <figure className='contact-map__figure'>
+      {hasAddress ? <figure className='contact-map__figure'>
         <div className='contact-map__canvas' aria-label='Illustrative map with a sample office marker, not for directions'>
           <div className='contact-map__art' aria-hidden='true'>
             {blocks.map((block) => <div className='contact-map__block' key={block.id} style={{ left: block.x, top: block.y, width: block.width }} />)}
@@ -32,7 +33,7 @@ const ContactMap = () => {
             <img className='contact-map__waterway' src={waterway} alt='' />
             <div className='contact-map__road' />
             <div className='contact-map__avenue' />
-            <span className='contact-map__area-label'>Philadelphia area</span>
+            <span className='contact-map__area-label'>{contactData.city ? `${contactData.city} area` : 'Office area'}</span>
           </div>
           <p className='contact-map__badge'>Map preview · Demo</p>
           <div className='contact-map__location'>
@@ -48,7 +49,7 @@ const ContactMap = () => {
           </div>
         </div>
         <figcaption>Illustrative map and sample marker. The live map will use the confirmed office address.</figcaption>
-      </figure>
+      </figure> : <p className='contact-map__description'>Office location has not been added yet. A map will be available after the address is configured.</p>}
     </div>
   </section>
   );
