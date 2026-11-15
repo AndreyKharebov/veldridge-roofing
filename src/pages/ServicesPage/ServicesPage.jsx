@@ -16,9 +16,15 @@ import './ServicesPage.sass';
 const ServicesPage = () => {
   const { services } = useContent();
   const activeServices = services.filter((service) => service.status === 'active');
-  const mainServices = activeServices.filter((service) => service.group === 'main');
-  const supportingServices = activeServices.filter((service) => service.group === 'supporting');
-  const serviceNavigation = activeServices.map(({ id, title, number }) => ({ id, title, number }));
+  // Number the visible services in page order, not by their stored sort keys.
+  // Detailed sections render before care cards; neither order nor IDs are mutated.
+  const visibleServices = [
+    ...activeServices.filter((service) => service.group === 'main'),
+    ...activeServices.filter((service) => service.group === 'supporting'),
+  ].map((service, index) => ({ ...service, number: String(index + 1).padStart(2, '0') }));
+  const mainServices = visibleServices.filter((service) => service.group === 'main');
+  const supportingServices = visibleServices.filter((service) => service.group === 'supporting');
+  const serviceNavigation = visibleServices.map(({ id, title, number }) => ({ id, title, number }));
   const pageRef = useMotionReveal(servicesMotion, servicesMotionOptions);
   const { hash, key } = useLocation();
   const navigationType = useNavigationType();

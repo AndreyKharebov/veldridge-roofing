@@ -1,0 +1,49 @@
+// Keep the dialog heading and actions outside the only scrollable region.
+// The extra class scopes these overrides to media selection, regardless of
+// the load order of the shared Admin styles and their mobile dialog rules.
+.admin-dialog.admin-dialog--media
+  padding: 0
+  overflow: hidden
+
+  &[open]
+    gap: 0
+
+  > .admin-dialog__heading
+    flex: none
+    padding: 20px 28px
+    border-bottom: 1px solid var(--admin-border)
+
+  .admin-media-body
+    display: flex
+    flex-direction: column
+    flex: 1 1 auto
+    gap: 24px
+    min-height: 0
+    padding: 24px 28px
+    overflow-y: auto
+    overscroll-behavior: contain
+
+  .admin-media-footer
+    flex: none
+    padding: 16px 28px
+    border-top: 1px solid var(--admin-border)
+    background-color: var(--admin-surface)
+
+    .admin-hint
+      margin-right: auto
+
+@media (max-width: 700px)
+  .admin-dialog.admin-dialog--media
+    > .admin-dialog__heading
+      padding: 16px
+
+    .admin-media-body
+      gap: 20px
+      padding: 20px 16px
+
+    .admin-media-footer
+      gap: 10px
+      padding: 12px 16px
+
+      .admin-hint
+        flex-basis: 100%
