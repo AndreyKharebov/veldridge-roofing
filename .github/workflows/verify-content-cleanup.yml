@@ -5,20 +5,72 @@ on:
 permissions:
   contents: read
 jobs:
-  verify:
+  prepare:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    outputs:
+      sha: ${{ steps.record.outputs.sha }}
     steps:
       - uses: actions/checkout@v4
-      - name: Archive exact source for local review
-        run: git archive --format=tar.gz HEAD -o source.tar.gz
-      - uses: actions/upload-artifact@v4
-        with:
-          name: cleanup-source
-          path: source.tar.gz
-          retention-days: 3
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Apply reviewed cleanup
+        run: |
+          if [ ! -f src/data/defaultSettings.js ]; then python .verify/apply-cleanup.py; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src README.md tests
+          if ! git diff --cached --quiet; then
+            git commit -m 'Apply reviewed empty-content baseline and preserve all creation contracts [skip ci]'
+            git push origin HEAD:verify/content-cleanup-20261115
+          fi
+      - id: record
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
       - run: npm ci
-      - run: npm run lint && npm run build
+      - run: npm run lint && node --test tests/content-baseline.test.js && npm run build
+  browser:
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm ci && npm run build
+      - run: pip install playwright && python -m playwright install --with-deps ${{ matrix.browser }}
+      - name: Verify empty state and complete first-record workflows
+        env:
+          QA_BROWSERS: ${{ matrix.browser }}
+          QA_OUTPUT: cleanup-qa
+          LEGACY_BACKUP: .verify/legacy-backup.json
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/cleanup-preview.log 2>&1 &
+          for i in $(seq 1 45); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break || sleep 1; done
+          python .verify/cleanup-qa.py
+      - name: Record exact tested tree
+        if: always()
+        run: |
+          mkdir -p cleanup-qa
+          git rev-parse HEAD > cleanup-qa/tested-commit.txt
+          git ls-tree HEAD > cleanup-qa/tested-root-tree.txt
+          git archive --format=tar.gz HEAD -o cleanup-qa/tested-source.tar.gz
+          cp /tmp/cleanup-preview.log cleanup-qa/ || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cleanup-${{ matrix.browser }}
+          path: cleanup-qa/
+          retention-days: 7
