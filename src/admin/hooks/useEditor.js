@@ -1,30 +1,27 @@
-import { useCallback, useRef, useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useRef, useState } from 'react';
+import { logForm } from '../../utils/logForm.js';
 
-export function useEditor(initial,save) {
-  const [values,setValues] = useState(() => structuredClone(initial));
-  const [baseline,setBaseline] = useState(() => JSON.stringify(initial));
-  const [saved,setSaved] = useState(false);
+// Local input state only. Submitting never creates/updates a content record.
+export function useEditor(initial, formName) {
+  const [values, setValues] = useState(() => structuredClone(initial));
+  const [submitted, setSubmitted] = useState(false);
   const formRef = useRef(null);
-  const setFormElement = useCallback((element) => { formRef.current = element; },[]);
-  const client = useQueryClient();
-  const mutation = useMutation({ mutationFn:save, onMutate:() => setSaved(false), onSuccess:async (result) => {
-    setValues(result); setBaseline(JSON.stringify(result)); setSaved(true);
-    await client.invalidateQueries({queryKey:['workspace']});
-  }, onError:(error) => {
-    const name = Object.keys(error.fields || {})[0];
-    window.requestAnimationFrame(() => {
-      const control = name && formRef.current?.elements.namedItem(name);
-      if (control instanceof HTMLElement) control.focus();
-      else formRef.current?.querySelector('[role="alert"]')?.focus();
-    });
-  } });
-  const update = (name,value) => { setSaved(false); setValues((previous) => ({...previous,[name]:value})); };
-  const field = (name) => ({ name, value:values[name] ?? '', onChange:(event) => update(name,event.target.value), error:mutation.error?.fields?.[name] });
+  const update = (name, value) => {
+    setSubmitted(false);
+    setValues((previous) => ({ ...previous, [name]: value }));
+  };
+  const field = (name) => ({
+    name,
+    value: values[name] ?? '',
+    onChange: (event) => update(name, event.target.value),
+  });
+  const log = (payload = values) => {
+    logForm(formName, payload);
+    setSubmitted(true);
+  };
   const submit = (event) => {
     event.preventDefault();
-    if (mutation.isPending) return;
-    mutation.mutate(values);
+    log();
   };
-  return [setFormElement, { values,setValues,update,field,submit,mutation,saved,dirty:JSON.stringify(values) !== baseline }];
+  return [formRef, { values, update, field, submit, log, submitted }];
 }

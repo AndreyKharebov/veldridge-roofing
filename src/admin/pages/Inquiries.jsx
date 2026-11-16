@@ -1,100 +1,55 @@
+import { useState } from 'react';
+import { useParams } from 'react-router';
 import NotFound from '../../components/feedback/NotFound/NotFound.jsx';
-import { useEffect, useRef, useState } from 'react';
-import { Link, useParams } from 'react-router';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { workspaceApi } from '../../dev/workspace.js';
 import { useContent } from '../../content/context.js';
-import { Badge, Button, Empty, Field, Notice, PageHeading, Panel } from '../components/UI.jsx';
+import { logForm } from '../../utils/logForm.js';
+import { Button, Empty, Field, Notice, PageHeading, Panel } from '../components/UI.jsx';
 import InquiryTable from '../components/InquiryTable.jsx';
-import Dialog from '../components/Dialog.jsx';
-import UnsavedChanges from '../components/UnsavedChanges.jsx';
 
 const statuses = [['new','New'],['in-progress','In progress'],['closed','Closed'],['spam','Spam']];
-function useInbox() { return useQuery({queryKey:['workspace','inquiries'],queryFn:workspaceApi.getInquiries}); }
-function Attachment({ photo, onOpen }) {
-  const [url,setUrl] = useState('');
-  useEffect(() => {
-    if (!photo.blob) return;
-    const local = URL.createObjectURL(photo.blob);
-    setUrl(local); // eslint-disable-line react-hooks/set-state-in-effect
-    return () => URL.revokeObjectURL(local);
-  },[photo.blob]);
-  return <button className='admin-attachment' type='button' onClick={() => onOpen({url,name:photo.name})} disabled={!url}>
-    {url && <img src={url} alt={photo.name} />}<span>{photo.name}</span><small>View attachment</small>
-  </button>;
-}
 export function InquiriesList() {
-  const query = useInbox();
+  const { inquiries } = useContent();
   const [status,setStatus] = useState('all');
   const [search,setSearch] = useState('');
-  if (query.isPending) return <Notice>Loading inquiries…</Notice>;
-  if (query.isError) return <Notice error>{query.error.message} <Button onClick={() => query.refetch()}>Try again</Button></Notice>;
-  const records = query.data;
-  const filtered = records.filter((record) => (status === 'all' || record.status === status) && `${record.name} ${record.email} ${record.phone} ${record.message}`.toLowerCase().includes(search.toLowerCase()));
+  const filtered = inquiries.filter((record) => (status === 'all' || record.status === status) && `${record.name} ${record.email} ${record.phone} ${record.message}`.toLowerCase().includes(search.toLowerCase()));
   return <>
-    <PageHeading title='Inquiries' description={`${records.filter((row) => row.status === 'new').length} new requests need attention.`} />
+    <PageHeading title='Inquiries' description='Inbox layout. No customer data is loaded.' />
     <div className='admin-filter-bar' aria-label='Inquiry status'>
-      {[['all','All inquiries'],...statuses].map(([value,label]) => <Button key={value} variant={status === value ? 'primary' : 'secondary'} aria-pressed={status === value} onClick={() => setStatus(value)}>{label} · {value === 'all' ? records.length : records.filter((row) => row.status === value).length}</Button>)}
+      {[['all','All inquiries'],...statuses].map(([value,label]) => <Button key={value} variant={status === value ? 'primary' : 'secondary'} aria-pressed={status === value} onClick={() => setStatus(value)}>{label} · {value === 'all' ? inquiries.length : inquiries.filter((row) => row.status === value).length}</Button>)}
     </div>
     <Field name='search-inquiries' label='Search inquiries' value={search} placeholder='Name, email, phone or message' onChange={(event) => setSearch(event.target.value)} />
-    {filtered.length ? <InquiryTable records={filtered} detailed /> : <Empty title='No inquiries found.'><p>Change the filters or submit a test inquiry from Contact in this tab.</p><Button to='/contact'>Open Contact</Button></Empty>}
-    <p className='admin-hint' aria-live='polite'>{filtered.length} of {records.length} inquiries · Temporary in-memory data only.</p>
+    {filtered.length ? <InquiryTable records={filtered} detailed /> : <Empty title='No inquiries yet.'><p>Contact submissions only log to the console. They do not appear here.</p><Button to='/contact'>Open Contact</Button><Button to='/admin/inquiries/preview'>Preview details layout</Button></Empty>}
+    <p className='admin-hint' aria-live='polite'>{filtered.length} of {inquiries.length} inquiries</p>
   </>;
 }
 export function InquiryDetail() {
   const { id } = useParams();
-  const query = useInbox();
-  if (query.isPending) return <Notice>Loading inquiry…</Notice>;
-  if (query.isError) return <Notice error>{query.error.message} <Button onClick={() => query.refetch()}>Try again</Button></Notice>;
-  const record = query.data.find((row) => row.id === id);
-  return record ? <InquiryContent key={record.id} record={record} /> : <NotFound variant='admin' title='Inquiry not found.' description='This inquiry is not available in the current workspace. It may have been removed, or the link may be incorrect.' returnTo='/admin/inquiries' returnLabel='Back to inquiries' />;
+  // A blank layout is inspectable without creating a fictitious customer record.
+  if (id !== 'preview') return <NotFound variant='admin' title='Inquiry not found.' description='No inquiries are loaded in the static layout.' returnTo='/admin/inquiries' returnLabel='Back to inquiries' />;
+  return <InquiryLayout />;
 }
-function InquiryContent({ record }) {
-  const { projects,articles } = useContent();
-  const [snapshot,setSnapshot] = useState(record);
-  const [status,setStatus] = useState(record.status);
+function InquiryLayout() {
+  const [status,setStatus] = useState('');
   const [note,setNote] = useState('');
-  const [preview,setPreview] = useState(null);
-  const [copied,setCopied] = useState('');
-  const errorRef = useRef(null);
-  const client = useQueryClient();
-  const mutation = useMutation({mutationFn:workspaceApi.updateInquiry.bind(null,record.id),onSuccess:async (next) => {
-    setSnapshot(next);setStatus(next.status);setNote('');await client.invalidateQueries({queryKey:['workspace','inquiries']});
-  },onError:() => window.requestAnimationFrame(() => errorRef.current?.focus())});
-  const source = record.source;
-  const exists = source?.type === 'project' ? projects.some((p) => p.id === source.id && p.status === 'published') : articles.some((a) => a.id === source?.id && a.status === 'published');
-  const copy = async (value) => {
-    try { await navigator.clipboard.writeText(value);setCopied('Copied to clipboard.'); }
-    catch { setCopied('Clipboard access is unavailable. Select and copy the contact text above.'); }
+  const [logged,setLogged] = useState(false);
+  const submit = (event) => {
+    event.preventDefault();
+    logForm('Inquiry update', { status, note });
+    setLogged(true);
   };
   return <>
-    <UnsavedChanges dirty={status !== snapshot.status || Boolean(note.trim())} />
-    <PageHeading title={`Inquiry #${record.id.replace(/^INQ-/,'')}`} description={new Date(record.createdAt).toLocaleString('en-US')}><Button to='/admin/inquiries'>← Inquiries</Button></PageHeading>
-    {mutation.isError && <div ref={errorRef} tabIndex={-1} role='alert' className='admin-notice admin-notice--error'>{mutation.error.message}</div>}
-    {mutation.isSuccess && <Notice>Inquiry payload logged to console; not saved.</Notice>}
+    <PageHeading title='Inquiry details' description='Empty layout preview · No customer record.'><Button to='/admin/inquiries'>← Inquiries</Button></PageHeading>
+    {logged && <Notice>Form data logged to the console. No inquiry or note was saved.</Notice>}
     <div className='admin-editor-grid'><div className='admin-stack'>
-      <Panel title={record.name}>
-        <dl className='admin-facts'><div><dt>Email</dt><dd>{record.email || 'Not provided'}</dd></div><div><dt>Phone</dt><dd>{record.phone || 'Not provided'}</dd></div><div><dt>ZIP code</dt><dd>{record.zip || 'Not provided'}</dd></div><div><dt>Service</dt><dd>{record.serviceLabel}</dd></div></dl>
-        <div className='admin-actions'>{record.email && <Button onClick={() => copy(record.email)}>Copy email</Button>}{record.phone && <Button onClick={() => copy(record.phone)}>Copy phone</Button>}</div>
-        {copied && <p role='status' className='admin-hint'>{copied}</p>}
+      <Panel title='Customer details'><dl className='admin-facts'>{['Name','Email','Phone','ZIP code','Service'].map((label) => <div key={label}><dt>{label}</dt><dd>—</dd></div>)}</dl><div className='admin-actions'><Button disabled>Copy email</Button><Button disabled>Copy phone</Button></div></Panel>
+      <Panel title='Message'><p className='admin-prose'>No inquiry selected.</p><p className='admin-hint'>Source: —</p></Panel>
+      <Panel title='Attachments · 0 photos' description='Customer attachments will be separate from the public media library.'><p>No photos attached.</p></Panel>
+      <Panel title='Internal notes' description='Static form. Notes are never saved.'><p className='admin-hint'>No notes yet.</p>
+        <form onSubmit={submit}><Field name='internal-note' label='Add a note' multiline rows={4} maxLength={4000} value={note} onChange={(event) => {setNote(event.target.value);setLogged(false);}} /><Button variant='primary' type='submit'>Save note</Button></form>
       </Panel>
-      <Panel title='Message'><p className='admin-prose'>{record.message || 'No message provided.'}</p>
-        {source ? <><p className='admin-hint'>Source: {source.type === 'project' ? 'Gallery project' : 'Blog article'} · {source.title}</p>
-          {exists ? <Link className='admin-link' to={source.type === 'project' ? '/gallery' : '/blog'} state={source.type === 'project' ? {projectId:source.id} : {articleId:source.id}}>View source {source.type} →</Link> : <p className='admin-hint'>The source is no longer published. Its title is retained with this inquiry.</p>}</> : <p className='admin-hint'>Source: Contact page</p>}
-      </Panel>
-      <Panel title={`Attachments · ${record.photos.length} photos`} description='Customer attachments are kept separate from the public media library.'>
-        {record.photos.length ? <div className='admin-photo-grid'>{record.photos.map((photo) => <Attachment photo={photo} onOpen={setPreview} key={photo.id} />)}</div> : <p>No photos attached.</p>}
-      </Panel>
-      <Panel title='Internal notes' description='Temporary preview only. Notes are not saved to a database.'>
-        {snapshot.notes.length ? <ol className='admin-notes'>{snapshot.notes.map((item) => <li key={item.id}><p className='admin-prose'>{item.body}</p><small>{new Date(item.createdAt).toLocaleString('en-US')}</small></li>)}</ol> : <p className='admin-hint'>No notes yet.</p>}
-        <Field name='internal-note' label='Add a note' multiline rows={4} maxLength={4000} value={note} onChange={(event) => setNote(event.target.value)} disabled={mutation.isPending} />
-        <Button variant='primary' disabled={!note.trim() || mutation.isPending} onClick={() => mutation.mutate({status,note,revision:snapshot.revision})}>{mutation.isPending ? 'Saving…' : 'Save note'}</Button>
-      </Panel>
-    </div><aside className='admin-stack'><Panel title='Inquiry status'><Badge status={snapshot.status} />
-      <Field name='inquiry-status' label='Status' value={status} disabled={mutation.isPending} onChange={(event) => setStatus(event.target.value)}>{statuses.map(([value,label]) => <option key={value} value={value}>{label}</option>)}</Field>
-      <Button variant='primary' disabled={mutation.isPending} onClick={() => mutation.mutate({status,note,revision:snapshot.revision})}>{mutation.isPending ? 'Saving…' : 'Save status'}</Button>
-      <p className='admin-hint'>New → In progress → Closed. Use Spam for unwanted requests.</p>
-    </Panel><Panel title='Local demo'><p>Temporary test data. Refresh clears it; no messages are delivered.</p></Panel></aside></div>
-    {preview && <Dialog title={preview.name} onClose={() => setPreview(null)} className='admin-dialog--photo'><img src={preview.url} alt={preview.name} /></Dialog>}
+    </div><aside className='admin-stack'><Panel title='Inquiry status'><form onSubmit={submit}>
+      <Field name='inquiry-status' label='Status' value={status} onChange={(event) => {setStatus(event.target.value);setLogged(false);}}><option value=''>Choose a status</option>{statuses.map(([value,label]) => <option key={value} value={value}>{label}</option>)}</Field>
+      <Button variant='primary' type='submit'>Save status</Button><p className='admin-hint'>New → In progress → Closed. Use Spam for unwanted requests.</p>
+    </form></Panel><Panel title='Layout preview'><p>No customer information, messages or uploaded attachments are stored in this frontend.</p></Panel></aside></div>
   </>;
 }

@@ -1,21 +1,24 @@
 import { useState } from 'react';
-import { useContent } from '../../content/context.js';
+import { useObjectUrls } from '../../hooks/useObjectUrls.js';
 import { Button, Field, Panel } from './UI.jsx';
 import MediaPicker from './MediaPicker.jsx';
+
 export default function ImageField({ editor, title = 'Cover image' }) {
-  const { media } = useContent();
-  const [open,setOpen] = useState(false);
-  const selected = media.find(({ id }) => id === editor.values.imageId);
+  const [open, setOpen] = useState(false);
+  const urls = useObjectUrls();
+  const { values, update } = editor;
+  const select = ([file]) => {
+    if (!file) return;
+    urls.release(values.imagePreview);
+    update('imageFile', file);
+    update('imagePreview', urls.create(file));
+    setOpen(false);
+  };
   return <Panel title={title}>
-    {selected ? <img className='admin-cover' src={selected.src} alt={editor.values.imageAlt || selected.name} /> : <div className='admin-image-placeholder'>No image selected</div>}
-    <Button onClick={() => setOpen(true)}>{selected ? 'Replace image' : 'Choose image'}</Button>
-    {editor.mutation.error?.fields?.imageId && <p className='admin__field-error'>{editor.mutation.error.fields.imageId}</p>}
+    {values.imagePreview ? <img className='admin-cover' src={values.imagePreview} alt={values.imageAlt || values.imageFile?.name || ''} /> : <div className='admin-image-placeholder'>No image selected</div>}
+    <Button onClick={() => setOpen(true)}>{values.imagePreview ? 'Replace image' : 'Choose image'}</Button>
     <Field label='Image description *' {...editor.field('imageAlt')} maxLength={250} />
-    {open && <MediaPicker onClose={() => setOpen(false)} onChoose={([id]) => {
-      editor.update('imageId',id);
-      if ('homeImageId' in editor.values) editor.update('homeImageId',id);
-      if (!editor.values.imageAlt) editor.update('imageAlt',media.find((item) => item.id === id)?.alt || '');
-      setOpen(false);
-    }} />}
+    <p className='admin-hint'>Preview only. This file is not uploaded or saved.</p>
+    {open && <MediaPicker onClose={() => setOpen(false)} onChoose={select} />}
   </Panel>;
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router';
+import { logForm } from '../../utils/logForm.js';
 import { Button, Wordmark } from './UI.jsx';
 import Dialog, { ConfirmDialog } from './Dialog.jsx';
 import overviewIcon from '../assets/overview.svg';
@@ -34,21 +35,20 @@ export default function AdminLayout() {
   return <div className='admin-shell'>
     <a className='admin-skip' href='#admin-content'>Skip to content</a>
     <aside className='admin-sidebar'><Wordmark /><p className='admin-sidebar__caption'>Admin workspace</p><Navigation />
-      <div className='admin-sidebar__account'><strong>Admin</strong><span>Single administrator</span></div>
+      <div className='admin-sidebar__account'><strong>Admin layout</strong><span>No account connected</span></div>
       <Button onClick={() => setSignOut(true)}>Sign out</Button>
     </aside>
     <div className='admin-main'><header className='admin-topbar'>
       <Button className='admin-menu-toggle' aria-label='Open admin navigation' onClick={() => setMenu(true)}>☰</Button>
       <span className='admin-topbar__breadcrumb'>Workspace / {active}</span><strong className='admin-topbar__compact'>VELDRIDGE</strong>
-      <Button to='/' className='admin-view-site'>View website ↗</Button><span className='admin-avatar' aria-label='Admin account'>A</span>
+      <Button to='/' className='admin-view-site'>View website ↗</Button><span className='admin-avatar' aria-label='Admin layout'>A</span>
     </header><main className='admin-content' id='admin-content'>
-      <div className='admin-demo'>API development mode · Submissions are logged to the console. Nothing is saved.</div>
+      <div className='admin-demo'>Static layout · No authentication or API. Forms only log to the browser console.</div>
       <Outlet />
     </main></div>
     {menu && <Dialog title='Workspace' className='admin-dialog--menu' onClose={() => setMenu(false)}><Navigation close={() => setMenu(false)} /><Button onClick={() => {setMenu(false);setSignOut(true);}}>Sign out</Button></Dialog>}
-    {signOut && <ConfirmDialog title='Sign out of the admin?' action='Sign out' onClose={() => setSignOut(false)} onConfirm={() => {
-      // Navigate first: the route blocker gets a chance to preserve unsaved edits.
-      setSignOut(false); navigate('/admin/logout');
-    }}><p>Temporary test content will disappear when the page is refreshed.</p></ConfirmDialog>}
+    {signOut && <ConfirmDialog title='Return to the login layout?' action='Sign out' onClose={() => setSignOut(false)} onConfirm={() => {
+      logForm('Logout', {}); setSignOut(false); navigate('/admin/login');
+    }}><p>This is a layout action only. There is no authenticated session to end.</p></ConfirmDialog>}
   </div>;
 }
