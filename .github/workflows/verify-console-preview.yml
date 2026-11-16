@@ -1,0 +1,23 @@
+name: Verify temporary console adapter
+on:
+  push:
+    branches: [verify/console-preview-20261115]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - run: npm run lint
+      - run: node --test tests/*.test.js
+      - run: npm run build
+      - name: Verify removed persistence references are not imported
+        run: |
+          ! grep -R -n -E "from ['\"][^'\"]*(database|backup|seed)\\.js['\"]" src
+          ! grep -R -n -E 'indexedDB|sessionStorage|localStorage' src/api/workspace.js
