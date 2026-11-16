@@ -15,6 +15,7 @@ import Categories from './pages/Categories.jsx';
 import { ProjectsList, ProjectEditor } from './pages/Projects.jsx';
 import { InquiriesList, InquiryDetail } from './pages/Inquiries.jsx';
 import Settings from './pages/Settings.jsx';
+import Media from './pages/Media.jsx';
 
 import './Admin.sass';
 
@@ -150,6 +151,7 @@ export default function AdminApp() {
           <Route path='inquiries/:id' element={<InquiryDetail />} />
 
           <Route path='settings' element={<Settings />} />
+          <Route path='media' element={<Media />} />
 
           <Route
             path='*'

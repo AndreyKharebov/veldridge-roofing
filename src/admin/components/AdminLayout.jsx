@@ -18,6 +18,11 @@ const links = [
   { name: 'Projects', path: '/admin/projects', icon: projectsIcon },
   { name: 'Inquiries', path: '/admin/inquiries', icon: inquiriesIcon },
   { name: 'Settings', path: '/admin/settings', icon: settingsIcon },
+  {
+    name: 'Media Library',
+    path: '/admin/media',
+    icon: projectsIcon,
+  },
 ];
 
 function Navigation({ close }) {
