@@ -1,0 +1,23 @@
+name: Verify removal of frontend API directory
+on:
+  push:
+    branches: [verify/remove-frontend-api-20261115]
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - run: npm run lint
+      - run: node --test tests/*.test.js
+      - run: npm run build
+      - name: Ensure frontend src/api directory and imports are absent
+        run: |
+          test ! -e src/api
+          ! grep -RnE "from ['\"][^'\"]*/api/(auth|workspace|media|validation)\\.js" src tests

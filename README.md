@@ -28,3 +28,7 @@ The pre-cleanup source is on `backup/pre-content-cleanup-20261115`. Run `node --
 ## MERN transition status
 
 Admin authentication now calls the Express API at `VITE_API_URL` (default `http://localhost:5000`) using an HttpOnly-cookie session. Start the backend and create an administrator before signing in. **Content still uses IndexedDB** until the backend exposes content CRUD, media and inquiry endpoints. Browser-edited records are not in MongoDB. See `src/admin/README.md` and `docs/backend-handoff.md`.
+
+## Frontend directories
+
+`src/auth/session.js` handles Express administrator sessions. `src/dev/` contains temporary console-only form submission, validation and media previews for endpoints still being developed. There is no frontend `src/api/` directory or IndexedDB persistence.

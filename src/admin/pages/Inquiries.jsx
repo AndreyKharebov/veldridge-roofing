@@ -2,7 +2,7 @@ import NotFound from '../../components/feedback/NotFound/NotFound.jsx';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { workspaceApi } from '../../api/workspace.js';
+import { workspaceApi } from '../../dev/workspace.js';
 import { useContent } from '../../content/context.js';
 import { Badge, Button, Empty, Field, Notice, PageHeading, Panel } from '../components/UI.jsx';
 import InquiryTable from '../components/InquiryTable.jsx';

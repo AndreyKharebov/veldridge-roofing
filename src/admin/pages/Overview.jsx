@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useContent } from '../../content/context.js';
-import { workspaceApi } from '../../api/workspace.js';
+import { workspaceApi } from '../../dev/workspace.js';
 import { Button, Notice, PageHeading, Panel } from '../components/UI.jsx';
 import InquiryTable from '../components/InquiryTable.jsx';
 export default function Overview() {

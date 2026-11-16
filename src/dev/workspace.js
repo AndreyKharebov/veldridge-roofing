@@ -4,7 +4,7 @@ import { createDefaultSettings } from '../data/defaultSettings.js';
 import { hydrateContent, newId, validateImage } from './media.js';
 import { normalizeRecord, normalizeSettings, ValidationError } from './validation.js';
 import { validateInquiry, normalizeInquiry } from '../pages/ContactPage/data/inquiry.js';
-import { requireAdmin } from './auth.js';
+import { requireAdmin } from '../auth/session.js';
 
 const EVENT = 'veldridge-dev-content-change';
 const blank = () => ({

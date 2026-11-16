@@ -1,6 +1,6 @@
 import { useState, useSyncExternalStore } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router';
-import { auth } from '../../api/auth.js';
+import { auth } from '../../auth/session.js';
 import { Button, Field, Notice, Wordmark } from '../components/UI.jsx';
 export default function Login() {
   const state = useSyncExternalStore(auth.subscribe, auth.getSnapshot, () => 'checking');

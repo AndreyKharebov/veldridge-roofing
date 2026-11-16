@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createDefaultSettings } from '../src/data/defaultSettings.js';
-import { normalizeRecord, normalizeSettings, ValidationError } from '../src/api/validation.js';
+import { normalizeRecord, normalizeSettings, ValidationError } from '../src/dev/validation.js';
 import { serviceOptions, photoRules } from '../src/pages/ContactPage/data/contactData.js';
 import { createInitialInquiry, validateInquiry } from '../src/pages/ContactPage/data/inquiry.js';
 

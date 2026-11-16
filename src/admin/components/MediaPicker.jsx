@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useContent } from '../../content/context.js';
-import { workspaceApi } from '../../api/workspace.js';
+import { workspaceApi } from '../../dev/workspace.js';
 import Dialog from './Dialog.jsx';
 import { Button, Notice } from './UI.jsx';
 import './MediaPicker.sass';

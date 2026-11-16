@@ -1,6 +1,6 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router';
-import { auth } from '../api/auth.js';
+import { auth } from '../auth/session.js';
 import ContentProvider from '../content/ContentProvider.jsx';
 import AdminLayout from './components/AdminLayout.jsx';
 import NotFound from '../components/feedback/NotFound/NotFound.jsx';

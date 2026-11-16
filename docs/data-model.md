@@ -4,11 +4,11 @@ Recorded from inspected frontend `main` **921ae21f305dc1517d957776432bd9e9ae6e74
 
 ## Sources of truth
 
-- `src/api/validation.js`: persisted fields, normalization and validation.
-- `src/api/workspace.js`: methods, IDs, revisions, relationships.
-- `src/api/media.js`: media validation, sorting and derived read fields.
-- `src/api/database.js`: local persistence and atomic transactions.
-- `src/api/backup.js`: content backup/import; excludes private inquiries.
+- `src/dev/validation.js`: persisted fields, normalization and validation.
+- `src/dev/workspace.js`: methods, IDs, revisions, relationships.
+- `src/dev/media.js`: media validation, sorting and derived read fields.
+- Browser database module removed; the current frontend uses transient in-memory preview state.
+- Browser backup/import module removed during backend preparation.
 - `src/pages/ContactPage/data/inquiry.js`: public form and source context.
 - `src/admin/pages/`: actual creation/editing forms and defaults.
 - After cleanup, `src/data/seed.js` and `src/data/defaultSettings.js`: empty baseline.
@@ -211,7 +211,7 @@ No office marker appears without an address. Even with address and coordinates, 
 | parseBackup(file) / importBackup(validated) | Validate then atomically replace content/public media; preserve inbox |
 | auth.signIn / signOut / isSignedIn | Local sessionStorage demo only, not real authentication |
 
-TanStack Query keys are `['workspace','content']` and `['workspace','inquiries']`. Mutations invalidate the relevant query or `['workspace']`. Same-origin tabs use BroadcastChannel. Preserve these return shapes or adapt HTTP responses within src/api.
+TanStack Query keys are `['workspace','content']` and `['workspace','inquiries']`. Mutations invalidate the relevant query or `['workspace']`. Same-origin tabs use BroadcastChannel. Preserve these return shapes or adapt HTTP responses within src/dev.
 
 IMPORTANT: local getContent includes drafts/archives and relies on UI filtering. A production public endpoint must filter server-side and never return unpublished records, private notes or attachment access. Separate authenticated admin reads from public reads.
 

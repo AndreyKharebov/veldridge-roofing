@@ -17,8 +17,8 @@ One admin, English UI, no public registration. Hero remains static. Service is i
 ## Read first
 
 1. [Data model](data-model.md): inspected persisted/derived fields, relationships, limits and current adapter contracts.
-2. `src/api/validation.js` and `src/pages/ContactPage/data/inquiry.js`: actual validation; compare with current main.
-3. `src/api/workspace.js`, `media.js`, `database.js`, `backup.js`: persistence, media, revisions and operations.
+2. `src/dev/validation.js` and `src/pages/ContactPage/data/inquiry.js`: actual validation; compare with current main.
+3. `src/dev/workspace.js`, `src/dev/media.js` (browser persistence and backups have been removed): persistence, media, revisions and operations.
 4. `src/content/` and `src/admin/pages/`: query keys and actual editor submission/preview behavior.
 5. [Cleanup/recovery](content-cleanup.md): empty startup and existing browser data.
 
