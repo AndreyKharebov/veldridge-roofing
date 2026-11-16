@@ -1,529 +1,220 @@
 import { useEffect, useRef, useState } from 'react';
-
 import { mediaApi } from '../../lib/media.js';
-
-import { ConfirmDialog } from '../components/Dialog.jsx';
-
-import {
-  Button,
-  Empty,
-  Notice,
-  PageHeading,
-  Panel,
-} from '../components/UI.jsx';
+import { Button, Empty, Notice, PageHeading, Panel } from '../components/UI.jsx';
+import MediaCard from '../components/media/MediaCard.jsx';
+import MediaEditDialog from '../components/media/MediaEditDialog.jsx';
+import MediaDeleteDialog from '../components/media/MediaDeleteDialog.jsx';
+import './Media.sass';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const MAX_FILES = 10;
-const MAX_ALT_LENGTH = 300;
-
 const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
-const formatSize = (bytes) => `${(bytes / 1024).toFixed(1)} KB`;
-
-const formatDate = (value) =>
-  new Date(value).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-
-function MediaCard({ item, onUpdated, onDelete }) {
-  const [alt, setAlt] = useState(item.alt ?? '');
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-
-  const savedAlt = item.alt ?? '';
-  const changed = alt.trim() !== savedAlt;
-
-  const saveAlt = async (event) => {
-    event.preventDefault();
-
-    if (saving || !changed) return;
-
-    setSaving(true);
-    setError('');
-    setSuccess('');
-
-    try {
-      const response = await mediaApi.update(item.id, alt);
-
-      setAlt(response.media.alt);
-      onUpdated(response.media);
-      setSuccess('Alt text saved successfully.');
-    } catch (failure) {
-      setError(failure.message);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <Panel className='admin-media-card'>
-      <a
-        href={item.url}
-        target='_blank'
-        rel='noopener noreferrer'
-        aria-label={`Open ${item.filename}`}
-      >
-        <img
-          src={item.url}
-          alt={savedAlt || item.filename}
-          loading='lazy'
-          style={{
-            display: 'block',
-            width: '100%',
-            aspectRatio: '3 / 2',
-            objectFit: 'cover',
-            borderRadius: '8px',
-          }}
-        />
-      </a>
-
-      <div style={{ minWidth: 0 }}>
-        <strong style={{ overflowWrap: 'anywhere' }}>{item.filename}</strong>
-
-        <p className='admin-hint'>
-          {formatSize(item.size)}
-          {' · '}
-          {formatDate(item.createdAt)}
-        </p>
-      </div>
-
-      <form
-        onSubmit={saveAlt}
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '10px',
-        }}
-      >
-        <label htmlFor={`media-alt-${item.id}`} style={{ fontWeight: 600 }}>
-          Alt text
-        </label>
-
-        <textarea
-          id={`media-alt-${item.id}`}
-          className='admin__control'
-          value={alt}
-          onChange={(event) => {
-            setAlt(event.target.value);
-            setError('');
-            setSuccess('');
-          }}
-          maxLength={MAX_ALT_LENGTH}
-          rows={3}
-          disabled={saving}
-          placeholder='Describe what is shown in this image'
-        />
-
-        <p className='admin-hint'>
-          {alt.length}/{MAX_ALT_LENGTH} characters
-        </p>
-
-        {error && <Notice error>{error}</Notice>}
-        {success && <Notice>{success}</Notice>}
-
-        <Button variant='primary' type='submit' disabled={saving || !changed}>
-          {saving ? 'Saving…' : 'Save alt text'}
-        </Button>
-      </form>
-
-      <div className='admin-actions'>
-        <a
-          href={item.url}
-          target='_blank'
-          rel='noopener noreferrer'
-          className='admin-link'
-        >
-          View original ↗
-        </a>
-
-        <span className='admin-spacer' />
-
-        <Button
-          variant='danger'
-          disabled={saving}
-          onClick={() => onDelete(item)}
-        >
-          Delete
-        </Button>
-      </div>
-    </Panel>
-  );
+function SelectPage({ checked, mixed, disabled, onChange }) {
+  const ref = useRef(null);
+  useEffect(() => { if (ref.current) ref.current.indeterminate = mixed; }, [mixed]);
+  return <label className='media-library__check'>
+    <input ref={ref} type='checkbox' checked={checked} disabled={disabled} onChange={onChange} />
+    <span>Select all on this page</span>
+  </label>;
 }
 
 export default function Media() {
   const inputRef = useRef(null);
-  const uploadingRef = useRef(false);
-
-  const [page, setPage] = useState(1);
-  const [items, setItems] = useState([]);
-  const [pagination, setPagination] = useState(null);
-
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [retry, setRetry] = useState(0);
-
+  const mounted = useRef(false);
+  const uploadLock = useRef(false);
+  const [query, setQuery] = useState({ page: 1, revision: 0 });
+  const [result, setResult] = useState({ items: [], pagination: null, loading: true, error: '' });
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [editing, setEditing] = useState(null);
+  const [deleteTargets, setDeleteTargets] = useState(null);
+  const [mutationPending, setMutationPending] = useState(false);
+  const [notice, setNotice] = useState('');
   const [uploading, setUploading] = useState(false);
   const [uploadResults, setUploadResults] = useState([]);
-  const [uploadProgress, setUploadProgress] = useState({
-    current: 0,
-    total: 0,
-  });
-
-  const [selectedForDelete, setSelectedForDelete] = useState(null);
-  const [deleting, setDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState('');
-
-  const refresh = () => {
-    setRetry((value) => value + 1);
-  };
+  const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 });
+  const { items, pagination, loading, error } = result;
+  const selectedItems = items.filter((item) => selectedIds.includes(item.id));
+  const busy = uploading || mutationPending;
+  const blocked = busy || loading || Boolean(editing || deleteTargets);
 
   useEffect(() => {
-    let active = true;
+    mounted.current = true;
+    return () => { mounted.current = false; };
+  }, []);
 
-    const load = async () => {
-      setLoading(true);
-      setError('');
+  useEffect(() => {
+    if (!busy) return;
+    const warn = (event) => { event.preventDefault(); event.returnValue = ''; };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [busy]);
 
-      try {
-        const response = await mediaApi.getAll(page);
+  useEffect(() => {
+    const controller = new AbortController();
+    mediaApi.getAll(query.page, { signal: controller.signal })
+      .then((response) => {
+        if (controller.signal.aborted) return;
+        const lastPage = Math.max(1, response.pagination.totalPages);
+        // Covers deleting the entire last page and concurrent changes in another tab.
+        if (query.page > lastPage) {
+          setSelectedIds([]);
+          setQuery((previous) => ({ ...previous, page: lastPage }));
+          return;
+        }
+        setResult({ items: response.media, pagination: response.pagination, loading: false, error: '' });
+        setSelectedIds((previous) => previous.filter((id) => response.media.some((item) => item.id === id)));
+      })
+      .catch((failure) => {
+        if (controller.signal.aborted) return;
+        setSelectedIds([]);
+        setResult({ items: [], pagination: null, loading: false, error: failure.status === 401
+          ? 'Your session expired. Sign in again to view the media library.' : failure.message });
+      });
+    return () => controller.abort();
+  }, [query]);
 
-        if (!active) return;
-
-        setItems(response.media);
-        setPagination(response.pagination);
-      } catch (failure) {
-        if (!active) return;
-
-        setItems([]);
-        setPagination(null);
-        setError(failure.message);
-      } finally {
-        if (active) setLoading(false);
-      }
-    };
-
-    void load();
-
-    return () => {
-      active = false;
-    };
-  }, [page, retry]);
-
-  const handleUpdated = (updatedMedia) => {
-    setItems((previous) =>
-      previous.map((item) =>
-        item.id === updatedMedia.id ? { ...item, ...updatedMedia } : item,
-      ),
-    );
+  const reload = (page = query.page) => {
+    setResult((previous) => ({ ...previous, loading: true, error: '' }));
+    setQuery((previous) => ({ page, revision: previous.revision + 1 }));
+  };
+  const changePage = (page) => {
+    if (blocked) return;
+    setSelectedIds([]);
+    setNotice('');
+    reload(page);
+  };
+  const select = (id) => {
+    if (blocked) return;
+    setSelectedIds((previous) => previous.includes(id) ? previous.filter((value) => value !== id) : [...previous, id]);
+  };
+  const openDelete = (targets) => {
+    if (blocked || !targets.length) return;
+    setNotice('');
+    setDeleteTargets(targets.map(({ id, filename }) => ({ id, filename })));
+  };
+  const handleDeleted = (ids) => {
+    const removed = new Set(ids);
+    setSelectedIds((previous) => previous.filter((id) => !removed.has(id)));
+    setResult((previous) => ({ ...previous, items: previous.items.filter((item) => !removed.has(item.id)) }));
+    setNotice(`${ids.length} ${ids.length === 1 ? 'image removed' : 'images removed'} from the library.`);
+    reload();
+  };
+  const handleSaved = (media) => {
+    setResult((previous) => ({ ...previous, items: previous.items.map((item) => item.id === media.id ? media : item) }));
+    setNotice('Image name and alt text saved.');
+    setEditing(null);
+    setMutationPending(false);
   };
 
   const handleFiles = async (event) => {
     const files = Array.from(event.target.files || []);
-
     event.target.value = '';
-
-    if (!files.length || uploadingRef.current) return;
-
+    if (!files.length || uploadLock.current || blocked) return;
+    setNotice('');
     setUploadResults([]);
-
     if (files.length > MAX_FILES) {
-      setUploadResults([
-        {
-          name: 'Selection',
-          success: false,
-          message: `Select no more than ${MAX_FILES} files at once.`,
-        },
-      ]);
+      setUploadResults([{ name: 'Selection', success: false, message: `Choose no more than ${MAX_FILES} images at once.` }]);
       return;
     }
-
     const results = [];
-    const validFiles = [];
-
+    const valid = [];
     for (const file of files) {
       if (!ALLOWED_TYPES.has(file.type)) {
-        results.push({
-          name: file.name,
-          success: false,
-          message: 'Unsupported format. Use JPG, PNG or WebP.',
-        });
-      } else if (file.size === 0 || file.size > MAX_FILE_SIZE) {
-        results.push({
-          name: file.name,
-          success: false,
-          message: 'File must be larger than 0 and no more than 10 MB.',
-        });
-      } else {
-        validFiles.push(file);
-      }
+        results.push({ name: file.name, success: false, message: 'Use a JPEG, PNG or WebP image.' });
+      } else if (!file.size || file.size > MAX_FILE_SIZE) {
+        results.push({ name: file.name, success: false, message: 'Image must be larger than 0 and no more than 10 MB.' });
+      } else valid.push(file);
     }
-
-    if (!validFiles.length) {
-      setUploadResults(results);
-      return;
-    }
-
-    uploadingRef.current = true;
+    setUploadResults([...results]);
+    if (!valid.length) return;
+    uploadLock.current = true;
     setUploading(true);
-
-    setUploadProgress({
-      current: 0,
-      total: validFiles.length,
-    });
-
-    for (let index = 0; index < validFiles.length; index += 1) {
-      const file = validFiles[index];
-
-      setUploadProgress({
-        current: index + 1,
-        total: validFiles.length,
-      });
-
-      try {
-        const response = await mediaApi.upload(file);
-
-        results.push({
-          name: file.name,
-          success: true,
-          message: 'Uploaded successfully.',
-          id: response.media.id,
-        });
-      } catch (failure) {
-        results.push({
-          name: file.name,
-          success: false,
-          message: failure.message,
-        });
-      }
-
-      setUploadResults([...results]);
-    }
-
-    uploadingRef.current = false;
-    setUploading(false);
-    setUploadProgress({ current: 0, total: 0 });
-
-    if (results.some((result) => result.success)) {
-      if (page === 1) {
-        refresh();
-      } else {
-        setPage(1);
-      }
-    }
-  };
-
-  const openDeleteDialog = (item) => {
-    setDeleteError('');
-    setSelectedForDelete(item);
-  };
-
-  const closeDeleteDialog = () => {
-    if (deleting) return;
-
-    setDeleteError('');
-    setSelectedForDelete(null);
-  };
-
-  const confirmDelete = async () => {
-    if (!selectedForDelete || deleting) return;
-
-    setDeleting(true);
-    setDeleteError('');
-
+    setSelectedIds([]);
     try {
-      await mediaApi.remove(selectedForDelete.id);
-
-      setSelectedForDelete(null);
-
-      // If the current page becomes empty,
-      // move back to the preceding page.
-      if (items.length === 1 && page > 1) {
-        setPage((value) => value - 1);
-      } else {
-        refresh();
+      for (let index = 0; index < valid.length; index += 1) {
+        // Do not start further uploads after navigating away. An in-flight mutation may still finish.
+        if (!mounted.current) break;
+        const file = valid[index];
+        setUploadProgress({ current: index + 1, total: valid.length });
+        try {
+          await mediaApi.upload(file);
+          results.push({ name: file.name, success: true, message: 'Uploaded successfully.' });
+        } catch (failure) {
+          results.push({ name: file.name, success: false, message: failure.message });
+          if (failure.status === 401 || failure.status === 403) {
+            for (const unprocessed of valid.slice(index + 1)) {
+              results.push({ name: unprocessed.name, success: false, message: 'Not uploaded. Check your session and access.' });
+            }
+            break;
+          }
+        }
+        if (mounted.current) setUploadResults([...results]);
       }
-    } catch (failure) {
-      // Keep the dialog open so the administrator
-      // can see the error and retry.
-      setDeleteError(failure.message);
     } finally {
-      setDeleting(false);
+      uploadLock.current = false;
+      if (mounted.current) {
+        setUploadResults([...results]);
+        setUploading(false);
+        if (results.some((entry) => entry.success)) reload(1);
+      }
     }
   };
-
-  const successfulUploads = uploadResults.filter(
-    (result) => result.success,
-  ).length;
-
-  const failedUploads = uploadResults.filter(
-    (result) => !result.success,
-  ).length;
 
   return (
-    <>
-      <PageHeading
-        title='Media Library'
-        description='Upload, edit and manage images in Cloudflare R2.'
-      >
-        <Button
-          variant='primary'
-          disabled={uploading || deleting}
-          onClick={() => inputRef.current?.click()}
-        >
-          + Upload images
-        </Button>
+    <div className='media-library'>
+      <PageHeading title='Media Library' description='Your images, ready for the website. Edit details or select images to remove.'>
+        <Button variant='primary' disabled={blocked} onClick={() => inputRef.current?.click()}>+ Upload images</Button>
       </PageHeading>
-
-      <input
-        ref={inputRef}
-        type='file'
-        accept='image/jpeg,image/png,image/webp'
-        multiple
-        onChange={handleFiles}
-        disabled={uploading || deleting}
-        aria-label='Select images to upload'
-        style={{ display: 'none' }}
-      />
-
-      <Panel title='Upload images'>
-        <p className='admin-hint'>
-          JPG, PNG or WebP. Maximum 10 MB per file. Select up to 10 images at
-          once.
-        </p>
-
-        <div className='admin-actions'>
-          <Button
-            disabled={uploading || deleting}
-            onClick={() => inputRef.current?.click()}
-          >
-            Choose files
-          </Button>
-
-          {uploading && (
-            <span role='status'>
-              Uploading {uploadProgress.current} of {uploadProgress.total}…
-            </span>
-          )}
+      <input ref={inputRef} type='file' accept='image/jpeg,image/png,image/webp' multiple hidden
+        onChange={handleFiles} disabled={blocked} aria-label='Select images to upload' />
+      <div className='media-library__upload'>
+        <div><h2>Build your image library</h2><p>JPG, PNG or WebP · Up to 10 MB each · Up to 10 images per upload</p></div>
+        <Button disabled={blocked} onClick={() => inputRef.current?.click()}>Choose files</Button>
+        {uploading && <div className='media-library__progress' role='status'>
+          <span>Uploading {uploadProgress.current} of {uploadProgress.total}…</span>
+          <progress value={Math.max(0, uploadProgress.current - 1)} max={Math.max(1, uploadProgress.total)} aria-label='Images uploaded' />
+        </div>}
+      </div>
+      {uploadResults.length > 0 && <div className='media-library__results' aria-live='polite'>
+        <p>{uploading ? 'Upload results' : `${uploadResults.filter((entry) => entry.success).length} uploaded · ${uploadResults.filter((entry) => !entry.success).length} not uploaded`}</p>
+        <ul>{uploadResults.map((entry, index) => <li key={`${index}-${entry.name}`} className={entry.success ? 'is-success' : 'is-error'}>
+          <strong>{entry.name}</strong><span>{entry.message}</span>
+        </li>)}</ul>
+      </div>}
+      {notice && <Notice>{notice}</Notice>}
+      <div className='media-library__toolbar'>
+        <div className='media-library__selection'>
+          <SelectPage checked={items.length > 0 && selectedItems.length === items.length}
+            mixed={selectedItems.length > 0 && selectedItems.length < items.length}
+            disabled={blocked || !items.length} onChange={(event) => setSelectedIds(event.target.checked ? items.map(({ id }) => id) : [])} />
+          <span className='media-library__count' aria-live='polite'>{selectedItems.length} selected</span>
+          {selectedItems.length > 0 && <button className='media-library__clear' type='button' disabled={blocked} onClick={() => setSelectedIds([])}>Clear</button>}
         </div>
-
-        {uploadResults.length > 0 && (
-          <div aria-live='polite'>
-            {!uploading && (
-              <p className='admin-hint'>
-                Uploaded: {successfulUploads}
-                {' · '}
-                Failed: {failedUploads}
-              </p>
-            )}
-
-            <ul>
-              {uploadResults.map((result, index) => (
-                <li key={`${result.name}-${index}`}>
-                  <strong>{result.name}</strong>
-                  {' — '}
-                  <span
-                    style={{
-                      color: result.success ? '#226549' : '#b42318',
-                    }}
-                  >
-                    {result.message}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </Panel>
-
-      {error && (
-        <Notice error>
-          {error}
-
-          <div className='admin-actions'>
-            <Button onClick={refresh}>Try again</Button>
-          </div>
-        </Notice>
+        <Button variant='danger' disabled={blocked || !selectedItems.length} onClick={() => openDelete(selectedItems)}>
+          Delete selected{selectedItems.length > 0 ? ` (${selectedItems.length})` : ''}
+        </Button>
+        <p className='media-library__scope'>Selection applies to this page only and clears when you change pages.</p>
+      </div>
+      {error && <Notice error><p>{error}</p><div className='admin-actions'>
+        <Button disabled={busy} onClick={() => reload()}>Try again</Button>
+        <Button to='/admin/login'>Sign in</Button>
+      </div></Notice>}
+      {loading ? <Panel><p role='status'>Loading images…</p></Panel> : !error && (
+        items.length ? <div className='media-library__grid'>
+          {items.map((item) => <MediaCard key={item.id} item={item} selected={selectedIds.includes(item.id)} disabled={blocked}
+            onSelect={select} onEdit={(image) => { if (!blocked) { setNotice(''); setEditing(image); } }} onDelete={openDelete} />)}
+        </div> : <Empty title='No images yet.'><p>Upload your first image to get started.</p></Empty>
       )}
-
-      {loading ? (
-        <Panel>
-          <p>Loading images…</p>
-        </Panel>
-      ) : (
-        <>
-          {!error && items.length === 0 && (
-            <Empty title='No images yet.'>
-              Uploaded images will appear here.
-            </Empty>
-          )}
-
-          {!error && (
-            <div className='admin-media-grid'>
-              {items.map((item) => (
-                <MediaCard
-                  key={item.id}
-                  item={item}
-                  onUpdated={handleUpdated}
-                  onDelete={openDeleteDialog}
-                />
-              ))}
-            </div>
-          )}
-
-          {pagination && (
-            <div className='admin-actions'>
-              <p className='admin-hint'>
-                {pagination.total} images · Page {pagination.page} of{' '}
-                {Math.max(1, pagination.totalPages)}
-              </p>
-
-              <span className='admin-spacer' />
-
-              <Button
-                disabled={page <= 1 || uploading || deleting}
-                onClick={() => setPage((value) => value - 1)}
-              >
-                Previous
-              </Button>
-
-              <Button
-                disabled={
-                  page >= pagination.totalPages || uploading || deleting
-                }
-                onClick={() => setPage((value) => value + 1)}
-              >
-                Next
-              </Button>
-            </div>
-          )}
-        </>
-      )}
-
-      {selectedForDelete && (
-        <ConfirmDialog
-          title='Delete image?'
-          action='Delete image'
-          danger
-          pending={deleting}
-          onClose={closeDeleteDialog}
-          onConfirm={confirmDelete}
-        >
-          <p>
-            Are you sure you want to permanently delete{' '}
-            <strong>{selectedForDelete.filename}</strong>?
-          </p>
-
-          <p className='admin-hint'>
-            The image will be removed from Cloudflare R2 and MongoDB. This
-            action cannot be undone.
-          </p>
-
-          {deleteError && <Notice error>{deleteError}</Notice>}
-        </ConfirmDialog>
-      )}
-    </>
+      {pagination && !error && <nav className='media-library__pagination' aria-label='Media pages'>
+        <p>{pagination.total} images · Page {pagination.page} of {Math.max(1, pagination.totalPages)}</p>
+        <div><Button disabled={blocked || query.page <= 1} onClick={() => changePage(query.page - 1)}>Previous</Button>
+          <Button disabled={blocked || query.page >= pagination.totalPages} onClick={() => changePage(query.page + 1)}>Next</Button></div>
+      </nav>}
+      {editing && <MediaEditDialog key={editing.id} item={editing} onSaved={handleSaved}
+        onClose={() => setEditing(null)} onBusy={setMutationPending} />}
+      {deleteTargets && <MediaDeleteDialog items={deleteTargets} onDeleted={handleDeleted}
+        onClose={() => { setDeleteTargets(null); setMutationPending(false); }} onBusy={setMutationPending} />}
+    </div>
   );
 }
