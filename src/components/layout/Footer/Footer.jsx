@@ -1,16 +1,15 @@
 import { NavLink, Link } from 'react-router';
+import { useContent } from '../../../content/context.js';
+import FooterMap from './FooterMap.jsx';
 
 import phoneIcon from './assets/phone.svg';
 import mailIcon from './assets/mail.svg';
-import locationIcon from './assets/location.svg';
-
 import facebookIcon from './assets/facebook.svg';
 import linkedinIcon from './assets/linkedin.svg';
 import instagramIcon from './assets/instagram.svg';
 import youtubeIcon from './assets/youtube.svg';
 
 import './Footer.sass';
-import { useContent } from '../../../content/context.js';
 
 const navLinks = [
   { label: 'Home', path: '/' },
@@ -18,104 +17,105 @@ const navLinks = [
   { label: 'Services', path: '/services' },
   { label: 'Gallery', path: '/gallery' },
   { label: 'Blog', path: '/blog' },
+  { label: 'Contact', path: '/contact' },
 ];
 
 const socialIcons = [
-  { id: 'facebook', label: 'Facebook', icon: facebookIcon, url: null },
-  { id: 'linkedin', label: 'LinkedIn', icon: linkedinIcon, url: null },
-  { id: 'instagram', label: 'Instagram', icon: instagramIcon, url: null },
-  { id: 'youtube', label: 'YouTube', icon: youtubeIcon, url: null },
+  { id: 'facebook', label: 'Facebook', icon: facebookIcon },
+  { id: 'linkedin', label: 'LinkedIn', icon: linkedinIcon },
+  { id: 'instagram', label: 'Instagram', icon: instagramIcon },
+  { id: 'youtube', label: 'YouTube', icon: youtubeIcon },
 ];
 
-const Footer = () => {
+export default function Footer() {
   const { settings } = useContent();
-  const contacts = {phone:settings.phone,email:settings.email,location:[settings.street,settings.locality].filter(Boolean).join(', ')};
-  const socialLinks = socialIcons.map((item) => ({...item,url:settings.socials[item.id] || null}));
+  const contacts = [
+    {
+      id: 'phone',
+      label: 'Call our team',
+      value: settings.phone,
+      href: settings.phoneHref,
+      icon: phoneIcon,
+    },
+    {
+      id: 'email',
+      label: 'Send an email',
+      value: settings.email,
+      href: settings.email ? `mailto:${settings.email}` : '',
+      icon: mailIcon,
+    },
+  ].filter(({ value }) => Boolean(value));
+
   return (
     <footer className='footer'>
       <div className='container'>
         <div className='footer__main'>
-          <Link
-            className='footer__logo'
-            to='/'
-            aria-label='Veldridge Roofing — Home'
-          >
-            <span className='footer__logo-name'>Veldridge</span>
-            <span className='footer__logo-description'>Roofing</span>
-          </Link>
+          <div className='footer__information'>
+            <Link className='footer__logo' to='/' aria-label='Veldridge Roofing — Home'>
+              <span className='footer__logo-name'>Veldridge</span>
+              <span className='footer__logo-description'>Roofing</span>
+            </Link>
 
-          <p className='footer__description'>
-            Reliable roofing solutions for homeowners across Pennsylvania, New
-            Jersey, and Delaware. Your roof is our priority.
-          </p>
+            <p className='footer__description'>
+              Reliable roofing solutions for homes and businesses
+              {settings.serviceArea ? ` across ${settings.serviceArea}` : ''}.
+              {' '}Your roof is our priority.
+            </p>
 
-          <nav className='footer__nav' aria-label='Footer navigation'>
-            <ul className='footer__nav-list'>
-              {navLinks.map(({ label, path }) => (
-                <li key={path}>
-                  <NavLink
-                    className='footer__nav-link'
-                    to={path}
-                    end={path === '/'}
-                  >
-                    {label}
-                  </NavLink>
-                </li>
-              ))}
-            </ul>
-          </nav>
+            <nav className='footer__nav' aria-label='Footer navigation'>
+              <ul className='footer__nav-list'>
+                {navLinks.map(({ label, path }) => (
+                  <li key={path}>
+                    <NavLink className='footer__nav-link' to={path} end={path === '/'}>
+                      {label}
+                    </NavLink>
+                  </li>
+                ))}
+              </ul>
+            </nav>
 
-          <div className='footer__contacts'>
-            {contacts.phone && <div className='footer__contact'>
-              <img className='footer__contact-icon' src={phoneIcon} alt='' />
-
-              {contacts.phone && !settings.isDemo ? (
-                <a href={`tel:${contacts.phone.replace(/[^\d+]/g, '')}`}>
-                  {contacts.phone}
-                </a>
-              ) : (
-                <span>{contacts.phone || 'Contact our team'}</span>
-              )}
-            </div>}
-
-            {contacts.email && <div className='footer__contact'>
-              <img className='footer__contact-icon' src={mailIcon} alt='' />
-
-              {contacts.email && !settings.isDemo ? (
-                <a href={`mailto:${contacts.email}`}>{contacts.email}</a>
-              ) : (
-                <span>{contacts.email || 'Send an inquiry'}</span>
-              )}
-            </div>}
-
-            {contacts.location && <div className='footer__contact'>
-              <img className='footer__contact-icon' src={locationIcon} alt='' />
-
-              <span>{contacts.location}</span>
-            </div>}
-          </div>
-
-          {!contacts.phone && !contacts.email && !contacts.location ? <p className='footer__demo-note'>Contact details will be added soon.</p> : settings.isDemo && <p className='footer__demo-note'>Local demo contacts · Not for calls or directions</p>}
-          <div className='footer__socials'>
-            {socialLinks.map(({ id, label, icon, url }) =>
-              url ? (
-                <a
-                  className='footer__social'
-                  href={url}
-                  aria-label={label}
-                  target='_blank'
-                  rel='noopener noreferrer'
-                  key={id}
-                >
-                  <img src={icon} alt='' />
-                </a>
-              ) : (
-                <span className='footer__social' key={id}>
-                  <img src={icon} alt={label} />
-                </span>
-              ),
+            {contacts.length > 0 && (
+              <div className='footer__contacts'>
+                {contacts.map(({ id, label, value, href, icon }) => (
+                  <div className='footer__contact' key={id}>
+                    <span className='footer__contact-symbol'>
+                      <img className='footer__contact-icon' src={icon} alt='' />
+                    </span>
+                    <div className='footer__contact-copy'>
+                      <span className='footer__contact-label'>{label}</span>
+                      {href && !settings.isDemo
+                        ? <a href={href}>{value}</a>
+                        : <span>{value}</span>}
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
+
+            <div className='footer__socials' aria-label='Social media'>
+              {socialIcons.map(({ id, label, icon }) => {
+                const url = settings.socials?.[id];
+                return url ? (
+                  <a
+                    className='footer__social'
+                    href={url}
+                    aria-label={`${label} (opens in a new tab)`}
+                    target='_blank'
+                    rel='noopener noreferrer'
+                    key={id}
+                  >
+                    <img src={icon} alt='' />
+                  </a>
+                ) : (
+                  <span className='footer__social footer__social--inactive' key={id} title={`${label} link not configured`}>
+                    <img src={icon} alt={label} />
+                  </span>
+                );
+              })}
+            </div>
           </div>
+
+          <FooterMap />
         </div>
       </div>
 
@@ -124,7 +124,6 @@ const Footer = () => {
           <p className='footer__copyright'>
             © {new Date().getFullYear()} Veldridge Roofing. All Rights Reserved.
           </p>
-
           <div className='footer__legal'>
             <span>Privacy Policy</span>
             <span className='footer__separator' aria-hidden='true' />
@@ -134,6 +133,4 @@ const Footer = () => {
       </div>
     </footer>
   );
-};
-
-export default Footer;
+}

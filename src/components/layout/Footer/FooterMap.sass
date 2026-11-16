@@ -1,0 +1,213 @@
+@use '../../../styles/abstracts/variables' as vars
+
+.footer-map
+  width: 100%
+  min-width: 0
+  overflow: hidden
+  border: 1px solid #423a30
+  border-radius: 18px
+  background-color: #22211f
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.16)
+  text-align: left
+
+  &__header
+    display: flex
+    align-items: center
+    flex-wrap: wrap
+    gap: 10px
+    padding: 16px 20px
+
+    h2
+      flex: 1
+      margin: 0
+      color: vars.$color-white
+      font-size: 16px
+      font-weight: vars.$font-semibold
+      line-height: 1.5
+
+  &__icon
+    display: grid
+    place-items: center
+    flex-shrink: 0
+    color: vars.$color-primary
+
+  &__badge
+    padding: 4px 8px
+    border: 1px solid #594128
+    border-radius: 6px
+    color: #ffbd70
+    font-size: 10px
+    font-weight: vars.$font-medium
+    line-height: 1.4
+    white-space: nowrap
+
+  // Keep the entire Google viewport visible, including its controls/attribution.
+  // Embed API requires at least 200 x 200 px. No overlays or visual filters.
+  &__canvas
+    height: 222px
+    border-top: 1px solid #3a362f
+    border-bottom: 1px solid #3a362f
+    background-color: #2a2926
+
+  &__embed
+    display: block
+    width: 100%
+    height: 220px
+    border: 0
+
+  &__empty
+    display: flex
+    flex-direction: column
+    align-items: center
+    justify-content: center
+    gap: 10px
+    height: 100%
+    padding: 24px
+    color: #c8c5c0
+    text-align: center
+
+    svg
+      flex-shrink: 0
+      color: vars.$color-primary
+
+    p
+      margin: 0
+      color: vars.$color-white
+      font-size: 14px
+      font-weight: vars.$font-medium
+      line-height: 1.5
+
+    span
+      max-width: 280px
+      font-size: 12px
+      line-height: 1.6
+
+  &__details
+    padding: 18px 20px 16px
+
+    &:empty
+      display: none
+
+  &__address
+    color: #e8e4dd
+    font-size: 13px
+    font-style: normal
+    line-height: 1.75
+    overflow-wrap: anywhere
+
+  &__actions
+    display: flex
+    align-items: center
+    flex-wrap: wrap
+    gap: 10px 18px
+    margin-top: 14px
+
+  &__directions
+    display: inline-flex
+    align-items: center
+    justify-content: center
+    gap: 8px
+    min-height: 42px
+    padding: 10px 14px
+    border-radius: 8px
+    background-color: vars.$color-primary
+    color: vars.$color-text
+    font-size: 12px
+    font-weight: vars.$font-bold
+    line-height: 1.5
+    text-decoration: none
+    transition: background-color var(--motion-color-duration) var(--motion-interaction-easing)
+
+    svg
+      flex-shrink: 0
+
+    &:hover
+      background-color: #ffad46
+
+    &:focus-visible
+      outline: 2px solid vars.$color-white
+      outline-offset: 4px
+
+  &__external
+    display: inline-flex
+    align-items: center
+    gap: 6px
+    min-height: 42px
+    color: #e8e4dd
+    font-size: 12px
+    line-height: 1.5
+    text-decoration: underline
+    text-underline-offset: 4px
+    transition: color var(--motion-color-duration) var(--motion-interaction-easing)
+
+    &:hover
+      color: vars.$color-primary
+
+    &:focus-visible
+      outline: 2px solid vars.$color-primary
+      outline-offset: 4px
+
+  &__note
+    margin: 12px 0 0
+    color: #b6b1a9
+    font-size: 11px
+    line-height: 1.6
+
+    &:first-child
+      margin-top: 0
+
+  &__error
+    display: flex
+    align-items: center
+    flex-wrap: wrap
+    gap: 8px 14px
+    margin-top: 12px
+    color: #ffcb8c
+    font-size: 12px
+    line-height: 1.6
+
+    p
+      flex: 1 1 180px
+      margin: 0
+
+    button
+      min-height: 36px
+      padding: 4px 10px
+      border: 1px solid #746147
+      border-radius: 6px
+      background: transparent
+      color: inherit
+      font: inherit
+      cursor: pointer
+
+      &:focus-visible
+        outline: 2px solid vars.$color-primary
+        outline-offset: 4px
+
+@media (max-width: 900px)
+  .footer-map
+    max-width: 480px
+    justify-self: center
+
+@media (max-width: 480px)
+  .footer-map
+    border-radius: 14px
+
+    &__header
+      gap: 8px
+      padding: 14px 16px
+
+      h2
+        font-size: 14px
+
+    &__details
+      padding: 16px
+
+    &__actions
+      gap: 4px 14px
+
+@media (prefers-reduced-motion: reduce)
+  .footer-map
+    &__directions,
+    &__external
+      transition: none

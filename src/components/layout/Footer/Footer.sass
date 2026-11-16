@@ -1,4 +1,3 @@
-
 @use '../../../styles/abstracts/variables' as vars
 
 .footer
@@ -6,29 +5,30 @@
   color: vars.$color-white
 
   &__main
-    display: flex
-    flex-direction: column
+    display: grid
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 420px)
     align-items: center
-    padding: 60px 0 48px
-    text-align: center
+    gap: 64px
+    padding: 64px 0 56px
 
-  // Logo
+  &__information
+    min-width: 0
 
   &__logo
-    display: flex
+    display: inline-flex
     flex-direction: column
-    align-items: center
-    gap: 2px
+    align-items: flex-start
+    gap: 3px
     text-decoration: none
     text-transform: uppercase
 
     &:focus-visible
       outline: 2px solid vars.$color-primary
-      outline-offset: 4px
+      outline-offset: 6px
 
   &__logo-name
     color: vars.$color-white
-    font-size: 24px
+    font-size: 28px
     font-weight: vars.$font-bold
     line-height: 1.2
     letter-spacing: 0.5px
@@ -40,34 +40,32 @@
     line-height: 1.2
     letter-spacing: 4px
 
-  // Description
-
   &__description
-    max-width: 530px
-    margin: 24px 0 0
-    color: vars.$color-white
-    font-size: 16px
-    line-height: 1.5
-
-  // Navigation
+    max-width: 480px
+    margin: 22px 0 0
+    color: #c8c5c0
+    font-size: 15px
+    line-height: 1.8
+    overflow-wrap: anywhere
 
   &__nav
-    margin-top: 40px
+    margin-top: 30px
 
   &__nav-list
     display: flex
     align-items: center
-    justify-content: center
     flex-wrap: wrap
-    gap: 64px
+    gap: 12px 26px
     margin: 0
     padding: 0
     list-style: none
 
   &__nav-link
+    display: inline-block
+    padding: 6px 0
     color: vars.$color-white
-    font-size: 16px
-    font-weight: vars.$font-regular
+    font-size: 14px
+    font-weight: vars.$font-medium
     line-height: 1.5
     text-decoration: none
     transition: color var(--motion-color-duration) var(--motion-interaction-easing)
@@ -80,34 +78,51 @@
       outline: 2px solid vars.$color-primary
       outline-offset: 4px
 
-  // Contacts
-
   &__contacts
     display: grid
-    grid-template-columns: repeat(3, minmax(0, 1fr))
-    gap: 32px
-    width: 100%
-    max-width: 1000px
-    margin-top: 40px
+    grid-template-columns: repeat(2, minmax(0, 1fr))
+    gap: 24px
+    margin-top: 28px
+    padding-top: 28px
+    border-top: 1px solid #35332f
 
   &__contact
     display: flex
-    flex-direction: column
-    align-items: center
-    justify-content: flex-start
+    align-items: flex-start
     gap: 12px
     min-width: 0
     color: vars.$color-white
-    font-size: 16px
-    font-weight: vars.$font-medium
-    line-height: 1.5
+    font-size: 14px
+    line-height: 1.6
+
+  &__contact-symbol
+    display: grid
+    place-items: center
+    flex-shrink: 0
+    width: 38px
+    height: 38px
+    border: 1px solid #40372c
+    border-radius: 10px
+    background-color: #24211d
+
+  &__contact-icon
+    display: block
+    width: 18px
+    height: 18px
+    object-fit: contain
+
+  &__contact-copy
+    display: flex
+    flex-direction: column
+    gap: 4px
+    min-width: 0
 
     a,
     span
-      color: inherit
       overflow-wrap: anywhere
 
     a
+      color: inherit
       text-decoration: none
       transition: color var(--motion-color-duration) var(--motion-interaction-easing)
 
@@ -118,30 +133,27 @@
         outline: 2px solid vars.$color-primary
         outline-offset: 4px
 
-  &__contact-icon
-    display: block
-    flex-shrink: 0
-    width: 24px
-    height: 24px
-    object-fit: contain
-
-  // Social icons
+  &__contact-label
+    color: #b6b1a9
+    font-size: 11px
+    font-weight: vars.$font-medium
+    letter-spacing: 0.5px
+    text-transform: uppercase
 
   &__socials
     display: flex
     align-items: center
-    justify-content: center
     flex-wrap: wrap
-    gap: 16px
-    margin-top: 36px
+    gap: 12px
+    margin-top: 28px
 
   &__social
     display: flex
     align-items: center
     justify-content: center
     flex-shrink: 0
-    width: 32px
-    height: 32px
+    width: 36px
+    height: 36px
     border-radius: 50%
     background-color: vars.$color-primary
     text-decoration: none
@@ -161,122 +173,115 @@
       outline: 2px solid vars.$color-white
       outline-offset: 4px
 
-  // Copyright
+    &--inactive
+      opacity: 0.45
 
   &__bottom
-    background-color: vars.$color-text-secondary
+    border-top: 1px solid #35332f
+    background-color: #131313
 
   &__bottom-inner
     display: flex
     align-items: center
     justify-content: space-between
     gap: 24px
-    min-height: 44px
-    padding: 10px 0
+    min-height: 64px
+    padding-top: 16px
+    padding-bottom: 16px
 
   &__copyright
     margin: 0
-    color: vars.$color-white
-    font-size: 14px
-    font-weight: vars.$font-regular
-    line-height: 1.5
+    color: #b6b1a9
+    font-size: 12px
+    line-height: 1.7
 
   &__legal
     display: flex
     align-items: center
+    flex-wrap: wrap
     gap: 12px
-    color: vars.$color-white
-    font-size: 14px
-    line-height: 1.5
+    color: #b6b1a9
+    font-size: 12px
+    line-height: 1.7
 
   &__separator
     flex-shrink: 0
     width: 1px
-    height: 20px
-    background-color: rgba(255, 255, 255, 0.5)
+    height: 14px
+    background-color: #4a4742
 
-// Tablet: 701px - 1100px
-
-@media (min-width: 701px) and (max-width: 1100px)
+@media (min-width: 901px) and (max-width: 1100px)
   .footer
     &__main
+      grid-template-columns: minmax(0, 1fr) 360px
+      gap: 36px
       padding: 56px 0 48px
-
-    &__nav-list
-      gap: 32px
-
-    &__contacts
-      gap: 20px
-
-    &__contact
-      font-size: 14px
-
-    &__bottom-inner
-      gap: 16px
-
-    &__copyright,
-    &__legal
-      font-size: 12px
-
-// Mobile: up to 700px
-
-@media (max-width: 700px)
-  .footer
-    &__main
-      padding: 48px 0
-
-    &__logo-name
-      font-size: 22px
-
-    &__logo-description
-      font-size: 12px
-
-    &__description
-      max-width: 350px
-      margin-top: 20px
-      font-size: 15px
-
-    &__nav
-      margin-top: 32px
-
-    &__nav-list
-      gap: 16px 24px
-
-    &__nav-link
-      font-size: 14px
 
     &__contacts
       grid-template-columns: minmax(0, 1fr)
-      gap: 28px
-      margin-top: 36px
+      gap: 18px
 
-    &__contact
-      gap: 8px
-      font-size: 15px
+@media (max-width: 900px)
+  .footer
+    &__main
+      grid-template-columns: minmax(0, 1fr)
+      gap: 36px
+      padding: 48px 0
 
+    &__information
+      text-align: center
+
+    &__logo
+      align-items: center
+
+    &__description
+      margin-right: auto
+      margin-left: auto
+
+    &__nav-list,
     &__socials
-      gap: 16px
-      margin-top: 32px
+      justify-content: center
+
+    &__contacts
+      max-width: 560px
+      margin-right: auto
+      margin-left: auto
+      text-align: left
 
     &__bottom-inner
       flex-direction: column
       justify-content: center
-      gap: 12px
-      padding: 20px 0
+      gap: 8px
       text-align: center
 
-    &__copyright,
     &__legal
-      font-size: 12px
+      justify-content: center
+
+@media (max-width: 480px)
+  .footer
+    &__logo-name
+      font-size: 24px
+
+    &__description
+      font-size: 14px
+
+    &__nav-list
+      gap: 8px 20px
+
+    &__contacts
+      grid-template-columns: minmax(0, 1fr)
+      gap: 20px
+
+    &__contact
+      justify-content: center
+      text-align: left
+
+    &__contact-copy
+      width: min(100%, 240px)
 
 @media (prefers-reduced-motion: reduce)
   .footer
     &__nav-link,
-    &__contact a,
+    &__contact-copy a,
     &__social
       transition: none
-
-.footer__demo-note
-  margin: 24px 0 0
-  font-size: 12px
-  line-height: 18px
