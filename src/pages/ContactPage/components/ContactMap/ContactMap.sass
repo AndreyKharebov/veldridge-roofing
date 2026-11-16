@@ -1,231 +1,282 @@
 @use '../../../../styles/abstracts/variables' as vars
-@use '../../../../styles/abstracts/interior-page' as interior
 
 .contact-map
   padding: 80px 0
   background-color: vars.$color-white
 
-  &__inner
-    display: flex
-    flex-direction: column
-    gap: 24px
+.contact-map__inner
+  display: flex
+  flex-direction: column
+  gap: 24px
 
-  &__heading
-    display: grid
-    grid-template-columns: minmax(0, 736fr) minmax(0, 480fr)
-    align-items: start
-    gap: 64px
+.contact-map__heading
+  display: grid
+  grid-template-columns: minmax(0, 736fr) minmax(0, 480fr)
+  align-items: start
+  gap: 64px
 
-    h2
-      margin: 12px 0 0
-      color: vars.$color-text
-      font-size: 36px
-      font-weight: vars.$font-semibold
-      line-height: 47px
+.contact-map__heading h2
+  margin: 12px 0 0
+  color: vars.$color-text
+  font-size: 36px
+  font-weight: vars.$font-semibold
+  line-height: 47px
 
-  &__eyebrow
-    @include interior.eyebrow
+.contact-map__eyebrow
+  margin: 0
+  color: #975000
+  font-size: 12px
+  font-weight: vars.$font-bold
+  line-height: 20px
+  letter-spacing: .1em
+  text-transform: uppercase
 
-  &__description
-    @include interior.body-text
+.contact-map__description
+  margin: 0
+  color: vars.$color-text-secondary
+  font-size: 16px
+  line-height: 26px
 
-  &__figure
-    display: flex
-    flex-direction: column
-    gap: 24px
-    margin: 0
+.contact-map__figure
+  margin: 0
+  min-width: 0
 
-    figcaption
-      color: vars.$color-text-secondary
-      font-size: 12px
-      line-height: 20px
+.contact-map__layout
+  display: grid
+  grid-template-columns: minmax(280px, 340px) minmax(0, 1fr)
+  overflow: hidden
+  border: 1px solid #e8e1d8
+  border-radius: 20px
+  background-color: vars.$color-background-warm
+  box-shadow: 0 16px 48px rgba(23, 23, 23, .06)
 
-  &__canvas
-    position: relative
-    height: 360px
-    overflow: hidden
-    border-radius: 16px
-    background-color: #eeede7
+.contact-map__card
+  display: flex
+  flex-direction: column
+  align-items: flex-start
+  gap: 14px
+  min-width: 0
+  padding: 32px
+  border-top: 4px solid vars.$color-primary
+  overflow-wrap: anywhere
 
-  &__art
-    position: absolute
-    top: 0
-    left: 50%
-    width: 1280px
-    height: 360px
-    transform: translateX(-50%)
-    pointer-events: none
+.contact-map__icon
+  display: grid
+  place-items: center
+  width: 48px
+  height: 48px
+  border: 1px solid #efd3b2
+  border-radius: 14px
+  background-color: vars.$color-white
+  color: #a55a00
 
-  &__block
-    position: absolute
-    height: 62px
-    border-radius: 8px
-    background-color: #e3e1d8
+.contact-map__label
+  margin: 4px 0 -6px
+  color: #80501a
+  font-size: 11px
+  font-weight: vars.$font-bold
+  line-height: 18px
+  letter-spacing: .12em
+  text-transform: uppercase
 
-  &__park
-    position: absolute
-    background-color: #d7e2d0
+.contact-map__card h3
+  margin: 0
+  color: vars.$color-text
+  font-size: 23px
+  font-weight: vars.$font-semibold
+  line-height: 1.35
 
-    &--first
-      top: 28px
-      left: 83px
-      width: 168px
-      height: 125px
-      border-radius: 24px
+.contact-map__address
+  margin: 0
+  color: vars.$color-text-secondary
+  font-size: 14px
+  font-style: normal
+  line-height: 23px
 
-    &--second
-      top: 235px
-      left: 935px
-      width: 177px
-      height: 97px
-      border-radius: 18px
+.contact-map__hours
+  display: grid
+  gap: 4px
+  width: 100%
+  padding-top: 16px
+  border-top: 1px solid #eadfce
+  color: vars.$color-text-secondary
+  font-size: 13px
+  line-height: 21px
 
-  &__waterway
-    position: absolute
-    top: 0
-    left: 924px
-    display: block
+.contact-map__hours span
+  font-weight: vars.$font-semibold
 
-  &__road
-    position: absolute
-    top: 169px
-    left: 0
-    width: 1280px
-    height: 20px
-    background-color: vars.$color-white
+.contact-map__hours p
+  margin: 0
+  white-space: pre-line
 
-  &__avenue
-    position: absolute
-    top: 0
-    left: 534px
-    width: 20px
-    height: 360px
-    background-color: vars.$color-white
+.contact-map__hours-note
+  color: #675d50
 
-  &__area-label
-    position: absolute
-    top: 218px
-    left: 172px
-    color: vars.$color-text-secondary
-    opacity: 0.58
-    font-size: 12px
-    font-weight: vars.$font-medium
-    line-height: 18px
-    text-transform: uppercase
+.contact-map__demo-note
+  margin: 0
+  padding: 10px 12px
+  border: 1px solid #eed6b6
+  border-radius: 8px
+  background-color: vars.$color-white
+  color: #705125
+  font-size: 12px
+  line-height: 19px
 
-  &__badge
-    position: absolute
-    top: 20px
-    left: 20px
-    width: 190px
-    margin: 0
-    padding: 12px
-    border-radius: 8px
-    background-color: vars.$color-white
-    color: vars.$color-text-secondary
-    font-size: 11px
-    font-weight: vars.$font-bold
-    line-height: 18px
-    text-transform: uppercase
+.contact-map__actions
+  display: grid
+  gap: 12px
+  width: 100%
+  margin-top: auto
+  padding-top: 8px
 
-  &__location
-    position: absolute
-    top: 98px
-    left: calc(50% - 28px)
-    display: flex
-    align-items: flex-start
-    gap: 14px
+.contact-map__directions
+  display: flex
+  align-items: center
+  justify-content: center
+  gap: 10px
+  min-height: 48px
+  padding: 12px 16px
+  border-radius: 9px
+  background-color: vars.$color-primary
+  color: vars.$color-text
+  text-align: center
+  text-decoration: none
+  font-size: 14px
+  font-weight: vars.$font-bold
+  line-height: 22px
 
-  &__pin
-    position: relative
-    display: flex
-    align-items: center
-    justify-content: center
-    flex: 0 0 64px
-    width: 64px
-    height: 64px
-    margin-top: 76px
+.contact-map__directions:hover
+  background-color: #df7b00
 
-  &__pin-background
-    position: absolute
-    inset: 0
-    display: block
+.contact-map__external
+  padding: 6px 0
+  color: vars.$color-text-secondary
+  text-align: center
+  text-decoration: underline
+  text-underline-offset: 4px
+  font-size: 13px
+  font-weight: vars.$font-semibold
+  line-height: 22px
 
-  &__pin-icon
-    position: relative
-    display: block
+.contact-map__directions:focus-visible, .contact-map__external:focus-visible, .contact-map__refresh button:focus-visible
+  outline: 3px solid vars.$color-text
+  outline-offset: 4px
 
-  &__card
-    display: flex
-    flex-direction: column
-    gap: 6px
-    width: 306px
-    padding: 20px
-    border-radius: 12px
-    background-color: vars.$color-white
+.contact-map__route-note
+  margin: 0
+  color: #675d50
+  font-size: 11px
+  line-height: 18px
 
-    h3
-      margin: 0
-      color: vars.$color-text
-      font-size: 17px
-      font-weight: vars.$font-semibold
-      line-height: 26px
+.contact-map__canvas
+  position: relative
+  min-width: 0
+  min-height: 460px
+  background-color: #f1f0eb
 
-    p
-      margin: 0
-      color: vars.$color-text-secondary
-      font-size: 13px
-      line-height: 21px
+.contact-map__embed
+  position: absolute
+  inset: 0
+  display: block
+  width: 100%
+  height: 100%
+  min-height: 460px
+  border: 0
 
-    .contact-map__pin-note
-      font-size: 11px
-      font-weight: vars.$font-medium
-      line-height: 18px
+.contact-map__empty
+  display: flex
+  flex-direction: column
+  align-items: center
+  justify-content: center
+  gap: 14px
+  height: 100%
+  min-height: 460px
+  padding: 40px
+  color: #615e57
+  text-align: center
+  background-image: linear-gradient(rgba(23, 23, 23, .025) 1px, transparent 1px), linear-gradient(90deg, rgba(23, 23, 23, .025) 1px, transparent 1px)
+  background-size: 32px 32px
 
-@media (min-width: 701px) and (max-width: 1100px)
+.contact-map__empty-icon
+  display: grid
+  place-items: center
+  width: 64px
+  height: 64px
+  border-radius: 50%
+  background-color: vars.$color-white
+  color: #a55a00
+
+.contact-map__empty h3
+  margin: 0
+  color: vars.$color-text
+  font-size: 21px
+  line-height: 1.4
+
+.contact-map__empty p, .contact-map__empty small
+  max-width: 350px
+  margin: 0
+  font-size: 14px
+  line-height: 23px
+  overflow-wrap: anywhere
+
+.contact-map__empty small
+  font-size: 12px
+
+.contact-map__caption
+  display: flex
+  justify-content: space-between
+  flex-wrap: wrap
+  gap: 8px 24px
+  padding-top: 16px
+  color: #69635a
+  font-size: 11px
+  line-height: 18px
+
+.contact-map__refresh
+  display: flex
+  align-items: center
+  flex-wrap: wrap
+  gap: 12px
+  font-size: 13px
+  line-height: 22px
+
+.contact-map__refresh button
+  padding: 8px 16px
+  border: 1px solid #d7c9b7
+  border-radius: 8px
+  background-color: vars.$color-background-warm
+  color: vars.$color-text
+  font: inherit
+  cursor: pointer
+
+@media (max-width: 1100px)
   .contact-map
     padding: 64px 0
-
-    &__heading
-      gap: 28px
-
-      h2
-        font-size: 30px
-        line-height: 1.3
-
-    &__location
-      left: calc(50% - 110px)
+  .contact-map__heading
+    gap: 28px
+  .contact-map__heading h2
+    font-size: 30px
+    line-height: 1.3
+  .contact-map__card
+    padding: 24px
 
 @media (max-width: 700px)
   .contact-map
     padding: 48px 0
-
-    &__heading
-      grid-template-columns: minmax(0, 1fr)
-      gap: 16px
-
-      h2
-        font-size: 28px
-        line-height: 1.3
-
-    &__description br
-      display: none
-
-    &__location
-      top: 96px
-      left: 16px
-      right: 16px
-      flex-direction: column
-      align-items: center
-      gap: 12px
-
-    &__pin
-      margin-top: 0
-
-    &__card
-      width: min(100%, 306px)
-      padding: 16px
-
-    &__badge
-      top: 16px
-      left: 16px
+  .contact-map__heading
+    grid-template-columns: minmax(0, 1fr)
+    gap: 16px
+  .contact-map__heading h2
+    font-size: 28px
+  .contact-map__description br
+    display: none
+  .contact-map__layout
+    grid-template-columns: minmax(0, 1fr)
+    border-radius: 16px
+  .contact-map__card
+    padding: 24px 20px
+  .contact-map__canvas, .contact-map__embed, .contact-map__empty
+    min-height: 340px
+  .contact-map__empty
+    padding: 28px 20px

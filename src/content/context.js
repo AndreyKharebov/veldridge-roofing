@@ -1,7 +1,6 @@
 import { createContext, useContext } from 'react';
 
 const empty = Object.freeze([]);
-
 const content = Object.freeze({
   services: empty,
   articles: empty,
@@ -9,7 +8,8 @@ const content = Object.freeze({
   categories: empty,
   media: empty,
   inquiries: empty,
-
+  settingsStatus: 'idle',
+  settingsError: '',
   settings: Object.freeze({
     company: 'Veldridge Roofing',
     phone: '',
@@ -25,22 +25,11 @@ const content = Object.freeze({
     timeZone: '',
     serviceStates: empty,
     serviceArea: '',
-    map: Object.freeze({
-      latitude: '',
-      longitude: '',
-      label: '',
-    }),
-    socials: Object.freeze({
-      facebook: '',
-      instagram: '',
-      linkedin: '',
-      youtube: '',
-    }),
+    socials: Object.freeze({ facebook: '', instagram: '', linkedin: '', youtube: '' }),
   }),
 });
 
 export const ContentContext = createContext(content);
-
 export function useContent() {
   return useContext(ContentContext);
 }
