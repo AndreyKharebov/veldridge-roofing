@@ -3,7 +3,7 @@ import NotFound from '../../components/feedback/NotFound/NotFound.jsx';
 import { useMutation } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router';
 import { useContent } from '../../content/context.js';
-import { workspaceApi } from '../../api/workspace.js';
+import { workspaceApi } from '../../dev/workspace.js';
 import { useEditor } from '../hooks/useEditor.js';
 import { Button, Empty, Field, Notice, PageHeading, Panel } from '../components/UI.jsx';
 import EditorFeedback from '../components/EditorFeedback.jsx';

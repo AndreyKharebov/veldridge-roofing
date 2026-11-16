@@ -2,7 +2,7 @@
 
 The Express server already handles administrator authentication through `/api/auth/login`, `/api/auth/me` and `/api/auth/logout`.
 
-**All other endpoints are pending.** Services, News, Categories, Projects, Settings, image upload and Contact submissions currently call a development-only adapter in `src/api/workspace.js`.
+**All other endpoints are pending.** Services, News, Categories, Projects, Settings, image upload and Contact submissions currently call a development-only adapter in `src/dev/workspace.js`.
 
 - Submit to validate and print each request payload in DevTools Console (`[Veldridge API TODO]`).
 - Mock records and uploaded-image previews exist only in JavaScript memory. They disappear on a page refresh. No IndexedDB, localStorage or MongoDB writes occur.

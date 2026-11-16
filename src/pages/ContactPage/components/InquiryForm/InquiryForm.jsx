@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import FormField from './FormField.jsx';
 import PhotoPicker from '../PhotoPicker/PhotoPicker.jsx';
 import { useContent } from '../../../../content/context.js';
-import { workspaceApi } from '../../../../api/workspace.js';
+import { workspaceApi } from '../../../../dev/workspace.js';
 import { createInitialInquiry, validateInquiry } from '../../data/inquiry.js';
 import './InquiryForm.sass';
 

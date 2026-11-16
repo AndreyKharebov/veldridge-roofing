@@ -2,7 +2,7 @@ import NotFound from '../../components/feedback/NotFound/NotFound.jsx';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { useContent } from '../../content/context.js';
-import { workspaceApi } from '../../api/workspace.js';
+import { workspaceApi } from '../../dev/workspace.js';
 import { useEditor } from '../hooks/useEditor.js';
 import { Badge, Button, Checkbox, Empty, Field, PageHeading, Panel } from '../components/UI.jsx';
 import EditorFeedback from '../components/EditorFeedback.jsx';

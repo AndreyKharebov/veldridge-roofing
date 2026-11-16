@@ -1,5 +1,5 @@
 import { useContent } from '../../content/context.js';
-import { workspaceApi } from '../../api/workspace.js';
+import { workspaceApi } from '../../dev/workspace.js';
 import { useEditor } from '../hooks/useEditor.js';
 import EditorFeedback from '../components/EditorFeedback.jsx';
 import { Button, Checkbox, Field, PageHeading, Panel } from '../components/UI.jsx';

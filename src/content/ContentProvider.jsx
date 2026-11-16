@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ContentContext } from './context.js';
-import { workspaceApi, subscribeWorkspace } from '../api/workspace.js';
+import { workspaceApi, subscribeWorkspace } from '../dev/workspace.js';
 import './ContentProvider.sass';
 
 export default function ContentProvider({ children }) {
