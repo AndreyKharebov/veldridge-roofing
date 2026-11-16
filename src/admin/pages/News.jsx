@@ -65,7 +65,7 @@ function ArticleForm({ initial }) {
           <Button disabled={!image || !values.title.trim()} onClick={() => setPreview(true)}>Preview article</Button>
           <Button type='submit'>{mutation.isPending ? 'Saving…' : values.status === 'draft' ? 'Save draft' : 'Save changes'}</Button>
           {values.status !== 'published' && <Button variant='primary' onClick={() => mutation.mutate({...values,status:'published'})}>Publish article</Button>}
-          <Button to='/admin/news'>Cancel</Button><p className='admin-hint'>Drafts are visible only in this workspace. Publishing updates Blog and Latest News. The publication date controls sorting, not scheduling.</p>
+          <Button to='/admin/news'>Cancel</Button><p className='admin-hint'>Preview only: submits log to DevTools and exist in memory until refresh. Publication dates control sorting.</p>
         </Panel><ImageField editor={editor} title='Article cover' />
         <Panel title='Reader layout'><p>Date → title → introduction → cover → sections → source → Contact CTA</p><p className='admin-hint'>Matches the existing article window. Typography and the closing Contact block stay fixed.</p></Panel>
         {values.id && values.status !== 'archived' && <Panel title='Archive article'><Button variant='danger' onClick={() => setArchive(true)}>Archive article</Button></Panel>}

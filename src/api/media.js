@@ -1,4 +1,5 @@
-import { bundledAssets } from '../data/seed.js';
+// Keep static asset URLs for the existing public design and previously authored UI fields.
+export const bundledAssets = import.meta.glob('../pages/**/assets/**/*.{webp,png,jpg,jpeg,svg}', { eager: true, query: '?url', import: 'default' });
 export const newId = (prefix = 'item') => `${prefix}-${globalThis.crypto?.randomUUID?.() || `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`}`;
 export const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const urls = new Map();

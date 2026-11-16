@@ -49,7 +49,7 @@ const InquiryForm = ({ context }) => {
     setPending(true); setSaveError('');
     try {
       const receipt = await workspaceApi.createInquiry(values,photos,context);
-      console.log('[Veldridge Contact demo — saved locally, not sent]', receipt);
+      console.info('[Veldridge Contact] Test inquiry (not delivered)', receipt);
       setSubmitted(true);
     } catch (error) {
       submittedRef.current = false;
@@ -75,7 +75,7 @@ const InquiryForm = ({ context }) => {
         </div>
         {attempted && hasErrors && <div className='inquiry-form__error-summary' role='alert'>
           <p>Please check the highlighted fields.</p>
-          <span>Your details have not been saved. Correct the errors below and try again.</span>
+          <span>Please correct the errors before testing this submission.</span>
         </div>}
         <fieldset className='inquiry-form__inputs' disabled={pending}>
         <div className='inquiry-form__row'>
@@ -94,14 +94,14 @@ const InquiryForm = ({ context }) => {
         </fieldset>
         {saveError && <div id='inquiry-save-error' className='inquiry-form__error-summary' role='alert' tabIndex={-1}>{saveError} Your entries are still here; please try again.</div>}
         <div className='inquiry-form__actions'>
-          <button className='inquiry-form__button' type='submit' disabled={pending}>{pending ? 'Saving locally…' : 'Send Message'}</button>
-          <p id='inquiry-demo-note'>Demo mode: details and optional photos are saved in this browser’s admin inbox. Nothing is sent to a server. Use sample information only.</p>
+          <button className='inquiry-form__button' type='submit' disabled={pending}>{pending ? 'Logging payload…' : 'Send Message'}</button>
+          <p id='inquiry-demo-note'>Development mode: submissions are logged to DevTools and temporarily visible in admin. Nothing is sent or saved. Do not enter real customer details.</p>
         </div>
       </form>
       {submitted && <section ref={resultRef} className='inquiry-form__result' tabIndex={-1} aria-labelledby='inquiry-result-title' role='status'>
         <h2 id='inquiry-result-title'>Demo complete.</h2>
-        <p>Your inquiry was saved in this browser’s demo inbox. No email or photos were sent to a server.</p>
-        <p className='inquiry-form__result-note'>Open /admin in this same browser to review it. Returning to the form and submitting again creates another demo inquiry.</p>
+        <p>The test payload was logged to your browser console. No email, upload or database write occurred.</p>
+        <p className='inquiry-form__result-note'>You can inspect the temporary entry in /admin during this session. Refreshing clears it.</p>
         <button className='inquiry-form__button' type='button' onClick={returnToForm}>Back to Form</button>
       </section>}
     </div>

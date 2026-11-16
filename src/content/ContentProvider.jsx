@@ -11,8 +11,8 @@ export default function ContentProvider({ children }) {
     client.invalidateQueries({queryKey:['workspace']});
   }),[client]);
   if (!query.data) return <main className='content-status' aria-live='polite'>
-    <h1>{query.isError ? 'Browser content is unavailable.' : 'Loading Veldridge…'}</h1>
-    <p>{query.isError ? query.error.message : 'Opening local content while the Express content API is being developed.'}</p>
+    <h1>{query.isError ? 'Temporary preview is unavailable.' : 'Loading Veldridge…'}</h1>
+    <p>{query.isError ? query.error.message : 'Preparing empty development data.'}</p>
     {query.isError && <button type='button' onClick={() => query.refetch()}>Try again</button>}
   </main>;
   return <ContentContext.Provider value={query.data}>{children}</ContentContext.Provider>;

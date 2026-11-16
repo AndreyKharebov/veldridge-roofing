@@ -20,7 +20,7 @@ export default function MediaPicker({ multiple = false, onChoose, onClose }) {
     : previous.includes(id) ? previous.filter((value) => value !== id) : [...previous,id]);
   return <Dialog title={multiple ? 'Choose project images' : 'Choose an image'} onClose={upload.isPending ? () => {} : onClose} className='admin-dialog--media'>
     <div className='admin-media-body'>
-      <p className='admin-hint'>Public content only. Customer inquiry attachments are never shown here.</p>
+      <p className='admin-hint'>Temporary image previews only. Files are not uploaded to a server or saved.</p>
       <div className={`admin-dropzone${dragging ? ' is-dragging' : ''}`}
         onDragOver={(event) => { if (event.dataTransfer.types.includes('Files')) { event.preventDefault(); setDragging(true); } }}
         onDragLeave={() => setDragging(false)} onDrop={(event) => {

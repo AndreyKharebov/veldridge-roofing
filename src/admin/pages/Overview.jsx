@@ -13,7 +13,7 @@ export default function Overview() {
     ['Published projects',projects.filter((p) => p.status === 'published').length,`${projects.length} total projects`],
     ['Published articles',articles.filter((a) => a.status === 'published').length,`${articles.length} total articles`],
   ];
-  return <><PageHeading title='Overview' description='A clear view of your content and customer inquiries.' />
+  return <><PageHeading title='Overview' description='Temporary test records for API development. Refresh clears these counters.' />
     <div className='admin-metrics'>{metrics.map(([title,value,note],index) => <Panel key={title}>
       <p>{title}</p><strong>{query.isPending && index < 2 ? '—' : value}</strong><small>{note}</small>
     </Panel>)}</div>

@@ -1,11 +1,17 @@
-# Veldridge admin — backend transition
+# Frontend while the MERN API is under development
 
-The admin login now uses the **Express** API and server-side HttpOnly sessions.
-Set `VITE_API_URL` in the frontend environment (default: `http://localhost:5000`).
-The backend must allow the frontend origin with credentials and have an administrator created with `npm run admin:create`.
+The Express server already handles administrator authentication through `/api/auth/login`, `/api/auth/me` and `/api/auth/logout`.
 
-**Content migration is not complete.** Services, News, Projects, Settings, Media and Inquiries still use a browser-only IndexedDB adapter until their corresponding Express routes exist. Editing this content does **not** write to MongoDB or deliver visitor inquiries. Do not use real customer data yet.
+**All other endpoints are pending.** Services, News, Categories, Projects, Settings, image upload and Contact submissions currently call a development-only adapter in `src/api/workspace.js`.
 
-The browser data should be backed up before future migration. The local export excludes private inquiries and attachments. Settings still offers local import/export/clear solely for that transition.
+- Submit to validate and print each request payload in DevTools Console (`[Veldridge API TODO]`).
+- Mock records and uploaded-image previews exist only in JavaScript memory. They disappear on a page refresh. No IndexedDB, localStorage or MongoDB writes occur.
+- Uploaded media is held in memory as File/Blob with temporary object URLs; it is never uploaded.
+- Contact form logs fictional test data. Do not enter real personal information: browser console is not an appropriate storage or transmission destination.
+- Temporary in-memory records are only for wiring dependent forms (for example, creating a Service before a Project).
+- Import/export/reset from the old browser database were removed.
+- The real backend will replace the development adapter one endpoint at a time while the React forms and data-model contracts remain.
 
-Existing design and data contracts: [data model](../../docs/data-model.md) and [backend handoff](../../docs/backend-handoff.md). Hero remains static. The public site and admin content editors retain their existing layout and animations.
+Start Express at `http://localhost:5000` and Vite at `http://localhost:5173`; set `VITE_API_URL` if needed. Use the MongoDB administrator account to sign in.
+
+See `docs/data-model.md` for the complete entity field contracts.

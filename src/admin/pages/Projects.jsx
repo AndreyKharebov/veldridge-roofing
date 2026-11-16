@@ -34,9 +34,9 @@ export function ProjectEditor() {
   const { id } = useParams(); const { projects,services } = useContent();
   if (!id && !services.some((service) => service.status === 'active')) return <>
     <PageHeading title='New project' description='Projects need a service category.' />
-    <Empty title='Create a service first.'><p>Add an active service with Residential or Commercial selected, then create your project.</p><Button to='/admin/services/new'>Create a service</Button><Button to='/admin/projects'>Back to projects</Button></Empty>
+    <Empty title='Create a service first.'><p>Submit a service in this session to make it available in the project category selector. Nothing is persisted.</p><Button to='/admin/services/new'>Create a service</Button><Button to='/admin/projects'>Back to projects</Button></Empty>
   </>;
-  const initial = id ? projects.find((p) => p.id === id) : {title:'',summary:'',serviceId:'',propertyType:'',property:'',duration:'',material:'',finish:'',photos:[],coverPhotoId:'',work:[''],status:'draft',order:projects.length+1,revision:0,isDemo:true};
+  const initial = id ? projects.find((p) => p.id === id) : {title:'',summary:'',serviceId:'',propertyType:'',property:'',duration:'',material:'',finish:'',photos:[],coverPhotoId:'',work:[''],status:'draft',order:projects.length+1,revision:0,isDemo:false};
   if (!initial) return <NotFound variant='admin' title='Project not found.' description='This project is not available in the current workspace. It may have been removed, or the link may be incorrect.' returnTo='/admin/projects' returnLabel='Back to projects' />;
   return <ProjectForm key={id || 'new'} initial={initial} />;
 }
@@ -75,7 +75,7 @@ function ProjectForm({ initial }) {
           {photo && <><p className='admin-hint'>Editing photo {photos.findIndex((p) => p.id === photo.id)+1}. Select a thumbnail to edit a different photo.</p>
             <Field label='Photo caption' name='photoCaption' value={photo.caption} onChange={(event) => setPhoto('caption',event.target.value)} maxLength={250} />
             <Field label='Image description *' name='photoAlt' value={photo.alt} onChange={(event) => setPhoto('alt',event.target.value)} maxLength={250} /></>}
-          {values.isDemo && <p className='admin-hint'>Seed projects use illustrative photographs and crops. Replace them with actual same-project photos before publication.</p>}
+          {values.isDemo && <p className='admin-hint'>Sample preview only; replace all illustrative images before production.</p>}
         </Panel>
         <Panel title='Project information'><Field label='Project title *' {...field('title')} maxLength={150} />
           <div className='admin-two-columns'><Field label='Service category *' {...field('serviceId')}><option value=''>Choose a service</option>{services.filter((s) => s.status === 'active' || s.id === values.serviceId).map((s) => <option key={s.id} value={s.id}>{s.title}</option>)}</Field>
@@ -91,7 +91,7 @@ function ProjectForm({ initial }) {
           <Field label='Display order' type='number' min='1' max='9999' {...field('order')} />
           <Button disabled={!photos.length || !values.title.trim()} onClick={() => setPreview(true)}>Preview project</Button>
           <Button variant='primary' type='submit'>{mutation.isPending ? 'Saving…' : 'Save changes'}</Button><Button to='/admin/projects'>Cancel</Button>
-          <p className='admin-hint'>Published changes appear in Gallery after saving. Draft projects stay private to this demo workspace.</p>
+          <p className='admin-hint'>Console preview only. Changes disappear when you reload.</p>
         </Panel><Panel title='Gallery cover preview'>{cover ? <ProjectPhoto photo={cover} className='admin-cover-photo' /> : <div className='admin-image-placeholder'>Choose a cover photo</div>}
           <p className='admin-eyebrow'>{service?.title || 'Service category'}</p><h3>{values.title || 'Project title'}</h3><p>View Project →</p>
         </Panel>{values.id && values.status !== 'archived' && <Panel title='Archive project'><p className='admin-hint'>Remove the project from the public Gallery without losing its photos or details.</p><Button variant='danger' onClick={() => setArchive(true)}>Archive project</Button></Panel>}

@@ -1,6 +1,6 @@
 export class ValidationError extends Error {
   constructor(fields) {
-    super('Please check the highlighted fields. Your changes have not been saved.');
+    super('Please check the highlighted fields. The payload was not logged.');
     this.name = 'ValidationError';
     this.fields = fields;
   }

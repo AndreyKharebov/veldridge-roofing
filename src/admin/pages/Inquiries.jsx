@@ -37,8 +37,8 @@ export function InquiriesList() {
       {[['all','All inquiries'],...statuses].map(([value,label]) => <Button key={value} variant={status === value ? 'primary' : 'secondary'} aria-pressed={status === value} onClick={() => setStatus(value)}>{label} · {value === 'all' ? records.length : records.filter((row) => row.status === value).length}</Button>)}
     </div>
     <Field name='search-inquiries' label='Search inquiries' value={search} placeholder='Name, email, phone or message' onChange={(event) => setSearch(event.target.value)} />
-    {filtered.length ? <InquiryTable records={filtered} detailed /> : <Empty title='No inquiries found.'><p>Change the filters, or send a demo inquiry from Contact in this same browser.</p><Button to='/contact'>Open Contact</Button></Empty>}
-    <p className='admin-hint' aria-live='polite'>{filtered.length} of {records.length} inquiries · Sample and local browser data only.</p>
+    {filtered.length ? <InquiryTable records={filtered} detailed /> : <Empty title='No inquiries found.'><p>Change the filters or submit a test inquiry from Contact in this tab.</p><Button to='/contact'>Open Contact</Button></Empty>}
+    <p className='admin-hint' aria-live='polite'>{filtered.length} of {records.length} inquiries · Temporary in-memory data only.</p>
   </>;
 }
 export function InquiryDetail() {
@@ -71,7 +71,7 @@ function InquiryContent({ record }) {
     <UnsavedChanges dirty={status !== snapshot.status || Boolean(note.trim())} />
     <PageHeading title={`Inquiry #${record.id.replace(/^INQ-/,'')}`} description={new Date(record.createdAt).toLocaleString('en-US')}><Button to='/admin/inquiries'>← Inquiries</Button></PageHeading>
     {mutation.isError && <div ref={errorRef} tabIndex={-1} role='alert' className='admin-notice admin-notice--error'>{mutation.error.message}</div>}
-    {mutation.isSuccess && <Notice>Inquiry updated locally. No message was sent.</Notice>}
+    {mutation.isSuccess && <Notice>Inquiry payload logged to console; not saved.</Notice>}
     <div className='admin-editor-grid'><div className='admin-stack'>
       <Panel title={record.name}>
         <dl className='admin-facts'><div><dt>Email</dt><dd>{record.email || 'Not provided'}</dd></div><div><dt>Phone</dt><dd>{record.phone || 'Not provided'}</dd></div><div><dt>ZIP code</dt><dd>{record.zip || 'Not provided'}</dd></div><div><dt>Service</dt><dd>{record.serviceLabel}</dd></div></dl>
@@ -85,7 +85,7 @@ function InquiryContent({ record }) {
       <Panel title={`Attachments · ${record.photos.length} photos`} description='Customer attachments are kept separate from the public media library.'>
         {record.photos.length ? <div className='admin-photo-grid'>{record.photos.map((photo) => <Attachment photo={photo} onOpen={setPreview} key={photo.id} />)}</div> : <p>No photos attached.</p>}
       </Panel>
-      <Panel title='Internal notes' description='Only visible in this local admin workspace. Never shown on the public website.'>
+      <Panel title='Internal notes' description='Temporary preview only. Notes are not saved to a database.'>
         {snapshot.notes.length ? <ol className='admin-notes'>{snapshot.notes.map((item) => <li key={item.id}><p className='admin-prose'>{item.body}</p><small>{new Date(item.createdAt).toLocaleString('en-US')}</small></li>)}</ol> : <p className='admin-hint'>No notes yet.</p>}
         <Field name='internal-note' label='Add a note' multiline rows={4} maxLength={4000} value={note} onChange={(event) => setNote(event.target.value)} disabled={mutation.isPending} />
         <Button variant='primary' disabled={!note.trim() || mutation.isPending} onClick={() => mutation.mutate({status,note,revision:snapshot.revision})}>{mutation.isPending ? 'Saving…' : 'Save note'}</Button>
@@ -94,7 +94,7 @@ function InquiryContent({ record }) {
       <Field name='inquiry-status' label='Status' value={status} disabled={mutation.isPending} onChange={(event) => setStatus(event.target.value)}>{statuses.map(([value,label]) => <option key={value} value={value}>{label}</option>)}</Field>
       <Button variant='primary' disabled={mutation.isPending} onClick={() => mutation.mutate({status,note,revision:snapshot.revision})}>{mutation.isPending ? 'Saving…' : 'Save status'}</Button>
       <p className='admin-hint'>New → In progress → Closed. Use Spam for unwanted requests.</p>
-    </Panel><Panel title='Local demo'><p>These details are stored in this browser only. Replying by email is not connected.</p></Panel></aside></div>
+    </Panel><Panel title='Local demo'><p>Temporary test data. Refresh clears it; no messages are delivered.</p></Panel></aside></div>
     {preview && <Dialog title={preview.name} onClose={() => setPreview(null)} className='admin-dialog--photo'><img src={preview.url} alt={preview.name} /></Dialog>}
   </>;
 }

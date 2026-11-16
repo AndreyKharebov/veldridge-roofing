@@ -42,13 +42,13 @@ export default function AdminLayout() {
       <span className='admin-topbar__breadcrumb'>Workspace / {active}</span><strong className='admin-topbar__compact'>VELDRIDGE</strong>
       <Button to='/' className='admin-view-site'>View website ↗</Button><span className='admin-avatar' aria-label='Admin account'>A</span>
     </header><main className='admin-content' id='admin-content'>
-      <div className='admin-demo'>Content preview · Edits and inquiries currently stay in this browser.</div>
+      <div className='admin-demo'>API development mode · Submissions are logged to the console. Nothing is saved.</div>
       <Outlet />
     </main></div>
     {menu && <Dialog title='Workspace' className='admin-dialog--menu' onClose={() => setMenu(false)}><Navigation close={() => setMenu(false)} /><Button onClick={() => {setMenu(false);setSignOut(true);}}>Sign out</Button></Dialog>}
     {signOut && <ConfirmDialog title='Sign out of the admin?' action='Sign out' onClose={() => setSignOut(false)} onConfirm={() => {
       // Navigate first: the route blocker gets a chance to preserve unsaved edits.
       setSignOut(false); navigate('/admin/logout');
-    }}><p>Locally stored content remains in this browser.</p></ConfirmDialog>}
+    }}><p>Temporary test content will disappear when the page is refreshed.</p></ConfirmDialog>}
   </div>;
 }

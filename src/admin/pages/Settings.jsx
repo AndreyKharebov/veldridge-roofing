@@ -1,50 +1,19 @@
-import { useRef, useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useContent } from '../../content/context.js';
 import { workspaceApi } from '../../api/workspace.js';
-import { downloadBackup, exportBackup, parseBackup, importBackup } from '../../api/backup.js';
 import { useEditor } from '../hooks/useEditor.js';
 import EditorFeedback from '../components/EditorFeedback.jsx';
-import { Button, Checkbox, Field, Notice, PageHeading, Panel } from '../components/UI.jsx';
-import { ConfirmDialog } from '../components/Dialog.jsx';
+import { Button, Checkbox, Field, PageHeading, Panel } from '../components/UI.jsx';
 
-function DemoData({ onReplaced }) {
-  const [confirmation,setConfirmation] = useState(null);
-  const [message,setMessage] = useState('');
-  const fileRef = useRef(null);
-  const client = useQueryClient();
-  const backup = useMutation({mutationFn:exportBackup,onSuccess:(blob) => {downloadBackup(blob);setMessage('Content backup exported. Inquiries and their attachments are not included.');}});
-  const parse = useMutation({mutationFn:parseBackup,onSuccess:(data) => setConfirmation({kind:'import',data})});
-  const change = useMutation({mutationFn:async () => confirmation.kind === 'reset' ? workspaceApi.reset() : importBackup(confirmation.data),onSuccess:async () => {
-    setMessage(confirmation.kind === 'reset' ? 'Workspace cleared. You can now create content from scratch.' : 'Content imported. Your inquiry inbox was not changed.');
-    setConfirmation(null);await client.invalidateQueries({queryKey:['workspace']});onReplaced();
-  }});
-  return <Panel title='Workspace data' description='Back up content and public images before replacing them. Inquiries and customer attachments are deliberately excluded from content backups.'>
-    <div className='admin-actions'>
-      <Button disabled={backup.isPending} onClick={() => backup.mutate()}>{backup.isPending ? 'Exporting…' : 'Export content backup'}</Button>
-      <input ref={fileRef} type='file' accept='.json,application/json' hidden aria-label='Import content backup' onChange={(event) => {const file = event.target.files?.[0];event.target.value = '';if (file) parse.mutate(file);}} />
-      <Button disabled={parse.isPending} onClick={() => fileRef.current.click()}>{parse.isPending ? 'Validating backup…' : 'Import content backup'}</Button>
-      <Button variant='danger' onClick={() => setConfirmation({kind:'reset'})}>Clear workspace</Button>
-    </div>
-    {message && <Notice>{message}</Notice>}{[backup,parse].filter((mutation) => mutation.isError).map((mutation,i) => <Notice key={i} error>{mutation.error.message}</Notice>)}
-    <p className='admin-hint'>JSON backup up to 100 MB. Uploaded public images are embedded; bundled images use stable references. Import replaces content but keeps your inbox. Clear workspace removes all content, contact details, public media and inquiries. It does not restore sample records.</p>
-    {confirmation && <ConfirmDialog title={confirmation.kind === 'reset' ? 'Clear this local workspace?' : 'Replace local content?'} action={confirmation.kind === 'reset' ? 'Clear workspace' : 'Import content'} danger pending={change.isPending} onClose={() => {setConfirmation(null);change.reset();}} onConfirm={() => change.mutate()}>
-      <p>{confirmation.kind === 'reset' ? 'This permanently removes local services, news, projects, contact details, images, inquiries and private attachments. It starts an empty workspace; no sample records are restored. Content backups do not include inquiries. Cancel unless you are ready to lose those local messages.' : 'This replaces services, articles, projects, contact settings and public images. Your inquiry inbox and its attachments stay intact.'}</p>
-      {change.isError && <Notice error>{change.error.message}</Notice>}
-    </ConfirmDialog>}
-  </Panel>;
-}
 export default function Settings() {
   const { settings } = useContent();
-  const [generation,setGeneration] = useState(0);
-  return <SettingsForm key={generation} initial={settings} onReplaced={() => setGeneration((value) => value+1)} />;
+  return <SettingsForm initial={settings} />;
 }
-function SettingsForm({ initial, onReplaced }) {
+function SettingsForm({ initial }) {
   const [formRef,editor] = useEditor(initial,workspaceApi.saveSettings);
   const { values,field,update } = editor;
   const nested = (group,name) => ({name,value:values[group]?.[name] || '',onChange:(event) => update(group,{...values[group],[name]:event.target.value}),error:editor.mutation.error?.fields?.[name]});
   return <>
-    <PageHeading title='Contact settings' description='Keep company details consistent across Contact and the website Footer.' />
+    <PageHeading title='Contact settings' description='Prepare the Settings payload. Submitting logs it to the browser console; no database writes occur.' />
     <form ref={formRef} onSubmit={editor.submit} noValidate>
       <EditorFeedback editor={editor} />
       <fieldset disabled={editor.mutation.isPending} className='admin-editor-grid'>
@@ -69,12 +38,11 @@ function SettingsForm({ initial, onReplaced }) {
           </Panel>
           <Panel title='Social links' description='Leave a field empty to keep that link inactive.'>{[['facebook','Facebook'],['instagram','Instagram'],['linkedin','LinkedIn'],['youtube','YouTube']].map(([key,label]) => <Field key={key} label={label} {...nested('socials',key)} type='url' maxLength={2000} placeholder='https://…' />)}</Panel>
         </div>
-        <aside className='admin-stack'><Panel title='Save settings'><Button variant='primary' type='submit'>{editor.mutation.isPending ? 'Saving…' : 'Save changes'}</Button><Button to='/admin'>Cancel</Button><p className='admin-hint'>Shared by Contact and Footer. Hero content is not editable here.</p></Panel>
+        <aside className='admin-stack'><Panel title='Save settings'><Button variant='primary' type='submit'>{editor.mutation.isPending ? 'Saving…' : 'Save changes'}</Button><Button to='/admin'>Cancel</Button><p className='admin-hint'>Preview only until the settings endpoint exists. Hero is static.</p></Panel>
           <Panel title='Contact preview'><h3>{values.company}</h3><p className='admin-prose'>{values.phone || 'Phone not provided'}<br />{values.email || 'Email not provided'}<br />{values.street || 'Address not provided'}<br />{[values.city, [values.state,values.zip].filter(Boolean).join(' ')].filter(Boolean).join(', ')}</p><p className='admin-hint'>{values.hours}<br />{values.hoursNote}</p><p>{values.serviceStates.join(' · ')}</p></Panel>
           <Panel title='Local content workspace'><p>Content, images and inquiries are currently stored in this browser only. Express authentication is connected; content endpoints will replace local storage in the next backend stages.</p></Panel>
         </aside>
       </fieldset>
     </form>
-    <DemoData onReplaced={onReplaced} />
   </>;
 }

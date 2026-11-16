@@ -12,7 +12,7 @@ import { ConfirmDialog } from '../components/Dialog.jsx';
 
 export function ServicesList() {
   const { services } = useContent();
-  return <><PageHeading title='Services' description='Manage your service categories and the property types they support.'>
+  return <><PageHeading title='Services' description='Prepare service payloads for the future API. All submits are logged and temporary.'>
     <Button variant='primary' to='/admin/services/new'>+ Add service</Button></PageHeading>
     <div className='admin-table-wrap'><table className='admin-table'><thead><tr><th>Service</th><th>Property types</th><th>Visibility</th><th>Order</th><th>Action</th></tr></thead>
       <tbody>{services.map((s) => <tr key={s.id}><td data-label='Service'><strong>{s.title}</strong><small>{s.summary}</small></td>
