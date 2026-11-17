@@ -1,0 +1,76 @@
+.testimonials__card-header
+  flex-wrap: wrap
+
+.testimonials__author-name,
+.testimonials__author-location,
+.testimonials__review
+  overflow-wrap: anywhere
+
+.testimonials__review
+  white-space: pre-wrap
+
+.testimonials__initials
+  display: grid
+  place-items: center
+  background: #fbe9d3
+  color: #603600
+  font-size: 18px
+  font-weight: 600
+
+.testimonials__rating
+  max-width: 100%
+
+.testimonials__empty-star
+  color: #767676
+
+.testimonials__demo
+  margin: 0
+  color: #666
+  font-size: 12px
+  line-height: 18px
+
+.testimonials__track--single .testimonials__card
+  flex-basis: 100%
+
+.testimonials__arrow:disabled
+  opacity: 0.45
+  cursor: default
+
+.testimonials__controls,
+.testimonials__feedback
+  display: flex
+  flex-wrap: wrap
+  align-items: center
+  justify-content: center
+  gap: 12px
+  margin-top: 20px
+
+.testimonials__controls .testimonials__counter
+  margin: 0
+
+.testimonials__pause,
+.testimonials__feedback button
+  min-height: 44px
+  padding: 8px 14px
+  border: 1px solid #dedede
+  border-radius: 8px
+  background: white
+  color: #171717
+  font: inherit
+  font-size: 13px
+  cursor: pointer
+
+.testimonials__pause:focus-visible,
+.testimonials__feedback button:focus-visible
+  outline: 2px solid #a15d00
+  outline-offset: 3px
+
+@media (max-width: 380px)
+  .testimonials__card
+    padding: 16px
+
+  .testimonials__card-header
+    gap: 8px
+
+  .testimonials__rating
+    flex-basis: 100%

@@ -1,0 +1,77 @@
+// Only the review workspace; existing public sections and editors are unchanged.
+.testimonials-admin,
+.testimonials-admin__form
+  display: flex
+  flex-direction: column
+  gap: 24px
+  min-width: 0
+
+.testimonials-admin .admin-stack,
+.testimonials-admin .admin-panel
+  min-width: 0
+
+.testimonials-admin .admin-hint
+  overflow-wrap: anywhere
+
+.testimonials-admin__avatar
+  display: block
+  width: 96px
+  height: 96px
+  border-radius: 50%
+  object-fit: cover
+
+.testimonials-admin__preview
+  min-width: 0
+
+.testimonials-admin__preview .testimonials__card
+  width: 100%
+  box-sizing: border-box
+
+.testimonials-admin__excerpt
+  display: -webkit-box
+  -webkit-box-orient: vertical
+  -webkit-line-clamp: 3
+  overflow: hidden
+  overflow-wrap: anywhere
+  font-size: 13px
+  line-height: 21px
+  max-width: 520px
+  margin-top: 6px
+
+.testimonials-admin__table td
+  overflow-wrap: anywhere
+
+.testimonials-admin__savebar
+  position: sticky
+  bottom: 12px
+  z-index: 5
+  display: flex
+  flex-wrap: wrap
+  align-items: center
+  gap: 12px
+  padding: 16px 20px
+  border: 1px solid var(--admin-border)
+  border-radius: 12px
+  background: var(--admin-surface)
+  box-shadow: 0 6px 24px rgba(0,0,0,0.08)
+
+.testimonials-admin__savebar p
+  flex: 1 1 220px
+  min-width: 0
+  font-size: 13px
+  overflow-wrap: anywhere
+
+@media (max-width: 700px)
+  .testimonials-admin .admin-heading
+    align-items: stretch
+
+  .testimonials-admin__savebar
+    padding: 12px
+    bottom: 8px
+
+  .testimonials-admin__savebar p
+    flex-basis: 100%
+
+  .testimonials-admin__savebar .admin-button
+    flex: 1
+    padding-inline: 12px

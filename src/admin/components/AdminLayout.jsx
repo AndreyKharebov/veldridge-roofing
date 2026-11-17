@@ -10,12 +10,14 @@ import newsIcon from '../assets/news.svg';
 import projectsIcon from '../assets/projects.svg';
 import inquiriesIcon from '../assets/inquiries.svg';
 import settingsIcon from '../assets/settings.svg';
+import testimonialsIcon from '../assets/testimonials.svg';
 
 const links = [
   { name: 'Overview', path: '/admin', icon: overviewIcon },
   { name: 'Services', path: '/admin/services', icon: servicesIcon },
   { name: 'News', path: '/admin/news', icon: newsIcon },
   { name: 'Projects', path: '/admin/projects', icon: projectsIcon },
+  { name: 'Testimonials', path: '/admin/testimonials', icon: testimonialsIcon },
   { name: 'Inquiries', path: '/admin/inquiries', icon: inquiriesIcon },
   { name: 'Settings', path: '/admin/settings', icon: settingsIcon },
   {
@@ -99,7 +101,7 @@ export default function AdminLayout() {
         </header>
         <main className='admin-content' id='admin-content'>
           <div className='admin-demo'>
-            Services, Projects, News, Inquiries, Settings and Media Library use the API.
+            Services, Projects, News, Testimonials, Inquiries, Settings and Media Library use the API.
             Overview metrics are not live yet. Customer inquiry photos are private.
           </div>
           <Outlet />

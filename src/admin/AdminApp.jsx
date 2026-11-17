@@ -16,6 +16,7 @@ import { ProjectsList, ProjectEditor } from './pages/Projects.jsx';
 import { InquiriesList, InquiryDetail } from './pages/Inquiries.jsx';
 import Settings from './pages/Settings.jsx';
 import Media from './pages/Media.jsx';
+import { TestimonialsList, TestimonialEditor } from './pages/Testimonials.jsx';
 
 import './Admin.sass';
 
@@ -149,6 +150,10 @@ export default function AdminApp() {
 
           <Route path='inquiries' element={<InquiriesList />} />
           <Route path='inquiries/:id' element={<InquiryDetail />} />
+
+          <Route path='testimonials' element={<TestimonialsList />} />
+          <Route path='testimonials/new' element={<TestimonialEditor />} />
+          <Route path='testimonials/:id' element={<TestimonialEditor />} />
 
           <Route path='settings' element={<Settings />} />
           <Route path='media' element={<Media />} />
