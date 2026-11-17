@@ -1,76 +1,77 @@
-import { useState } from 'react';
-import { Link, useParams } from 'react-router';
-import NotFound from '../../components/feedback/NotFound/NotFound.jsx';
-import { useContent } from '../../content/context.js';
-import { useEditor } from '../hooks/useEditor.js';
-import { Badge, Button, Empty, Field, PageHeading, Panel } from '../components/UI.jsx';
-import EditorFeedback from '../components/EditorFeedback.jsx';
-import ImageField from '../components/ImageField.jsx';
-import ArticleDialog from '../../pages/BlogPage/components/ArticleDialog/ArticleDialog.jsx';
+import { useEffect, useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router';
+import { useNewsResource } from '../../hooks/useNewsResource.js';
+import { Badge, Button, Empty, Field, Notice, PageHeading, Panel } from '../components/UI.jsx';
+import SaveStatus from '../components/SaveStatus.jsx';
+import ArticleForm from '../components/news/ArticleForm.jsx';
+import NewsDeleteDialog from '../components/news/NewsDeleteDialog.jsx';
+import { freshArticle, toArticleForm } from '../components/news/articleForm.js';
+import './News.sass';
 
 export function NewsList() {
-  const { articles, categories } = useContent();
+  const [page, setPage] = useState(1);
   const [status, setStatus] = useState('all');
-  const visible = articles.filter((article) => status === 'all' || article.status === status);
-  return <><PageHeading title='News' description='Article list layout. No articles are loaded.'><Button variant='primary' to='/admin/news/new'>+ Add article</Button></PageHeading>
-    <div className='admin-actions'>{['all','published','draft','archived'].map((value) => <Button key={value} aria-pressed={status === value} onClick={() => setStatus(value)}>{value === 'all' ? 'All articles' : value[0].toUpperCase()+value.slice(1)}</Button>)}<Button to='/admin/news/categories'>Manage categories</Button></div>
-    <div className='admin-table-wrap'><table className='admin-table'><thead><tr><th>Article</th><th>Category</th><th>Date</th><th>Status</th><th>Action</th></tr></thead><tbody>
-      {visible.map((article) => <tr key={article.id}><td data-label='Article'><strong>{article.title}</strong></td><td data-label='Category'>{categories.find(({ id }) => id === article.categoryId)?.name || 'Uncategorized'}</td>
-        <td data-label='Date'>{article.publishedAt || 'Not set'}</td><td data-label='Status'><Badge status={article.status} /></td><td data-label='Action'><Link to={`/admin/news/${article.id}`}>Edit article →</Link></td></tr>)}
-    </tbody></table></div>{!visible.length && <Empty title='No articles yet.'><p>Open the article form to inspect the layout. Submissions only log to the console.</p></Empty>}
-  </>;
+  const [categoryId, setCategoryId] = useState('all');
+  const [selected, setSelected] = useState(null);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const query = new URLSearchParams({ page: String(page), status, categoryId });
+  const { data, loading, error, reload } = useNewsResource(`/api/admin/news?${query}`, true);
+  const articles = data?.articles ?? [];
+  return <div className='news-admin'>
+    <PageHeading title='News' description='Draft, publish and maintain your roofing journal.'>
+      <Button variant='primary' to='/admin/news/new'>+ Add article</Button>
+    </PageHeading>
+    <div className='news-admin__filters'>
+      <Field name='status' label='Status' value={status} onChange={(event) => { setStatus(event.target.value); setPage(1); }}>
+        <option value='all'>All articles</option><option value='draft'>Draft</option><option value='published'>Published</option><option value='archived'>Archived</option>
+      </Field>
+      <Field name='category' label='Category' value={categoryId} onChange={(event) => { setCategoryId(event.target.value); setPage(1); }}>
+        <option value='all'>All categories</option><option value='uncategorized'>Uncategorized</option>
+        {(data?.categories ?? []).map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+      </Field>
+      <Button to='/admin/news/categories'>Manage categories</Button>
+      <Button disabled={loading} onClick={reload}>Refresh</Button>
+    </div>
+    {location.state?.notice && <Notice>{location.state.notice}</Notice>}
+    {error && <Notice error><p>{error}</p><Button onClick={reload}>Retry</Button></Notice>}
+    {loading && <Panel><p role='status'>Loading articles…</p></Panel>}
+    {!loading && !error && (articles.length ? <div className='admin-table-wrap'>
+      <table className='admin-table news-admin__table'><thead><tr><th>Article</th><th>Category</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>{articles.map((article) => <tr key={article.id}>
+          <td data-label='Article'><strong>{article.title}</strong><small>{article.summary || 'No introduction yet'}</small></td>
+          <td data-label='Category'>{article.categoryName}</td><td data-label='Date'>{article.publishedAt || 'Not set'}</td>
+          <td data-label='Status'><Badge status={article.status} /></td>
+          <td data-label='Actions'><div className='admin-actions'><Button to={`/admin/news/${article.id}`}>Edit</Button><Button variant='danger' onClick={() => setSelected(article)}>Delete</Button></div></td>
+        </tr>)}</tbody>
+      </table>
+    </div> : <Empty title='No articles in this selection.'><p>Create an article or change the filters.</p>{page > 1 && <Button onClick={() => setPage(1)}>First page</Button>}</Empty>)}
+    {data?.pagination && !loading && <nav className='news-admin__pagination' aria-label='News pages'>
+      <p>{data.pagination.total} articles · Page {page} of {Math.max(1, data.pagination.totalPages)}</p>
+      <div className='admin-actions'><Button disabled={page <= 1} onClick={() => setPage((value) => value - 1)}>Previous</Button><Button disabled={page >= data.pagination.totalPages} onClick={() => setPage((value) => value + 1)}>Next</Button></div>
+    </nav>}
+    {selected && <NewsDeleteDialog item={selected} onClose={() => setSelected(null)} onDone={() => {
+      setSelected(null);
+      if (articles.length === 1 && page > 1) setPage((value) => value - 1); else reload();
+      navigate('/admin/news', { replace: true, state: { notice: 'Article deleted. Its cover image was retained.' } });
+    }} />}
+  </div>;
 }
 export function ArticleEditor() {
   const { id } = useParams();
-  if (id) return <NotFound variant='admin' title='Article not found.' description='No articles are loaded in the static layout.' returnTo='/admin/news' returnLabel='Back to news' />;
-  return <ArticleForm />;
+  return id ? <ExistingArticle key={id} id={id} /> : <ArticleForm key='new' initial={freshArticle()} />;
 }
-function ArticleForm() {
-  const { categories } = useContent();
-  const [formRef, editor] = useEditor({ title:'', summary:'', imageFile:null, imagePreview:'', imageAlt:'', publishedAt:'', categoryId:'', status:'draft', sections:[{id:'section-initial', heading:'', body:''}], source:{label:'', url:''} }, 'Article');
-  const { values, field, update } = editor;
-  const [preview, setPreview] = useState(false);
-  const setSection = (index, key, value) => update('sections', values.sections.map((section, i) => i === index ? {...section, [key]:value} : section));
-  const move = (from, to) => { const next = [...values.sections]; [next[from], next[to]] = [next[to], next[from]]; update('sections', next); };
-  // The source is plain text while editing; do not render an unsafe link in a preview.
-  let source = { label:'', url:'' };
-  try {
-    const url = new URL(values.source.url);
-    if (['http:', 'https:'].includes(url.protocol) && !url.username && !url.password) source = values.source;
-  } catch { /* An empty or incomplete URL stays as form input only. */ }
-  return <><PageHeading title='New article' description='Static form · Nothing is published or saved.' />
-    <form ref={formRef} noValidate onSubmit={editor.submit}><EditorFeedback editor={editor} />
-      <fieldset className='admin-editor'><div className='admin-stack'>
-        <Panel title='Article details'><Field label='Title *' {...field('title')} maxLength={150} />
-          <Field label='Introduction / card excerpt *' multiline rows={3} {...field('summary')} maxLength={600} />
-          <Field label='Category' {...field('categoryId')}><option value=''>Uncategorized</option>{categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</Field>
-          <p className='admin-hint'>The same excerpt appears in the list and at the top of the reader.</p>
-        </Panel>
-        {values.sections.map((section, index) => <Panel key={section.id} title={`Section ${index+1}`}>
-          <div className='admin-actions'><span className='admin-hint'>Heading + paragraph</span><span className='admin-spacer' />
-            <Button disabled={index === 0} aria-label={`Move section ${index+1} up`} onClick={() => move(index,index-1)}>↑</Button>
-            <Button disabled={index === values.sections.length-1} aria-label={`Move section ${index+1} down`} onClick={() => move(index,index+1)}>↓</Button>
-            <Button aria-label={`Remove section ${index+1}`} onClick={() => update('sections',values.sections.filter((_,i) => i !== index))}>Remove</Button>
-          </div>
-          <Field name={`section-heading-${index}`} label='Section heading *' value={section.heading} onChange={(event) => setSection(index,'heading',event.target.value)} maxLength={200} />
-          <Field name={`section-body-${index}`} label='Paragraph *' multiline rows={6} value={section.body} onChange={(event) => setSection(index,'body',event.target.value)} maxLength={12000} />
-        </Panel>)}
-        <Button disabled={values.sections.length >= 30} onClick={() => update('sections',[...values.sections,{id:crypto.randomUUID(),heading:'',body:''}])}>+ Add section</Button>
-        <Panel title='Further reading' description='Optional source link below the article.'>
-          <Field name='sourceLabel' label='Source label' value={values.source.label} onChange={(event) => update('source',{...values.source,label:event.target.value})} maxLength={150} />
-          <Field name='sourceUrl' label='Source URL' value={values.source.url} onChange={(event) => update('source',{...values.source,url:event.target.value})} maxLength={2000} />
-        </Panel>
-      </div><div className='admin-stack'>
-        <Panel title='Publication'><Badge status={values.status} /><Field label='Publication date' type='date' {...field('publishedAt')} />
-          <Field label='Status' {...field('status')}><option value='draft'>Draft</option><option value='published'>Published</option><option value='archived'>Archived</option></Field>
-          <Button disabled={!values.imagePreview || !values.title.trim() || !values.publishedAt} onClick={() => setPreview(true)}>Preview article</Button>
-          <Button type='submit'>{values.status === 'draft' ? 'Save draft' : 'Save changes'}</Button>
-          <Button variant='primary' onClick={() => editor.log({...values,status:'published'})}>Publish article</Button>
-          <Button to='/admin/news'>Cancel</Button><p className='admin-hint'>Save and publish only log form data. The article list remains empty.</p>
-        </Panel><ImageField editor={editor} title='Article cover' />
-        <Panel title='Reader layout'><p>Date → title → introduction → cover → sections → source → Contact CTA</p><p className='admin-hint'>Add a title, date and local cover image to preview your current inputs.</p></Panel>
-      </div></fieldset>
-    </form>
-    {preview && <ArticleDialog id='admin-article-preview' article={{...values, image:values.imagePreview, source}} onClose={() => setPreview(false)} />}
-  </>;
+function ExistingArticle({ id }) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [seed] = useState(() => location.state?.createdArticle?.id === id ? location.state.createdArticle : null);
+  const { data, loading, error, reload } = useNewsResource(`/api/admin/news/${encodeURIComponent(id)}`);
+  useEffect(() => {
+    if (seed) navigate(`/admin/news/${id}`, { replace: true, state: null });
+  }, [seed, id, navigate]);
+  if (!seed && loading) return <Panel><p role='status'>Loading article…</p></Panel>;
+  if (!seed && error) return <Notice error><p>{error}</p><Button onClick={reload}>Retry</Button><Button to='/admin/news'>Back to news</Button></Notice>;
+  const article = seed || data?.article;
+  if (!article) return <SaveStatus error='Article not found.' />;
+  return <ArticleForm initial={toArticleForm(article)} created={Boolean(seed)} />;
 }

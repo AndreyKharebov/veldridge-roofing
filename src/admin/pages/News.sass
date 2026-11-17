@@ -1,0 +1,109 @@
+// Isolated News additions: existing admin tokens and public layouts are retained.
+.news-admin,
+.news-admin__form
+  display: flex
+  flex-direction: column
+  gap: 24px
+  min-width: 0
+
+.news-admin__fieldset
+  margin: 0
+  padding: 0
+  border: 0
+  min-width: 0
+
+.news-admin__filters
+  display: flex
+  flex-wrap: wrap
+  align-items: flex-end
+  gap: 12px
+
+  .admin__field
+    flex: 1 1 180px
+
+.news-admin__table .admin-actions
+  gap: 8px
+
+.news-admin__table .admin-button
+  padding-inline: 14px
+
+.news-admin__section
+  display: flex
+  flex-direction: column
+  gap: 16px
+  padding: 20px
+  min-width: 0
+  border: 1px solid var(--admin-border)
+  border-radius: 10px
+  background: var(--admin-subtle)
+
+.news-admin__section-heading,
+.news-admin__pagination
+  display: flex
+  flex-wrap: wrap
+  align-items: center
+  justify-content: space-between
+  gap: 12px
+
+.news-admin__section-heading .admin-button
+  padding-inline: 12px
+
+.news-admin__cover
+  display: block
+  width: 100%
+  aspect-ratio: 3 / 2
+  object-fit: cover
+  border-radius: 10px
+
+.news-admin__savebar
+  position: sticky
+  bottom: 12px
+  z-index: 5
+  display: flex
+  flex-wrap: wrap
+  align-items: center
+  gap: 12px
+  padding: 16px
+  min-width: 0
+  border: 1px solid var(--admin-border)
+  border-radius: 12px
+  background: var(--admin-surface)
+  box-shadow: 0 6px 24px rgb(0 0 0 / 10%)
+
+  p
+    flex: 1 1 220px
+    font-size: 13px
+    overflow-wrap: anywhere
+
+.news-delete p
+  overflow-wrap: anywhere
+
+@media (max-width: 700px)
+  .news-admin .admin-heading
+    flex-direction: column
+    align-items: stretch
+    gap: 16px
+
+  .news-admin .admin-editor
+    grid-template-columns: minmax(0, 1fr)
+
+  .news-admin__section
+    padding: 14px
+
+  .news-admin__savebar
+    bottom: 8px
+
+    p
+      flex-basis: 100%
+
+    .admin-button
+      flex: 1
+      padding-inline: 12px
+
+@media (max-width: 400px)
+  .news-admin .admin-panel
+    padding: 16px
+
+  .news-admin__filters > .admin-button,
+  .news-admin .admin-heading > .admin-button
+    width: 100%

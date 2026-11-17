@@ -1,0 +1,48 @@
+.news-public__filter
+  display: flex
+  flex-wrap: wrap
+  align-items: center
+  gap: 12px
+  max-width: 100%
+
+  select
+    min-height: 44px
+    min-width: 0
+    max-width: 100%
+    padding: 8px 36px 8px 12px
+    border: 1px solid #e3e1da
+    border-radius: 8px
+    background: #fff
+    color: #171717
+    font: inherit
+
+.news-public__button
+  display: inline-flex
+  align-items: center
+  justify-content: center
+  min-height: 44px
+  padding: 10px 18px
+  border: 1px solid #e3e1da
+  border-radius: 8px
+  background: #fff
+  color: #171717
+  font: inherit
+  cursor: pointer
+
+  &:disabled
+    cursor: not-allowed
+    opacity: 0.5
+
+  &:focus-visible
+    outline: 2px solid #854600
+    outline-offset: 3px
+
+.news-public__pagination
+  display: flex
+  flex-wrap: wrap
+  align-items: center
+  gap: 12px
+
+.article-row__title,
+.article-row__summary
+  overflow-wrap: anywhere
