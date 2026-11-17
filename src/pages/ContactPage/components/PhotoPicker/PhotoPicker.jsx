@@ -16,6 +16,7 @@ const PhotoPicker = ({ photos, onChange, error, onError, disabled = false }) => 
     if (!result.error) onChange(result.files);
   };
   const removePhoto = (key) => {
+    if (disabled) return;
     onChange(photos.filter((file) => photoKey(file) !== key));
     onError('');
     chooseRef.current?.focus({ preventScroll: true });
@@ -30,9 +31,9 @@ const PhotoPicker = ({ photos, onChange, error, onError, disabled = false }) => 
         <span className='photo-picker__icon' aria-hidden='true'><img src={paperclip} alt='' /></span><span className='photo-picker__guidance'><span className='photo-picker__action'>Choose photos or drop them here</span><span className='photo-picker__help' id='contact-photos-help'>JPG, PNG or WebP · Up to 5 images, 10 MB each</span></span>
       </button>
     </div>
-    {photos.length > 0 && <ul className='photo-picker__files' aria-label='Selected photos'>{photos.map((file) => <li className='photo-picker__file' key={photoKey(file)}><span className='photo-picker__file-icon' aria-hidden='true'><img src={paperclip} alt='' /></span><div className='photo-picker__file-text'><span>{file.name}</span><small>{formatFileSize(file.size)} · Selected locally</small></div><button type='button' disabled={disabled} className='photo-picker__remove' aria-label={`Remove ${file.name}`} onClick={() => removePhoto(photoKey(file))}><img src={closeIcon} alt='' aria-hidden='true' /></button></li>)}</ul>}
-    {error && <div className='photo-picker__error'><p id='contact-photos-error' role='alert'>{error}</p><button type='button' onClick={() => {onError('');chooseRef.current?.focus();}}>Dismiss file error</button></div>}
-    <p className='photo-picker__note' id='contact-photos-note'>Files stay in this form only. They are not uploaded or saved.</p><span className='photo-picker__status' role='status' aria-live='polite'>{photos.length} of {photoRules.maxCount} photos selected locally.</span>
+    {photos.length > 0 && <ul className='photo-picker__files' aria-label='Selected photos'>{photos.map((file) => <li className='photo-picker__file' key={photoKey(file)}><span className='photo-picker__file-icon' aria-hidden='true'><img src={paperclip} alt='' /></span><div className='photo-picker__file-text'><span>{file.name}</span><small>{formatFileSize(file.size)} · Ready to send</small></div><button type='button' disabled={disabled} className='photo-picker__remove' aria-label={`Remove ${file.name}`} onClick={() => removePhoto(photoKey(file))}><img src={closeIcon} alt='' aria-hidden='true' /></button></li>)}</ul>}
+    {error && <div className='photo-picker__error'><p id='contact-photos-error' role='alert'>{error}</p><button type='button' disabled={disabled} onClick={() => {onError('');chooseRef.current?.focus();}}>Dismiss file error</button></div>}
+    <p className='photo-picker__note' id='contact-photos-note'>Photos are uploaded only when you send the inquiry. They remain private and do not appear in the public gallery.</p><span className='photo-picker__status' role='status' aria-live='polite'>{photos.length} of {photoRules.maxCount} photos selected.</span>
   </div>;
 };
 export default PhotoPicker;

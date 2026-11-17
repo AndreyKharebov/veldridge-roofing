@@ -99,8 +99,8 @@ export default function AdminLayout() {
         </header>
         <main className='admin-content' id='admin-content'>
           <div className='admin-demo'>
-            Services, Projects, News, Settings and Media Library use the API.
-            Inquiries remains console-only; Overview is not live yet.
+            Services, Projects, News, Inquiries, Settings and Media Library use the API.
+            Overview metrics are not live yet. Customer inquiry photos are private.
           </div>
           <Outlet />
         </main>
