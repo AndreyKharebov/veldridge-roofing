@@ -1,104 +1,70 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
+import { Link, useLocation, useNavigate, useParams } from 'react-router';
 import NotFound from '../../components/feedback/NotFound/NotFound.jsx';
 import { servicesApi } from '../../lib/services.js';
 import { Badge, Button, Checkbox, Empty, Field, Notice, PageHeading, Panel } from '../components/UI.jsx';
-import { ConfirmDialog } from '../components/Dialog.jsx';
-import StringList from '../components/StringList.jsx';
+import SaveStatus from '../components/SaveStatus.jsx';
 import ServiceImagePicker from '../components/services/ServiceImagePicker.jsx';
+import ServiceOrderDialog from '../components/services/ServiceOrderDialog.jsx';
+import ServiceDeleteDialog from '../components/services/ServiceDeleteDialog.jsx';
 import './Services.sass';
 
-const statusOptions = [['all', 'All services'], ['draft', 'Draft'], ['active', 'Published / Active'], ['archived', 'Archived']];
-const freshService = () => ({
-  title: '', summary: '', description: '', propertyTypes: [], points: [],
-  imageId: null, imageAlt: '', media: null, showOnHome: false,
-  group: 'main', status: 'draft', order: 1, eyebrow: '', cta: 'Discuss Your Project', tone: 'white',
-});
-const toForm = (service) => ({ ...freshService(), ...service,
-  description: service.descriptionText ?? service.description ?? '',
-  imageAlt: service.imageAltText ?? service.imageAlt ?? '',
-  cta: service.ctaText ?? service.cta ?? '',
-});
-const failureMessage = (error) => error.status === 401
-  ? 'Your session expired. Sign in again before saving.' : error.message;
+const statuses = [['all', 'All services'], ['draft', 'Draft'], ['active', 'Published'], ['archived', 'Archived']];
+const limits = { title: 100, summary: 160, description: 300, eyebrow: 100, cta: 80, imageAlt: 300 };
+const groups = { main: 'Detailed service sections', supporting: 'Additional care cards' };
+const freshService = () => ({ title: '', summary: '', description: '', points: [], imageId: null, media: null,
+  imageAlt: '', showOnHome: false, group: 'main', status: 'draft', position: null, eyebrow: '', cta: 'Discuss Your Project' });
+const toForm = (service) => ({ ...freshService(), ...service, position: null,
+  description: service.descriptionText ?? service.description ?? '', imageAlt: service.imageAltText ?? service.imageAlt ?? '',
+  cta: service.ctaText ?? service.cta ?? '' });
+const messageFor = (error) => error.status === 401 ? 'Your session expired. Sign in again before saving.' : error.message;
 
 export function ServicesList() {
-  const [page, setPage] = useState(1);
-  const [status, setStatus] = useState('all');
-  const [retry, setRetry] = useState(0);
-  const [result, setResult] = useState({ services: [], pagination: null, status: 'loading', error: '' });
+  const [query, setQuery] = useState({ page: 1, status: 'all', revision: 0 });
+  const [result, setResult] = useState({ services: [], pagination: null, loading: true, error: '' });
   const [selected, setSelected] = useState(null);
-  const [deleting, setDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState('');
-  const running = useRef(false);
+  const [arranging, setArranging] = useState(false);
+  const [notice, setNotice] = useState('');
+  const reload = () => { setResult((value) => ({ ...value, loading: true })); setQuery((value) => ({ ...value, revision: value.revision + 1 })); };
   useEffect(() => {
     const controller = new AbortController();
-    const load = async () => {
-      setResult((previous) => ({ ...previous, status: 'loading', error: '' }));
-      try {
-        const response = await servicesApi.getAll(page, status, { signal: controller.signal });
-        if (controller.signal.aborted) return;
-        const last = Math.max(1, response.pagination.totalPages);
-        if (page > last) { setPage(last); return; }
-        setResult({ services: response.services, pagination: response.pagination, status: 'ready', error: '' });
-      } catch (error) {
-        if (!controller.signal.aborted) setResult({ services: [], pagination: null, status: 'error', error: failureMessage(error) });
-      }
-    };
-    void load();
+    servicesApi.getAll(query.page, query.status, { signal: controller.signal }).then((data) => {
+      if (controller.signal.aborted) return;
+      const last = Math.max(1, data.pagination.totalPages);
+      if (query.page > last) { setQuery((value) => ({ ...value, page: last })); return; }
+      setResult({ ...data, loading: false, error: '' });
+    }).catch((failure) => {
+      if (!controller.signal.aborted) setResult({ services: [], pagination: null, loading: false, error: messageFor(failure) });
+    });
     return () => controller.abort();
-  }, [page, status, retry]);
-  const closeDelete = () => { if (!running.current) setSelected(null); };
-  const remove = async () => {
-    if (!selected || running.current) return;
-    running.current = true;
-    setDeleting(true);
-    setDeleteError('');
-    try {
-      await servicesApi.remove(selected.id);
-      setSelected(null);
-      setRetry((value) => value + 1);
-    } catch (error) {
-      if (error.status === 404) { setSelected(null); setRetry((value) => value + 1); }
-      else setDeleteError(failureMessage(error));
-    } finally { running.current = false; setDeleting(false); }
-  };
+  }, [query]);
   return <div className='services-admin'>
     <PageHeading title='Services' description='Manage the services shown on Home, Services and Contact.'>
-      <Button variant='primary' to='/admin/services/new'>+ Add service</Button>
+      <div className='admin-actions'><Button onClick={() => setArranging(true)}>Arrange services</Button><Button variant='primary' to='/admin/services/new'>+ Add service</Button></div>
     </PageHeading>
-    <div className='admin-actions'>{statusOptions.map(([value, label]) => <Button key={value}
-      disabled={deleting} aria-pressed={status === value} onClick={() => { setStatus(value); setPage(1); }}>{label}</Button>)}</div>
-    {result.status === 'loading' && <Panel><p role='status'>Loading services…</p></Panel>}
-    {result.error && <Notice error><p>{result.error}</p><Button onClick={() => setRetry((value) => value + 1)}>Retry</Button></Notice>}
-    {result.status === 'ready' && (result.services.length ? <div className='admin-table-wrap'>
-      <table className='admin-table services-admin__table'>
-        <thead><tr><th>Service</th><th>Property types</th><th>Visibility</th><th>Order</th><th>Actions</th></tr></thead>
+    <div className='admin-actions'>{statuses.map(([value, label]) => <Button key={value} aria-pressed={query.status === value} onClick={() => {
+      setResult((previous) => ({ ...previous, loading: true })); setQuery((previous) => ({ ...previous, page: 1, status: value }));
+    }}>{label}</Button>)}</div>
+    {notice && <Notice>{notice}</Notice>}
+    {result.loading ? <Panel><p role='status'>Loading services…</p></Panel> : result.error ? <Notice error><p>{result.error}</p><Button onClick={reload}>Retry</Button></Notice>
+      : result.services.length ? <div className='admin-table-wrap'><table className='admin-table services-admin__table'>
+        <thead><tr><th>Service</th><th>Placement</th><th>Visibility</th><th>Position</th><th>Actions</th></tr></thead>
         <tbody>{result.services.map((service) => <tr key={service.id}>
           <td data-label='Service'><strong>{service.title}</strong><small>{service.summary || 'No short description'}</small></td>
-          <td data-label='Property types'>{service.propertyTypes.join(' · ') || 'Not selected'}</td>
+          <td data-label='Placement'>{groups[service.group]}</td>
           <td data-label='Visibility'><Badge status={service.status} /><small>{service.showOnHome ? 'Home enabled' : 'Services page only'}</small></td>
-          <td data-label='Order'>{service.order}</td>
-          <td data-label='Actions'><div className='services-admin__actions'>
-            <Link className='admin-button' to={`/admin/services/${service.id}`}>Edit</Link>
-            <Button variant='danger' onClick={() => { setDeleteError(''); setSelected(service); }}>Delete</Button>
-          </div></td>
+          <td data-label='Position'>{service.order}</td>
+          <td data-label='Actions'><div className='services-admin__actions'><Link className='admin-button' to={`/admin/services/${service.id}`}>Edit</Link><Button variant='danger' onClick={() => setSelected(service)}>Delete</Button></div></td>
         </tr>)}</tbody>
-      </table>
-    </div> : <Empty title={status === 'all' ? 'No services yet.' : 'No services with this status.'}>
-      <p>Create a draft, choose an image and publish when it is ready.</p><Button to='/admin/services/new'>Add service</Button>
-    </Empty>)}
-    {result.pagination && result.status === 'ready' && <div className='admin-actions'>
-      <p className='admin-hint'>{result.pagination.total} services · Page {page} of {Math.max(1, result.pagination.totalPages)}</p><span className='admin-spacer' />
-      <Button disabled={page <= 1} onClick={() => setPage((value) => value - 1)}>Previous</Button>
-      <Button disabled={page >= result.pagination.totalPages} onClick={() => setPage((value) => value + 1)}>Next</Button>
+      </table></div> : <Empty title={query.status === 'all' ? 'No services yet.' : 'No services with this status.'}><Button to='/admin/services/new'>Add service</Button></Empty>}
+    {result.pagination && !result.loading && <div className='admin-actions'>
+      <p className='admin-hint'>{result.pagination.total} services · Page {query.page} of {Math.max(1, result.pagination.totalPages)}</p><span className='admin-spacer' />
+      <Button disabled={query.page <= 1} onClick={() => { setResult((value) => ({ ...value, loading: true })); setQuery((value) => ({ ...value, page: value.page - 1 })); }}>Previous</Button>
+      <Button disabled={query.page >= result.pagination.totalPages} onClick={() => { setResult((value) => ({ ...value, loading: true })); setQuery((value) => ({ ...value, page: value.page + 1 })); }}>Next</Button>
     </div>}
-    <p className='admin-hint'>Active means published. Drafts and archived services are not shown publicly. Hero stays static.</p>
-    {selected && <ConfirmDialog title='Delete service?' action='Delete service' danger pending={deleting} onClose={closeDelete} onConfirm={remove}>
-      <p>Permanently delete <strong>{selected.title}</strong>? Its library image will not be deleted.</p>
-      <p className='admin-hint'>To hide a service without deleting it, edit it and choose Archived.</p>
-      {deleteError && <Notice error>{deleteError}</Notice>}
-    </ConfirmDialog>}
+    <p className='admin-hint'>Positions are managed within each placement group. Drafts and archived services stay hidden on the public website.</p>
+    {selected && <ServiceDeleteDialog service={selected} onClose={() => setSelected(null)} onDeleted={() => { setSelected(null); setNotice('Service deleted. Its library image was retained.'); reload(); }} />}
+    {arranging && <ServiceOrderDialog onClose={() => setArranging(false)} onChanged={reload} />}
   </div>;
 }
 
@@ -107,121 +73,152 @@ export function ServiceEditor() {
   return id ? <ExistingService key={id} id={id} /> : <ServiceForm key='new' initial={freshService()} />;
 }
 function ExistingService({ id }) {
-  const [result, setResult] = useState({ service: null, error: '', status: 'loading' });
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [seed] = useState(() => location.state?.createdService?.id === id ? location.state.createdService : null);
+  const [result, setResult] = useState(() => ({ service: seed, error: '', status: seed ? 'ready' : 'loading' }));
   const [retry, setRetry] = useState(0);
   useEffect(() => {
+    // Keep the creation response and success notice across the first redirect.
+    // Consume the history payload so F5 does not resurrect stale editor data.
+    if (location.state?.createdService) navigate(location.pathname, { replace: true, state: null });
+  }, [location.pathname, location.state, navigate]);
+  useEffect(() => {
+    if (seed && retry === 0) return;
     const controller = new AbortController();
     servicesApi.get(id, { signal: controller.signal }).then(({ service }) => {
       if (!controller.signal.aborted) setResult({ service, status: 'ready', error: '' });
-    }).catch((error) => {
-      if (!controller.signal.aborted) setResult({ service: null, status: error.status === 404 ? 'missing' : 'error', error: failureMessage(error) });
+    }).catch((failure) => {
+      if (!controller.signal.aborted) setResult({ service: null, status: failure.status === 404 ? 'missing' : 'error', error: messageFor(failure) });
     });
     return () => controller.abort();
-  }, [id, retry]);
+  }, [id, seed, retry]);
   if (result.status === 'loading') return <Panel><p role='status'>Loading service…</p></Panel>;
   if (result.status === 'missing') return <NotFound variant='admin' title='Service not found.' returnTo='/admin/services' returnLabel='Back to services' />;
-  if (result.error) return <Notice error><p>{result.error}</p><Button onClick={() => {
-    setResult({ service: null, status: 'loading', error: '' }); setRetry((value) => value + 1);
-  }}>Retry</Button></Notice>;
-  return <ServiceForm initial={toForm(result.service)} />;
+  if (result.error) return <Notice error><p>{result.error}</p><Button onClick={() => { setResult({ service: null, status: 'loading', error: '' }); setRetry((value) => value + 1); }}>Retry</Button></Notice>;
+  return <ServiceForm initial={toForm(result.service)} created={Boolean(seed)} />;
 }
 
-function ServiceForm({ initial }) {
+function ServiceForm({ initial, created = false }) {
   const navigate = useNavigate();
   const [values, setValues] = useState(initial);
   const [picker, setPicker] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [errors, setErrors] = useState({});
+  const [success, setSuccess] = useState(created ? 'Service created successfully.' : '');
+  const [order, setOrder] = useState(null);
+  const [orderLoading, setOrderLoading] = useState(true);
+  const [orderError, setOrderError] = useState('');
+  const [orderRetry, setOrderRetry] = useState(0);
   const running = useRef(false);
+  const mounted = useRef(false);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  useEffect(() => {
+    const controller = new AbortController();
+    servicesApi.getOrder({ signal: controller.signal }).then((data) => {
+      if (!controller.signal.aborted) { setOrder(data); setOrderLoading(false); setOrderError(''); }
+    }).catch((failure) => { if (!controller.signal.aborted) { setOrderError(messageFor(failure)); setOrderLoading(false); } });
+    return () => controller.abort();
+  }, [orderRetry]);
+  const reloadOrder = () => { setOrderLoading(true); setOrderError(''); setOrderRetry((value) => value + 1); };
+  const members = (order?.groups?.[values.group] ?? []).filter((item) => item.id !== values.id);
+  const savedPosition = order?.groups?.[values.group]?.findIndex((item) => item.id === values.id) ?? -1;
+  const position = values.position ?? (savedPosition >= 0 ? savedPosition + 1 : members.length + 1);
   const update = (name, value) => {
-    setValues((previous) => ({ ...previous, [name]: value }));
-    setError(''); setSuccess('');
+    setValues((previous) => ({ ...previous, [name]: value, ...(name === 'group' ? { position: null } : {}) }));
+    setError(''); setErrors({}); setSuccess('');
   };
-  const field = (name) => ({ name, value: values[name] ?? '', onChange: (event) => update(name, event.target.value) });
-  const choose = (image) => {
-    setValues((previous) => ({ ...previous, imageId: image.id, media: image }));
-    setPicker(false); setError(''); setSuccess('');
-  };
+  const field = (name) => ({ name, value: values[name] ?? '', onChange: (event) => update(name, event.target.value), error: errors[name] });
+  const choose = (image) => { setValues((previous) => ({ ...previous, imageId: image.id, media: image })); setPicker(false); setError(''); setErrors({}); setSuccess(''); };
   const submit = async (event) => {
     event.preventDefault();
-    if (running.current) return;
-    const order = Number(values.order);
-    if (!values.title.trim()) { setError('Service name is required.'); return; }
-    if (!Number.isInteger(order) || order < 1 || order > 9999) { setError('Use a display order between 1 and 9999.'); return; }
-    if (values.status === 'active' && (!values.summary.trim() || !values.imageId || !values.propertyTypes.length)) {
-      setError('To publish, add a short description, choose an image and select at least one property type.'); return;
+    if (running.current || orderLoading || orderError || !order) return;
+    const problems = {};
+    for (const [name, maximum] of Object.entries(limits)) {
+      if (values[name].trim().length > maximum) problems[name] = `Use no more than ${maximum} characters. Existing text has not been shortened automatically.`;
     }
+    if (!values.title.trim()) problems.title = 'Service name is required.';
+    if (values.points.length > 5 || values.points.some((text) => text.trim().length > 100)) problems.points = 'Use up to 5 items, with at most 100 characters in each.';
+    if (values.status === 'active' && !values.summary.trim()) problems.summary = 'Add a short description before publishing.';
+    if (values.status === 'active' && !values.imageId) problems.imageId = 'Choose or upload an image before publishing.';
+    if (position < 1 || position > members.length + 1) problems.position = 'Reload the available positions.';
+    if (Object.keys(problems).length) { setErrors(problems); setSuccess(''); setError(Object.values(problems)[0]); return; }
     const data = {
-      title: values.title, summary: values.summary, description: values.description,
-      propertyTypes: values.propertyTypes, points: values.points, imageId: values.imageId,
-      imageAlt: values.imageAlt, showOnHome: values.showOnHome, group: values.group,
-      status: values.status, order, eyebrow: values.eyebrow, cta: values.cta, tone: values.tone,
+      ...Object.fromEntries(Object.keys(limits).map((key) => [key, values[key]])),
+      points: values.points, imageId: values.imageId, showOnHome: values.showOnHome,
+      group: values.group, status: values.status, position,
       ...(values.id ? { version: values.version } : {}),
     };
-    running.current = true; setSaving(true); setError(''); setSuccess('');
+    const isNew = !values.id;
+    running.current = true; setSaving(true); setError(''); setErrors({}); setSuccess('');
     try {
-      const response = values.id ? await servicesApi.update(values.id, data) : await servicesApi.create(data);
-      setValues(toForm(response.service));
-      setSuccess('Service saved. Only active services appear on the public website.');
-      if (!values.id) navigate(`/admin/services/${response.service.id}`, { replace: true });
-    } catch (failure) { setError(failureMessage(failure)); }
-    finally { running.current = false; setSaving(false); }
+      const { service } = isNew ? await servicesApi.create(data) : await servicesApi.update(values.id, data);
+      if (!mounted.current) return;
+      if (isNew) {
+        navigate(`/admin/services/${service.id}`, { replace: true, state: { createdService: service } });
+      } else {
+        setValues(toForm(service)); setSuccess('Service saved successfully.'); reloadOrder();
+      }
+    } catch (failure) { if (mounted.current) setError(messageFor(failure)); }
+    finally { running.current = false; if (mounted.current) setSaving(false); }
   };
+  const disabled = saving || orderLoading || Boolean(orderError) || !order;
+  const saveLabel = saving ? (values.id ? 'Saving…' : 'Creating…') : values.id ? 'Save changes' : 'Create service';
   return <div className='services-admin'>
-    <PageHeading title={values.id ? 'Edit service' : 'New service'} description='Save a draft or publish a service using an image from your Media Library.' />
-    <form className='services-admin__form' onSubmit={submit}>
-      {error && <Notice error>{error}</Notice>}{success && <Notice>{success}</Notice>}
+    <SaveStatus pending={saving} message={saving ? saveLabel : success} error={error} onDismiss={() => { setError(''); setSuccess(''); }} />
+    <PageHeading title={values.id ? 'Edit service' : 'New service'} description='Create a draft or publish a service. Images can be selected or uploaded here.' />
+    <form className='services-admin__form' onSubmit={submit} noValidate>
       <fieldset className='admin-editor' disabled={saving}>
         <div className='admin-stack'>
           <Panel title='Service details'>
             <Field label='Service name *' {...field('title')} required maxLength={100} />
-            <Field label='Short description' multiline rows={3} {...field('summary')} maxLength={500} hint='Required when publishing. Shown on Home and in service summaries.' />
-            <Field label='Full description' multiline rows={5} {...field('description')} maxLength={4000} hint='Leave empty to use the short description.' />
-            <fieldset className='admin-choice-group'><legend>Property types</legend><div className='admin-actions'>
-              {['Residential', 'Commercial'].map((type) => <Checkbox key={type} name='propertyTypes' label={type}
-                checked={values.propertyTypes.includes(type)} onChange={(event) => {
-                  const checked = event.target.checked;
-                  setValues((previous) => ({ ...previous, propertyTypes: checked
-                    ? [...new Set([...previous.propertyTypes, type])] : previous.propertyTypes.filter((value) => value !== type) }));
-                  setSuccess(''); setError('');
-                }} />)}
-            </div></fieldset>
-            <p className='admin-hint'>Residential and Commercial are independent. Select either or both.</p>
+            <Field label='Short description' multiline rows={3} {...field('summary')} maxLength={160} hint={`${values.summary.length}/160 · Shown on Home. Required for publication.`} />
+            <Field label='Full description' multiline rows={4} {...field('description')} maxLength={300} hint={`${values.description.length}/300 · Keep one concise paragraph. Empty uses the short description.`} />
           </Panel>
-          <Panel title='What is included' description='Up to 20 work items. Empty items are removed on save.'>
-            <StringList label='Point' items={values.points} onChange={(items) => update('points', items)} />
+          <Panel title='What is included' description='Up to 5 concise work items, 100 characters each. Existing text is never removed automatically.'>
+            {errors.points && <Notice error>{errors.points}</Notice>}
+            <div className='services-admin__points'>{values.points.map((point, index) => <div className='services-admin__point' key={index}>
+              <Field label={`Point ${index + 1}`} name={`point-${index}`} value={point} maxLength={100} hint={`${point.length}/100`} onChange={(event) => update('points', values.points.map((text, i) => i === index ? event.target.value : text))} />
+              <Button variant='danger' aria-label={`Remove point ${index + 1}`} onClick={() => update('points', values.points.filter((_, i) => i !== index))}>Remove</Button>
+            </div>)}</div>
+            <div className='admin-actions'><Button disabled={values.points.length >= 5} onClick={() => update('points', [...values.points, ''])}>+ Add point</Button><span className='admin-hint'>{values.points.length}/5 items</span></div>
           </Panel>
-          <Panel title='Detail section labels'>
-            <Field label='Eyebrow' {...field('eyebrow')} maxLength={100} />
-            <Field label='Contact button label' {...field('cta')} maxLength={80} />
-          </Panel>
+          <Panel title='Detail section labels'><Field label='Eyebrow' {...field('eyebrow')} maxLength={100} /><Field label='Contact button label' {...field('cta')} maxLength={80} /></Panel>
         </div>
         <aside className='admin-stack'>
-          <Panel title='Visibility & order'>
-            <Field label='Status' {...field('status')}>
-              <option value='draft'>Draft — admin only</option><option value='active'>Published / Active</option><option value='archived'>Archived — hidden</option>
-            </Field>
-            <Field label='Display order' type='number' min='1' max='9999' step='1' required {...field('order')} />
+          <Panel title='Visibility & position'>
+            <Field label='Status' {...field('status')}><option value='draft'>Draft — admin only</option><option value='active'>Published / Active</option><option value='archived'>Archived — hidden</option></Field>
             <Field label='Services page placement' {...field('group')}><option value='main'>Detailed service section</option><option value='supporting'>Additional care card</option></Field>
-            <Field label='Section background' {...field('tone')}><option value='white'>White</option><option value='warm'>Warm</option></Field>
+            <Field label='Position in this group' name='position' value={position} disabled={orderLoading || Boolean(orderError)} error={errors.position} onChange={(event) => update('position', Number(event.target.value))}>
+              {Array.from({ length: members.length + 1 }, (_, index) => <option key={index + 1} value={index + 1}>{index + 1}{index === 0 ? ' — First' : index === members.length ? ' — Last' : ''}</option>)}
+            </Field>
+            {orderLoading && <p role='status' className='admin-hint'>Loading available positions…</p>}
+            {orderError && <Notice error><p>{orderError}</p><Button onClick={reloadOrder}>Retry</Button></Notice>}
+            <p className='admin-hint'>Other services shift automatically. Use Arrange services in the list to drag items into order. Detailed backgrounds alternate automatically.</p>
             <Checkbox label='Show on Home' checked={values.showOnHome} onChange={(event) => update('showOnHome', event.target.checked)} />
-            <Button type='submit' variant='primary' disabled={saving}>{saving ? 'Saving…' : 'Save changes'}</Button>
+            <Button type='submit' variant='primary' disabled={disabled}>{saveLabel}</Button>
+            {error && <Notice error>{error}</Notice>}{success && <Notice>{success}</Notice>}
             <Button disabled={saving} onClick={() => navigate('/admin/services')}>Back to services</Button>
-            <p className='admin-hint'>Draft and archived services stay hidden even when Show on Home is checked. Saving does not modify Hero.</p>
           </Panel>
-          <Panel title='Service image' description='Select an existing R2 image. The file remains in Media Library.'>
-            {values.media ? <><img className='services-admin__preview' src={values.media.url} alt={values.imageAlt || values.media.alt || ''} /><p className='admin-hint'>{values.media.filename}</p></>
-              : <div className='admin-image-placeholder'>No image selected</div>}
-            <div className='admin-actions'>
-              <Button onClick={() => setPicker(true)}>{values.media ? 'Change image' : 'Choose from library'}</Button>
-              {values.media && <Button onClick={() => { setValues((previous) => ({ ...previous, imageId: null, media: null })); setSuccess(''); }}>Remove selection</Button>}
+          <Panel title='Service image' description='Choose an existing image or upload a new one without leaving the editor.'>
+            {values.media ? <><img className='services-admin__preview' src={values.media.url} alt={values.imageAlt || values.media.alt || ''} /><p className='admin-hint'>{values.media.filename}</p></> : <div className='admin-image-placeholder'>No image selected</div>}
+            {errors.imageId && <Notice error>{errors.imageId}</Notice>}
+            <div className='admin-actions'><Button onClick={() => setPicker(true)}>{values.media ? 'Change image' : 'Choose or upload image'}</Button>
+              {values.media && <Button onClick={() => { setValues((previous) => ({ ...previous, imageId: null, media: null })); setError(''); setSuccess(''); }}>Remove selection</Button>}
             </div>
-            <Field label='Alt text override' multiline rows={3} {...field('imageAlt')} maxLength={300} hint='Leave empty to use the library alt text. This does not edit the original media record.' />
+            <Field label='Alt text override' multiline rows={3} {...field('imageAlt')} maxLength={300} hint='Leave empty to use the library description.' />
           </Panel>
+          {values.id && <Panel title='Delete service'><p className='admin-hint'>Permanently remove this service. Its image stays in the library.</p><Button variant='danger' onClick={() => setDeleting(true)}>Delete service</Button></Panel>}
         </aside>
       </fieldset>
+      <div className='services-admin__savebar'>
+        <p role='status' className={error ? 'services-admin__savebar-error' : ''}>{saving ? saveLabel : error || success || 'Save to apply your changes.'}</p>
+        <Button type='submit' variant='primary' disabled={disabled}>{saveLabel}</Button>
+      </div>
     </form>
     {picker && <ServiceImagePicker selectedId={values.imageId} onChoose={choose} onClose={() => setPicker(false)} />}
+    {deleting && <ServiceDeleteDialog service={values} onClose={() => setDeleting(false)} onDeleted={() => navigate('/admin/services', { replace: true })} />}
   </div>;
 }

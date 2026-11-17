@@ -1,16 +1,16 @@
-// Scoped additions: existing admin components, colors and animation timings stay intact.
+// Styles scoped to Services and its dialogs.
 .services-admin
   display: flex
   flex-direction: column
   gap: 24px
   min-width: 0
-
 .services-admin__form
   display: flex
   flex-direction: column
-  gap: 20px
+  gap: 24px
   min-width: 0
-
+.services-admin .admin-stack, .services-admin .admin-panel
+  min-width: 0
 .services-admin__preview
   display: block
   width: 100%
@@ -19,53 +19,315 @@
   border: 1px solid var(--admin-border)
   border-radius: 10px
   background: var(--admin-subtle)
-
 .services-admin__actions
   display: flex
   flex-wrap: wrap
   gap: 8px
-
-.services-admin__table .services-admin__actions .admin-button
-  padding-inline: 14px
+.services-admin__table .admin-button
   min-height: 40px
-
+  padding-inline: 14px
 .services-admin__table td
   min-width: 100px
-
+.services-admin__points
+  display: flex
+  flex-direction: column
+  gap: 18px
+.services-admin__point
+  display: grid
+  grid-template-columns: minmax(0, 1fr) auto
+  align-items: start
+  gap: 12px
+.services-admin__point > .admin-button
+  margin-top: 28px
+  padding-inline: 12px
+.services-admin__savebar
+  position: sticky
+  bottom: 12px
+  z-index: 15
+  display: flex
+  align-items: center
+  justify-content: space-between
+  gap: 16px
+  padding: 16px 20px
+  border: 1px solid var(--admin-border)
+  border-radius: 12px
+  background: var(--admin-surface)
+  box-shadow: 0 6px 24px rgba(23,23,23,.10)
+.services-admin__savebar p
+  min-width: 0
+  overflow-wrap: anywhere
+  font-size: 13px
+.services-admin__savebar .admin-button
+  flex-shrink: 0
+.services-admin__savebar-error
+  color: var(--admin-danger)
+.admin-dialog.service-image-picker
+  width: 960px
+  max-width: calc(100vw - 32px)
+  max-height: min(850px, calc(100dvh - 32px))
+  padding: 0
+  overflow: hidden
+.admin-dialog.service-image-picker[open]
+  display: flex
+  flex-direction: column
+  gap: 0
+.service-image-picker .admin-dialog__heading
+  flex-shrink: 0
+  padding: 22px 24px 16px
+  border-bottom: 1px solid var(--admin-border)
+.service-image-picker__toolbar
+  flex-shrink: 0
+  display: flex
+  align-items: center
+  justify-content: space-between
+  gap: 16px
+  padding: 16px 24px
+  background: var(--admin-subtle)
+  border-bottom: 1px solid var(--admin-border)
+.service-image-picker__toolbar p
+  max-width: 380px
+.service-image-picker__toolbar .admin-actions
+  flex-shrink: 0
+.service-image-picker__body
+  flex: 1 1 auto
+  min-height: 120px
+  min-width: 0
+  overflow-y: auto
+  overscroll-behavior: contain
+  padding: 20px 24px
+.service-image-picker__body > .admin-notice
+  margin-bottom: 16px
 .service-image-picker__grid
   display: grid
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr))
+  grid-template-columns: repeat(4, minmax(0, 1fr))
+  align-items: stretch
   gap: 16px
-
-.service-image-picker .admin-media-choice
-  overflow-wrap: anywhere
-
-.service-image-picker .admin-media-choice:disabled
-  opacity: 0.5
-  cursor: not-allowed
-
-.services-admin .admin-stack,
-.services-admin .admin-panel
+.service-image-picker__tile
+  display: flex
+  flex-direction: column
   min-width: 0
-
+  padding: 0
+  border: 2px solid var(--admin-border)
+  border-radius: 10px
+  overflow: hidden
+  background: var(--admin-surface)
+  color: var(--admin-text)
+  font: inherit
+  text-align: left
+  cursor: pointer
+.service-image-picker__tile:hover:not(:disabled)
+  border-color: var(--admin-accent)
+.service-image-picker__tile.is-selected
+  border-color: var(--admin-accent-ink)
+  background: var(--admin-accent-soft)
+  box-shadow: 0 0 0 1px var(--admin-accent-ink)
+.service-image-picker__tile:focus-visible
+  outline: 2px solid var(--admin-accent-ink)
+  outline-offset: 3px
+.service-image-picker__tile:disabled
+  opacity: .55
+  cursor: not-allowed
+.service-image-picker__image
+  display: block
+  width: 100%
+  aspect-ratio: 4 / 3
+  background: var(--admin-subtle)
+.service-image-picker__image img
+  display: block
+  width: 100%
+  height: 100%
+  aspect-ratio: 4 / 3
+  object-fit: cover
+.service-image-picker__name
+  display: -webkit-box
+  -webkit-line-clamp: 2
+  -webkit-box-orient: vertical
+  overflow: hidden
+  overflow-wrap: anywhere
+  margin: 10px 10px 6px
+  font-size: 12px
+  font-weight: 600
+  line-height: 18px
+.service-image-picker__meta
+  margin: auto 10px 10px
+  font-size: 11px
+  color: var(--admin-muted)
+.service-image-picker__empty
+  padding: 32px 0
+  color: var(--admin-muted)
+  text-align: center
+.service-image-picker__footer
+  flex-shrink: 0
+  display: flex
+  flex-direction: column
+  gap: 12px
+  padding: 16px 24px 20px
+  border-top: 1px solid var(--admin-border)
+  background: var(--admin-surface)
+.service-image-picker__pages
+  display: flex
+  align-items: center
+  flex-wrap: wrap
+  gap: 8px
+.service-image-picker__pages > span
+  flex: 1
+  font-size: 12px
+  color: var(--admin-muted)
+.service-image-picker__pages .admin-button
+  min-height: 36px
+  padding: 6px 14px
+  font-size: 12px
+.service-image-picker__confirm
+  display: flex
+  align-items: center
+  gap: 10px
+.service-image-picker__confirm > span
+  flex: 1
+  min-width: 0
+  overflow-wrap: anywhere
+.admin-dialog.service-order
+  width: 720px
+.service-order__list
+  display: flex
+  flex-direction: column
+  gap: 10px
+  max-height: 420px
+  min-height: 0
+  overflow-y: auto
+  overscroll-behavior: contain
+  margin: 0
+  padding: 4px
+  list-style: none
+.service-order__list > li
+  display: flex
+  align-items: center
+  gap: 10px
+  min-width: 0
+  padding: 10px
+  border: 1px solid var(--admin-border)
+  border-radius: 10px
+  background: var(--admin-surface)
+.service-order__list > li.is-dragging
+  border-color: var(--admin-accent-ink)
+  background: var(--admin-accent-soft)
+  box-shadow: 0 4px 14px rgba(23,23,23,.12)
+.service-order__handle
+  flex: 0 0 40px
+  width: 40px
+  min-height: 44px
+  padding: 0
+  border: 0
+  border-radius: 6px
+  background: var(--admin-subtle)
+  color: var(--admin-muted)
+  font-size: 24px
+  cursor: grab
+  touch-action: none
+  user-select: none
+.service-order__handle:active
+  cursor: grabbing
+.service-order__number
+  width: 22px
+  flex-shrink: 0
+  color: var(--admin-accent-ink)
+  font-weight: 600
+  text-align: center
+.service-order__name
+  flex: 1
+  display: flex
+  flex-direction: column
+  min-width: 0
+  gap: 2px
+  overflow-wrap: anywhere
+.service-order__name strong
+  font-size: 13px
+.service-order__name small
+  color: var(--admin-muted)
+  font-size: 11px
+.service-order__arrows
+  display: flex
+  gap: 6px
+.service-order__arrows .admin-button
+  min-width: 38px
+  min-height: 40px
+  padding: 6px
+.service-order__status
+  font-size: 12px
+  color: var(--admin-muted)
+.service-delete strong
+  overflow-wrap: anywhere
+@media (max-width: 800px)
+  .service-image-picker__grid
+    grid-template-columns: repeat(3, minmax(0, 1fr))
+  .service-image-picker__toolbar
+    align-items: stretch
+    flex-direction: column
+    gap: 10px
 @media (max-width: 700px)
   .services-admin .admin-heading
     flex-direction: column
     align-items: stretch
     gap: 16px
-
-  .services-admin .admin-heading > .admin-button
-    width: 100%
-
+  .services-admin .admin-heading > .admin-actions .admin-button
+    flex: 1
   .services-admin .admin-editor
     grid-template-columns: minmax(0, 1fr)
-
   .services-admin__table .services-admin__actions
     justify-content: flex-start
-
 @media (max-width: 480px)
   .services-admin .admin-panel
     padding: 18px
-
-  .service-image-picker__grid
+  .services-admin__point
     grid-template-columns: minmax(0, 1fr)
+    gap: 6px
+  .services-admin__point > .admin-button
+    margin-top: 0
+    justify-self: end
+  .services-admin__savebar
+    flex-direction: column
+    align-items: stretch
+    padding: 12px
+    bottom: 8px
+    gap: 8px
+  .service-image-picker .admin-dialog__heading
+    padding: 16px
+    gap: 10px
+  .service-image-picker .admin-dialog__heading h2
+    font-size: 17px
+  .service-image-picker__toolbar
+    padding: 12px 16px
+  .service-image-picker__toolbar .admin-actions
+    gap: 8px
+  .service-image-picker__toolbar .admin-button
+    flex: 1
+    padding-inline: 8px
+    font-size: 12px
+  .service-image-picker__body
+    padding: 16px
+    min-height: 90px
+  .service-image-picker__grid
+    grid-template-columns: repeat(2, minmax(0, 1fr))
+    gap: 10px
+  .service-image-picker__footer
+    padding: 12px 16px 16px
+    gap: 10px
+  .service-image-picker__confirm
+    flex-wrap: wrap
+  .service-image-picker__confirm > span
+    flex-basis: 100%
+  .service-image-picker__confirm .admin-button
+    flex: 1
+    padding-inline: 8px
+  .admin-dialog.service-order
+    padding: 16px
+  .service-order__list > li
+    flex-wrap: wrap
+    gap: 6px
+    padding: 8px
+  .service-order__handle
+    flex-basis: 32px
+    width: 32px
+  .service-order__name
+    flex-basis: calc(100% - 80px)
+  .service-order__arrows
+    margin-left: auto

@@ -34,30 +34,33 @@ const ServicesPage = () => {
     if (!hash && navigationType !== 'POP') window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
   }, [hash, key, navigationType]);
   useEffect(() => {
-    if (!hash) return;
-    // Wait for the asynchronously loaded anchor. Do not scroll again when
-    // focus/background refresh supplies the same service a second time.
+    if (!hash) { scrolled.current = ''; return; }
     const token = `${key}:${hash}`;
     if (scrolled.current === token || servicesStatus !== 'ready') return;
     let targetId;
     try { targetId = decodeURIComponent(hash.slice(1)); } catch { return; }
-    const frame = window.requestAnimationFrame(() => {
+    let secondFrame = 0;
+    const firstFrame = window.requestAnimationFrame(() => {
       const target = document.getElementById(targetId);
       if (!target?.matches('[data-service-anchor]')) return;
-      scrolled.current = token;
-      const reduceMotion = window.matchMedia(motionConfig.reducedMotionQuery).matches;
+      // Reveal/focus first, then measure scroll geometry after the next paint.
       target.focus({ preventScroll: true });
-      target.scrollIntoView({ behavior: navigationType === 'POP' || reduceMotion ? 'instant' : 'smooth', block: 'start' });
+      secondFrame = window.requestAnimationFrame(() => {
+        if (!target.isConnected) return;
+        scrolled.current = token;
+        const reduced = window.matchMedia(motionConfig.reducedMotionQuery).matches;
+        target.scrollIntoView({ behavior: reduced ? 'instant' : 'smooth', block: 'start' });
+      });
     });
-    return () => window.cancelAnimationFrame(frame);
-  }, [hash, key, navigationType, servicesStatus, services]);
+    return () => { window.cancelAnimationFrame(firstFrame); window.cancelAnimationFrame(secondFrame); };
+  }, [hash, key, servicesStatus, services]);
   return <div className='services-page motion-root' ref={pageRef}>
     <ServicesHero />
     <ServiceFinder services={serviceNavigation} />
     {servicesStatus === 'loading' && <div className='container'><p role='status' className='services-page__text'>Loading services…</p></div>}
     {servicesError && <div className='container' role='status'><p className='services-page__text'>{servicesError}</p><button type='button' className='services-page__button' onClick={reloadServices}>Try again</button></div>}
     {servicesStatus === 'ready' && !visibleServices.length && <div className='container'><p className='services-page__text'>Services will be available soon. Contact our team with your questions.</p></div>}
-    {mainServices.map((service, index) => <ServiceDetail key={service.id} service={service} imageRight={index % 2 === 1} />)}
+    {mainServices.map((service, index) => <ServiceDetail key={service.id} service={{ ...service, tone: index % 2 === 0 ? 'white' : 'warm' }} imageRight={index % 2 === 1} />)}
     {supportingServices.length > 0 && <ServiceCare services={supportingServices} />}
     <ServicesCTA />
   </div>;

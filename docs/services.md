@@ -1,25 +1,39 @@
-# Services integration
+# Services, Settings and Media usability update
 
-Pull the matching backend update and restart both apps. No new packages are needed.
-`/admin/services` lists real MongoDB records, with status filtering and pagination.
-`/admin/services/new` creates a draft; the existing editor supports main/supporting
-placement, Residential/Commercial, work items, order and Show on Home.
+Pull the matching backend update and restart both applications. No package or
+configuration changes are required. Real API/Atlas/R2 checks must be done locally.
 
-Choose from the existing Media Library. Open it in a separate tab to upload, then
-Refresh images in the picker. Images are not duplicated or uploaded by service Save.
-Alt override is optional; an empty override uses the library alt text.
+Settings Save is disabled until normalized values differ from the last loaded or
+saved values. Time zone is a select with common US zones and other IANA zones.
+Social domains can omit https://; server validation remains authoritative. Empty
+or invalid social links are omitted from the Footer, including their icons.
 
-Only active/published services are returned publicly. Home honors Show on Home;
-Services shows both groups; Contact uses the real service list. Home Read More
-anchors wait for asynchronous loading without changing motion durations. Service
-contact links preselect the service, but the Inquiry submit still logs to console:
-this does not implement actual inquiry delivery, Projects, Blog or Overview metrics.
+Media Library has one Upload images action. Existing edit, bulk deletion and
+paging remain. The service image picker supports direct uploads, a selection
+preview and explicit Use image confirmation. Cancel does not delete an upload.
 
-Public services refresh after saves in the same origin, across tabs through
-BroadcastChannel, and on focus. No local/session storage or mock records are added.
-Settings, Maps, Footer, Hero and their configuration remain unchanged.
+Services have no Residential/Commercial or background controls. Projects retains
+its existing property-type input; this update does not implement Projects CRUD.
+Service drafts need a name; publication also requires a summary and library image.
+An inline message, fixed viewport notification and sticky save bar show creation,
+save and validation outcomes even at the bottom of the form. Creation preserves
+the response/notice across navigation and consumes the temporary history state.
+The edit page includes Delete service with confirmation; images are retained.
 
-Image deletion is blocked by the backend for any linked service, even draft/archive.
-Deleting a service does not delete its image. Update conflicts return 409; reload
-before overwriting a record changed in another tab. Do not publish demo records as
-real services. Check `npm run lint` and `npm run build` after pulling.
+Use the bounded Position select in a service form or Arrange services in the list.
+Ordering is separate for main sections and supporting cards, across all pages and
+statuses. Drag the handle, use its arrow keys/Home/End, or the arrow buttons.
+Changes in Arrange services save automatically. Stale edits return 409: preserve
+your text and reload, rather than silently overwriting another tab's changes.
+
+Only visible detailed sections alternate white/warm, based on render order.
+Hash links wait for asynchronous content then scroll smoothly, unless reduced
+motion is requested. Existing Hero and reveal-animation timing settings are unchanged.
+
+Editorial limits: summary 160, full description 300, up to 5 included items of
+100 characters. Counters are shown. These are layout-informed choices, not values
+specified by Figma. Existing longer values are displayed intact; shorten them
+explicitly before saving. No migration truncates text or removes old work items.
+
+Inquiries still logs to the console; Projects and Blog remain separate future modules.
+Run `npm run lint`, `npm run build` and the manual checks after pulling.
