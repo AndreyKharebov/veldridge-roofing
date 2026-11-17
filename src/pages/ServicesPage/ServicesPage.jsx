@@ -1,7 +1,6 @@
 import { motionConfig } from '../../config/motion.js';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useLocation, useNavigationType } from 'react-router';
-
 import ServicesHero from './components/ServicesHero/ServicesHero.jsx';
 import ServiceFinder from './components/ServiceFinder/ServiceFinder.jsx';
 import ServiceDetail from './components/ServiceDetail/ServiceDetail.jsx';
@@ -10,14 +9,11 @@ import ServicesCTA from './components/ServicesCTA/ServicesCTA.jsx';
 import { useContent } from '../../content/context.js';
 import { useMotionReveal } from '../../hooks/useMotionReveal.js';
 import { servicesMotion, servicesMotionOptions } from './motion/servicesMotion.js';
-
 import './ServicesPage.sass';
 
 const ServicesPage = () => {
-  const { services } = useContent();
+  const { services, servicesStatus, servicesError, reloadServices } = useContent();
   const activeServices = services.filter((service) => service.status === 'active');
-  // Number the visible services in page order, not by their stored sort keys.
-  // Detailed sections render before care cards; neither order nor IDs are mutated.
   const visibleServices = [
     ...activeServices.filter((service) => service.group === 'main'),
     ...activeServices.filter((service) => service.group === 'supporting'),
@@ -28,62 +24,42 @@ const ServicesPage = () => {
   const pageRef = useMotionReveal(servicesMotion, servicesMotionOptions);
   const { hash, key } = useLocation();
   const navigationType = useNavigationType();
-
+  const scrolled = useRef('');
   useEffect(() => {
     const previousTitle = document.title;
     document.title = 'Roofing Services | Veldridge Roofing';
     return () => { document.title = previousTitle; };
   }, []);
-
   useEffect(() => {
-    // Preserve the existing explicit anchor and history behavior. Handle
-    // in-page links, direct hash URLs and browser history on this page only.
-    if (!hash) {
-      if (navigationType !== 'POP') {
-        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-      }
-      return;
-    }
-
+    if (!hash && navigationType !== 'POP') window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [hash, key, navigationType]);
+  useEffect(() => {
+    if (!hash) return;
+    // Wait for the asynchronously loaded anchor. Do not scroll again when
+    // focus/background refresh supplies the same service a second time.
+    const token = `${key}:${hash}`;
+    if (scrolled.current === token || servicesStatus !== 'ready') return;
     let targetId;
-    try {
-      targetId = decodeURIComponent(hash.slice(1));
-    } catch {
-      return;
-    }
-
-    const frameId = window.requestAnimationFrame(() => {
+    try { targetId = decodeURIComponent(hash.slice(1)); } catch { return; }
+    const frame = window.requestAnimationFrame(() => {
       const target = document.getElementById(targetId);
       if (!target?.matches('[data-service-anchor]')) return;
-
+      scrolled.current = token;
       const reduceMotion = window.matchMedia(motionConfig.reducedMotionQuery).matches;
-      // Focus reveals the destination immediately, before scroll geometry is
-      // measured. This also keeps the animated care-card anchors accurate.
       target.focus({ preventScroll: true });
-      target.scrollIntoView({
-        behavior: navigationType === 'POP' || reduceMotion ? 'instant' : 'smooth',
-        block: 'start',
-      });
+      target.scrollIntoView({ behavior: navigationType === 'POP' || reduceMotion ? 'instant' : 'smooth', block: 'start' });
     });
-
-    return () => window.cancelAnimationFrame(frameId);
-  }, [hash, key, navigationType]);
-
-  return (
-    <div className='services-page motion-root' ref={pageRef}>
-      <ServicesHero />
-      <ServiceFinder services={serviceNavigation} />
-      {mainServices.map((service, index) => (
-        <ServiceDetail
-          key={service.id}
-          service={service}
-          imageRight={index % 2 === 1}
-        />
-      ))}
-      {supportingServices.length > 0 && <ServiceCare services={supportingServices} />}
-      <ServicesCTA />
-    </div>
-  );
+    return () => window.cancelAnimationFrame(frame);
+  }, [hash, key, navigationType, servicesStatus, services]);
+  return <div className='services-page motion-root' ref={pageRef}>
+    <ServicesHero />
+    <ServiceFinder services={serviceNavigation} />
+    {servicesStatus === 'loading' && <div className='container'><p role='status' className='services-page__text'>Loading services…</p></div>}
+    {servicesError && <div className='container' role='status'><p className='services-page__text'>{servicesError}</p><button type='button' className='services-page__button' onClick={reloadServices}>Try again</button></div>}
+    {servicesStatus === 'ready' && !visibleServices.length && <div className='container'><p className='services-page__text'>Services will be available soon. Contact our team with your questions.</p></div>}
+    {mainServices.map((service, index) => <ServiceDetail key={service.id} service={service} imageRight={index % 2 === 1} />)}
+    {supportingServices.length > 0 && <ServiceCare services={supportingServices} />}
+    <ServicesCTA />
+  </div>;
 };
-
 export default ServicesPage;

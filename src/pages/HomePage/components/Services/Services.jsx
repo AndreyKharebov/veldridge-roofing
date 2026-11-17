@@ -4,23 +4,21 @@ import { useContent } from '../../../../content/context.js';
 import './Services.sass';
 
 const Services = () => {
-  const { services } = useContent();
+  const { services, servicesStatus, servicesError, reloadServices } = useContent();
   const servicesData = services.filter((service) => service.status === 'active' && service.showOnHome)
     .map((service) => ({ ...service, image: service.homeImage, description: service.summary }));
-  return (
-    <section className='services'>
-      <div className='container'>
-        <div className='services__header'>
-          <h2 className='services__title'>We Offer <span>High-Quality</span><br />Roofing Services</h2>
-          <p className='services__description'>Discover reliable roofing solutions designed to protect your home and provide lasting peace of mind.</p>
-        </div>
-        <div className='services__grid'>
-          {servicesData.map((service) => <ServiceCard key={service.id} service={service} />)}
-        </div>
-        {!servicesData.length && <p className='services__description'>No services added yet.</p>}
-        <Link className='services__button' to='/services'>View All Services</Link>
+  return <section className='services'>
+    <div className='container'>
+      <div className='services__header'>
+        <h2 className='services__title'>We Offer <span>High-Quality</span><br />Roofing Services</h2>
+        <p className='services__description'>Discover reliable roofing solutions designed to protect your home and provide lasting peace of mind.</p>
       </div>
-    </section>
-  );
+      <div className='services__grid'>{servicesData.map((service) => <ServiceCard key={service.id} service={service} />)}</div>
+      {servicesStatus === 'loading' && <p className='services__description' role='status'>Loading services…</p>}
+      {servicesError && <div role='status'><p className='services__description'>{servicesError}</p><button className='services__button' type='button' onClick={reloadServices}>Try again</button></div>}
+      {servicesStatus === 'ready' && !servicesData.length && <p className='services__description'>No featured services yet.</p>}
+      <Link className='services__button' to='/services'>View All Services</Link>
+    </div>
+  </section>;
 };
 export default Services;

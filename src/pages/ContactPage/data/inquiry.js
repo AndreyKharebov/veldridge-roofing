@@ -3,6 +3,9 @@ import { photoRules, serviceOptions } from './contactData.js';
 const text = (value, max = 240) => typeof value === 'string' ? value.trim().slice(0, max) : '';
 export const getInquiryContext = (state) => {
   if (!state || typeof state !== 'object') return null;
+  const serviceTitle = text(state.serviceTitle);
+  const serviceId = text(state.serviceId, 120);
+  if (serviceTitle && /^[a-f\d]{24}$/i.test(serviceId)) return { type: 'service', id: serviceId, title: serviceTitle };
   const projectTitle = text(state.projectTitle);
   const articleTitle = text(state.articleTitle);
   if (projectTitle) return { type:'project', id:text(state.projectId,120), title:projectTitle };
@@ -10,10 +13,11 @@ export const getInquiryContext = (state) => {
   return null;
 };
 export const createInitialInquiry = (context) => ({
-  name:'', zip:'', phone:'', email:'', service:'not-sure',
+  name:'', zip:'', phone:'', email:'', service: context?.type === 'service' ? context.id : 'not-sure',
   message: context?.type === 'project'
     ? `I’m interested in a project like “${context.title}”. Can you advise on the next steps for my home?`
-    : context?.type === 'article' ? `I read “${context.title}” and would like to discuss my roof.` : '',
+    : context?.type === 'article' ? `I read “${context.title}” and would like to discuss my roof.`
+      : context?.type === 'service' ? `I’d like to discuss ${context.title}.` : '',
 });
 export const normalizeInquiry = (values) => Object.fromEntries(Object.entries(values).map(([key,value]) => [key, typeof value === 'string' ? value.trim() : '']));
 // Input feedback only. This is not backend validation or delivery.

@@ -1,0 +1,71 @@
+// Scoped additions: existing admin components, colors and animation timings stay intact.
+.services-admin
+  display: flex
+  flex-direction: column
+  gap: 24px
+  min-width: 0
+
+.services-admin__form
+  display: flex
+  flex-direction: column
+  gap: 20px
+  min-width: 0
+
+.services-admin__preview
+  display: block
+  width: 100%
+  aspect-ratio: 3 / 2
+  object-fit: cover
+  border: 1px solid var(--admin-border)
+  border-radius: 10px
+  background: var(--admin-subtle)
+
+.services-admin__actions
+  display: flex
+  flex-wrap: wrap
+  gap: 8px
+
+.services-admin__table .services-admin__actions .admin-button
+  padding-inline: 14px
+  min-height: 40px
+
+.services-admin__table td
+  min-width: 100px
+
+.service-image-picker__grid
+  display: grid
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr))
+  gap: 16px
+
+.service-image-picker .admin-media-choice
+  overflow-wrap: anywhere
+
+.service-image-picker .admin-media-choice:disabled
+  opacity: 0.5
+  cursor: not-allowed
+
+.services-admin .admin-stack,
+.services-admin .admin-panel
+  min-width: 0
+
+@media (max-width: 700px)
+  .services-admin .admin-heading
+    flex-direction: column
+    align-items: stretch
+    gap: 16px
+
+  .services-admin .admin-heading > .admin-button
+    width: 100%
+
+  .services-admin .admin-editor
+    grid-template-columns: minmax(0, 1fr)
+
+  .services-admin__table .services-admin__actions
+    justify-content: flex-start
+
+@media (max-width: 480px)
+  .services-admin .admin-panel
+    padding: 18px
+
+  .service-image-picker__grid
+    grid-template-columns: minmax(0, 1fr)

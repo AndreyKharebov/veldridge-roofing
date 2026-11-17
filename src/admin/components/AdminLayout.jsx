@@ -74,8 +74,8 @@ export default function AdminLayout() {
         <p className='admin-sidebar__caption'>Admin workspace</p>
         <Navigation />
         <div className='admin-sidebar__account'>
-          <strong>Admin layout</strong>
-          <span>No account connected</span>
+          <strong>Administrator</strong>
+          <span>Server session</span>
         </div>
         <Button onClick={() => setSignOut(true)}>Sign out</Button>
       </aside>
@@ -93,14 +93,14 @@ export default function AdminLayout() {
           <Button to='/' className='admin-view-site'>
             View website ↗
           </Button>
-          <span className='admin-avatar' aria-label='Admin layout'>
+          <span className='admin-avatar' aria-label='Administrator'>
             A
           </span>
         </header>
         <main className='admin-content' id='admin-content'>
           <div className='admin-demo'>
-            Static layout · No authentication or API. Forms only log to the
-            browser console.
+            Services, Settings and Media Library use the API. News, Projects
+            and Inquiries remain console-only layouts; Overview is not live yet.
           </div>
           <Outlet />
         </main>
