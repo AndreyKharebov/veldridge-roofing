@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { createBrowserRouter, isRouteErrorResponse, Outlet, RouterProvider, useRouteError } from 'react-router';
 import PublicSettingsProvider from './content/PublicSettingsProvider.jsx';
 import PublicServicesProvider from './content/PublicServicesProvider.jsx';
+import PublicProjectsProvider from './content/PublicProjectsProvider.jsx';
 import Header from './components/layout/Header/Header.jsx';
 import Footer from './components/layout/Footer/Footer.jsx';
 import HomePage from './pages/HomePage/HomePage.jsx';
@@ -15,9 +16,9 @@ import './content/ContentProvider.sass';
 
 const AdminApp = lazy(() => import('./admin/AdminApp.jsx'));
 function SiteLayout() {
-  return <PublicSettingsProvider><PublicServicesProvider>
+  return <PublicSettingsProvider><PublicServicesProvider><PublicProjectsProvider>
     <Header /><main><Outlet /></main><Footer />
-  </PublicServicesProvider></PublicSettingsProvider>;
+  </PublicProjectsProvider></PublicServicesProvider></PublicSettingsProvider>;
 }
 function RouteError() {
   const error = useRouteError();
