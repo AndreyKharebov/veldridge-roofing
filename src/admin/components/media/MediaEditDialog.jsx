@@ -51,14 +51,14 @@ export default function MediaEditDialog({ item, onSaved, onClose, onBusy }) {
             <label htmlFor='media-edit-name'>Image name <span aria-hidden='true'>*</span></label>
             <input id='media-edit-name' name='filename' className='admin__control' value={filename}
               onChange={(event) => { setFilename(event.target.value); setError(''); }}
-              maxLength={255} required aria-describedby='media-edit-name-hint' />
+              maxLength={255} required placeholder='e.g. standing-seam-roof-overview.webp' aria-describedby='media-edit-name-hint' />
             <p id='media-edit-name-hint' className='admin-hint'>Changes the library name only. The original file and its URL stay the same.</p>
           </div>
           <div className='admin__field'>
             <label htmlFor='media-edit-alt'>Alt text</label>
             <textarea id='media-edit-alt' name='alt' className='admin__control' value={alt} rows={4}
               onChange={(event) => { setAlt(event.target.value); setError(''); }} maxLength={300}
-              placeholder='Describe what the image shows' aria-describedby='media-edit-alt-hint' />
+              placeholder='e.g. Charcoal standing-seam roof on a two-story home' aria-describedby='media-edit-alt-hint' />
             <div id='media-edit-alt-hint' className='media-edit__hint'>
               <span>Leave empty for a decorative image.</span><span>{alt.length}/300</span>
             </div>

@@ -13,7 +13,7 @@ export const getInquiryContext = (state) => {
   return null;
 };
 export const createInitialInquiry = (context) => ({
-  name:'', zip:'', phone:'', email:'', service: context?.type === 'service' ? context.id : 'not-sure',
+  name:'', address:'', zip:'', phone:'', email:'', service: context?.type === 'service' ? context.id : 'not-sure',
   message: context?.type === 'project'
     ? `I’m interested in a project like “${context.title}”. Can you advise on the next steps for my home?`
     : context?.type === 'article' ? `I read “${context.title}” and would like to discuss my roof.`
@@ -26,6 +26,10 @@ export const validateInquiry = (values, options = serviceOptions) => {
   const errors = {};
   if (!data.name) errors.name = 'Enter your name.';
   else if (data.name.length > 100) errors.name = 'Use no more than 100 characters.';
+  const address = values.address ?? '';
+  if (typeof address !== 'string' || address.length > 300 || /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/u.test(address)) {
+    errors.address = 'Use a property address of no more than 300 characters.';
+  }
   if (data.zip && !/^\d{5}(?:-\d{4})?$/.test(data.zip)) errors.zip = 'Enter a 5-digit ZIP code, or ZIP+4 (e.g. 19103-1234).';
   if (!data.phone && !data.email) {
     errors.phone = 'Add a phone number or email. You don’t need to fill in both.';

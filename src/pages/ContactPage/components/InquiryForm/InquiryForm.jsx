@@ -82,6 +82,8 @@ export default function InquiryForm({ context }) {
           <FormField name='phone' label='Phone' value={values.phone} onChange={updateValue} error={errors.phone} type='tel' autoComplete='tel' maxLength={32} placeholder='(000) 000-0000' />
           <FormField name='email' label='Email' value={values.email} onChange={updateValue} error={errors.email} type='email' autoComplete='email' autoCapitalize='none' spellCheck={false} maxLength={254} placeholder='you@example.com' />
         </div>
+        <FormField name='address' label='Property address (optional)' value={values.address} onChange={updateValue} error={errors.address}
+          autoComplete='street-address' maxLength={300} placeholder='e.g. 123 Example St, Philadelphia, PA' />
         <FormField name='service' label='Service (optional)' value={values.service} onChange={updateValue} error={errors.service}>
           {missingService && <option value={values.service}>{servicesStatus === 'loading' ? 'Loading selected service…' : 'Selected service is unavailable — choose another'}</option>}
           {serviceOptions.map(({ id, label }) => <option key={id} value={id}>{label}</option>)}

@@ -1,0 +1,14 @@
+/* Keep the existing desktop/login wordmark and compact mobile layout. */
+.admin-wordmark[href],
+.admin-topbar__compact[href] {
+  color: var(--admin-text);
+  text-decoration: none;
+}
+.admin-topbar__compact[href] {
+  min-width: 0;
+  font-weight: 700;
+}
+.admin-wordmark[href]:hover strong,
+.admin-topbar__compact[href]:hover {
+  color: var(--admin-accent-ink);
+}

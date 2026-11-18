@@ -19,7 +19,6 @@ export default function Gallery() {
         <ProjectPhoto className='gallery__image' photo={item.coverPhoto || item.photos[0]} />
       </Link>)}</div>
       {projectsStatus === 'ready' && !galleryImages.length && <p className='gallery__description'>No projects added yet.</p>}
-      {galleryImages.some((item) => item.isDemo) && <p className='gallery__description'>Portfolio preview · Includes demonstration projects.</p>}
       <Link className='gallery__button' to='/gallery'>View All Images</Link>
     </div>
   </section>;

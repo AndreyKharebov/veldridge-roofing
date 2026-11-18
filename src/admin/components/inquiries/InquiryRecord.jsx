@@ -58,7 +58,8 @@ export default function InquiryRecord({ initial }) {
     catch { setError('Could not copy automatically. Select the text and copy it manually.'); }
   };
   const facts = [
-    ['Name', inquiry.name], ['Email', inquiry.email], ['Phone', inquiry.phone], ['ZIP code', inquiry.zip],
+    ['Name', inquiry.name], ['Email', inquiry.email], ['Phone', inquiry.phone],
+    ['Property address', inquiry.address], ['ZIP code', inquiry.zip],
     ['Service', inquiry.serviceTitle || 'Not sure yet'], ['Received', formatInquiryDate(inquiry.createdAt)],
   ];
   return <div className='inquiries-admin'>

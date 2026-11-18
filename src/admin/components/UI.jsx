@@ -1,6 +1,8 @@
 import { Link } from 'react-router';
 import '../Workspace.css';
 import FormField from '../../components/forms/FormField.jsx';
+import { adminFieldPlaceholder } from './fieldExamples.js';
+import './AdminLinks.css';
 
 export function Button({ children, variant = 'secondary', to, className = '', disabled = false, ...props }) {
   const classes = `admin-button admin-button--${variant} ${className}`;
@@ -8,7 +10,9 @@ export function Button({ children, variant = 'secondary', to, className = '', di
   return to ? <Link className={classes} to={to} {...props}>{children}</Link>
     : <button type='button' className={classes} disabled={disabled} {...props}>{children}</button>;
 }
-export function Field(props) { return <FormField {...props} />; }
+export function Field(props) {
+  return <FormField {...props} placeholder={adminFieldPlaceholder(props)} />;
+}
 export function Panel({ title, description, children, className = '' }) {
   return <section className={`admin-panel ${className}`}>
     {title && <h2>{title}</h2>}{description && <p className='admin-hint'>{description}</p>}{children}
@@ -39,5 +43,8 @@ export function Empty({ title = 'Nothing here yet.', children }) {
   return <Panel className='admin-empty'><h2>{title}</h2>{children}</Panel>;
 }
 export function Wordmark() {
-  return <div className='admin-wordmark'><strong>VELDRIDGE</strong><span>ROOFING</span></div>;
+  return <a className='admin-wordmark' href='/' target='_blank' rel='noopener noreferrer'
+    aria-label='Veldridge Roofing home — opens in a new tab'>
+    <strong>VELDRIDGE</strong><span>ROOFING</span>
+  </a>;
 }

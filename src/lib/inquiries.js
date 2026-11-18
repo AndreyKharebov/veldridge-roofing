@@ -18,6 +18,7 @@ export const inquiriesApi = {
   async submit(values, photos, context, submissionId) {
     const payload = {
       name: values.name, email: values.email, phone: values.phone, zip: values.zip, message: values.message,
+      address: values.address ?? '',
       serviceId: values.service === 'not-sure' ? null : values.service,
       source: context && /^[a-f\d]{24}$/i.test(context.id) && ['service', 'project', 'article'].includes(context.type)
         ? { type: context.type, id: context.id } : null,

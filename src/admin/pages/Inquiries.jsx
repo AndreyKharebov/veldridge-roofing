@@ -40,6 +40,16 @@ export function InquiriesList() {
     };
     void load(); return () => controller.abort();
   }, [query, retry]);
+  useEffect(() => {
+    const nextSearch = search.trim();
+    if (nextSearch === query.search || selected) return;
+    const timer = window.setTimeout(() => {
+      setResult((previous) => ({ ...previous, loading: true, error: '' }));
+      setQuery((previous) => ({ ...previous, search: nextSearch, page: 1 }));
+    }, nextSearch ? 300 : 0);
+    return () => window.clearTimeout(timer);
+  }, [search, query.search, selected]);
+  const searchPending = search.trim() !== query.search;
   const refresh = () => {
     setResult((previous) => ({ ...previous, loading: true, error: '' }));
     setRetry((value) => value + 1);
@@ -55,12 +65,15 @@ export function InquiriesList() {
     <ListToolbar>
     <StatusFilters options={[['all', 'All inquiries'], ...statusOptions].map(([value, label]) => [value, `${label} · ${result.counts[value] ?? 0}`])}
       value={query.status} disabled={result.loading || Boolean(selected)} onChange={(status) => changeQuery((previous) => ({ ...previous, status, page: 1 }))} />
-    <p className='admin-hint'>Status counts cover the whole inbox. Search results are filtered below.</p>
-    <form className='inquiries-admin__search' onSubmit={(event) => { event.preventDefault(); changeQuery((previous) => ({ ...previous, search: search.trim(), page: 1 })); }}>
-      <Field name='search-inquiries' label='Search inquiries' value={search} maxLength={120} placeholder='Name, email, phone, message or reference'
+    <p className='admin-hint'>Status counts cover the whole inbox. Results update as you type; search contacts, addresses, messages, services, or references.</p>
+    <form className='inquiries-admin__search' role='search' aria-label='Search inquiries' onSubmit={(event) => {
+      event.preventDefault();
+      if (!selected) changeQuery((previous) => ({ ...previous, search: search.trim(), page: 1 }));
+    }}>
+      <Field name='search-inquiries' label='Search inquiries' value={search} type='search' maxLength={120} disabled={Boolean(selected)}
+        placeholder='e.g. Alex, roof repair, or Example Street'
         onChange={(event) => setSearch(event.target.value)} />
-      <Button type='submit' disabled={Boolean(selected)}>Search</Button>
-      <Button disabled={!search && !query.search} onClick={() => { setSearch(''); changeQuery((previous) => ({ ...previous, search: '', page: 1 })); }}>Clear</Button>
+      <Button disabled={Boolean(selected) || (!search && !query.search)} onClick={() => { setSearch(''); changeQuery((previous) => ({ ...previous, search: '', page: 1 })); }}>Clear</Button>
     </form>
     </ListToolbar>
     {result.loading ? <Panel><p role='status'>Loading inquiries…</p></Panel> : result.error ? <Notice error><p>{result.error}</p><Button onClick={() => refresh()}>Retry</Button><Button to='/admin/login'>Sign in</Button></Notice>
@@ -74,7 +87,7 @@ export function InquiriesList() {
           <td data-label='Actions'><div className='inquiries-admin__actions'><Link className='admin-button' to={`/admin/inquiries/${row.id}`}>View</Link><Button variant='danger' onClick={() => setSelected(row)}>Delete</Button></div></td>
         </tr>)}</tbody>
       </table></div> : <Empty title={query.search || query.status !== 'all' ? 'No matching inquiries.' : 'No inquiries yet.'}><p>Submitted Contact messages will appear here.</p><Button to='/contact'>Open Contact</Button></Empty>}
-    {!result.loading && !result.error && <Pagination pagination={result.pagination} page={query.page} noun='matching inquiries' disabled={Boolean(selected)}
+    {!result.loading && !result.error && <Pagination pagination={result.pagination} page={query.page} noun='matching inquiries' disabled={Boolean(selected) || searchPending}
       onPageChange={(page) => changeQuery((previous) => ({ ...previous, page }))} />}
     {selected && <InquiryDeleteDialog inquiry={selected} onClose={() => { setSelected(null); refresh(); }} onDeleted={() => { setSelected(null); refresh(); }} />}
   </div>;

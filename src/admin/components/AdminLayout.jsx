@@ -91,8 +91,10 @@ export default function AdminLayout() {
             ☰
           </Button>
           <span className='admin-topbar__breadcrumb'>Workspace / {active}</span>
-          <strong className='admin-topbar__compact'>VELDRIDGE</strong>
-          <Button to='/' className='admin-view-site'>
+          <a className='admin-topbar__compact' href='/' target='_blank' rel='noopener noreferrer'
+            aria-label='Veldridge Roofing home — opens in a new tab'>VELDRIDGE</a>
+          <Button to='/' className='admin-view-site' target='_blank' rel='noopener noreferrer'
+            aria-label='View website — opens in a new tab'>
             View website ↗
           </Button>
           <span className='admin-avatar' aria-label='Administrator'>
