@@ -6,6 +6,7 @@ import SaveStatus from '../components/SaveStatus.jsx';
 import ArticleForm from '../components/news/ArticleForm.jsx';
 import NewsDeleteDialog from '../components/news/NewsDeleteDialog.jsx';
 import { freshArticle, toArticleForm } from '../components/news/articleForm.js';
+import { ListToolbar, Pagination, StatusFilters } from '../components/Workspace.jsx';
 import './News.sass';
 
 export function NewsList() {
@@ -20,19 +21,16 @@ export function NewsList() {
   const articles = data?.articles ?? [];
   return <div className='news-admin'>
     <PageHeading title='News' description='Draft, publish and maintain your roofing journal.'>
-      <Button variant='primary' to='/admin/news/new'>+ Add article</Button>
+      <div className='admin-actions'><Button disabled={loading} onClick={reload}>Refresh</Button><Button to='/admin/news/categories'>Manage categories</Button><Button variant='primary' to='/admin/news/new'>+ Add article</Button></div>
     </PageHeading>
-    <div className='news-admin__filters'>
-      <Field name='status' label='Status' value={status} onChange={(event) => { setStatus(event.target.value); setPage(1); }}>
-        <option value='all'>All articles</option><option value='draft'>Draft</option><option value='published'>Published</option><option value='archived'>Archived</option>
-      </Field>
+    <ListToolbar>
+      <StatusFilters options={['all', 'published', 'draft', 'archived'].map((key) => [key, key === 'all' ? 'All articles' : key[0].toUpperCase() + key.slice(1)])}
+        value={status} disabled={loading} onChange={(value) => { setStatus(value); setPage(1); }} />
       <Field name='category' label='Category' value={categoryId} onChange={(event) => { setCategoryId(event.target.value); setPage(1); }}>
         <option value='all'>All categories</option><option value='uncategorized'>Uncategorized</option>
         {(data?.categories ?? []).map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
       </Field>
-      <Button to='/admin/news/categories'>Manage categories</Button>
-      <Button disabled={loading} onClick={reload}>Refresh</Button>
-    </div>
+    </ListToolbar>
     {location.state?.notice && <Notice>{location.state.notice}</Notice>}
     {error && <Notice error><p>{error}</p><Button onClick={reload}>Retry</Button></Notice>}
     {loading && <Panel><p role='status'>Loading articles…</p></Panel>}
@@ -46,10 +44,7 @@ export function NewsList() {
         </tr>)}</tbody>
       </table>
     </div> : <Empty title='No articles in this selection.'><p>Create an article or change the filters.</p>{page > 1 && <Button onClick={() => setPage(1)}>First page</Button>}</Empty>)}
-    {data?.pagination && !loading && <nav className='news-admin__pagination' aria-label='News pages'>
-      <p>{data.pagination.total} articles · Page {page} of {Math.max(1, data.pagination.totalPages)}</p>
-      <div className='admin-actions'><Button disabled={page <= 1} onClick={() => setPage((value) => value - 1)}>Previous</Button><Button disabled={page >= data.pagination.totalPages} onClick={() => setPage((value) => value + 1)}>Next</Button></div>
-    </nav>}
+    {!loading && !error && <Pagination pagination={data?.pagination} page={page} noun='articles' onPageChange={setPage} />}
     {selected && <NewsDeleteDialog item={selected} onClose={() => setSelected(null)} onDone={() => {
       setSelected(null);
       if (articles.length === 1 && page > 1) setPage((value) => value - 1); else reload();

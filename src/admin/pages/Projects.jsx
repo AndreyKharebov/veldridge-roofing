@@ -8,6 +8,7 @@ import ProjectForm from '../components/projects/ProjectForm.jsx';
 import ProjectDeleteDialog from '../components/projects/ProjectDeleteDialog.jsx';
 import ProjectOrderDialog from '../components/projects/ProjectOrderDialog.jsx';
 import { newProject, toProjectForm, projectFailure } from '../components/projects/projectForm.js';
+import { ListToolbar, Pagination, StatusFilters } from '../components/Workspace.jsx';
 import './Projects.sass';
 
 export function ProjectsList() {
@@ -33,11 +34,10 @@ export function ProjectsList() {
   const blocked = result.loading || selected || ordering;
   return <div className='projects-admin'>
     <PageHeading title='Projects' description='Manage your portfolio, photographs and the stories behind your work.'>
-      <div className='admin-actions'><Button disabled={Boolean(blocked)} onClick={() => setOrdering(true)}>Arrange projects</Button><Button variant='primary' to='/admin/projects/new'>+ Add project</Button></div>
+      <div className='admin-actions'><Button disabled={Boolean(blocked)} onClick={() => reload()}>Refresh</Button><Button disabled={Boolean(blocked)} onClick={() => setOrdering(true)}>Arrange projects</Button><Button variant='primary' to='/admin/projects/new'>+ Add project</Button></div>
     </PageHeading>
-    <div className='admin-actions' role='group' aria-label='Filter project status'>
-      {['all', 'published', 'draft', 'archived'].map((status) => <Button key={status} disabled={Boolean(blocked)} aria-pressed={query.status === status} onClick={() => { setNotice(''); reload({ status, page: 1 }); }}>{status === 'all' ? 'All projects' : status[0].toUpperCase() + status.slice(1)}</Button>)}
-    </div>
+    <ListToolbar><StatusFilters options={['all', 'published', 'draft', 'archived'].map((status) => [status, status === 'all' ? 'All projects' : status[0].toUpperCase() + status.slice(1)])}
+      value={query.status} disabled={Boolean(blocked)} onChange={(status) => { setNotice(''); reload({ status, page: 1 }); }} /></ListToolbar>
     {notice && <Notice>{notice}</Notice>}
     {result.error && <Notice error><p>{result.error}</p><Button onClick={() => reload()}>Retry</Button></Notice>}
     {result.loading ? <Panel><p role='status'>Loading projects…</p></Panel> : !result.error && <>
@@ -47,12 +47,10 @@ export function ProjectsList() {
         <div className='projects-admin__card-body'><div className='admin-actions'><Badge status={project.status} /><span className='admin-hint'>Position {project.order}</span></div>
           <h2>{project.title}</h2><p className='admin-hint'>{[project.categoryLabel, project.propertyType].filter(Boolean).join(' · ') || 'Project details not set'}</p>
           <p className='admin-hint'>{project.photos.length} photos{project.showOnHome ? ' · Home enabled' : ''}{project.isDemo ? ' · Demo' : ''}</p>
-          <div className='projects-admin__card-actions'><Link className='admin-button' to={`/admin/projects/${project.id}`}>Edit project</Link><Button variant='danger' disabled={Boolean(blocked)} onClick={() => setSelected(project)}>Delete</Button></div>
+          <div className='projects-admin__card-actions'><Link className='admin-button' to={`/admin/projects/${project.id}`}>Edit</Link><Button variant='danger' disabled={Boolean(blocked)} onClick={() => setSelected(project)}>Delete</Button></div>
         </div>
       </article>)}</div>
-      {result.pagination && <nav className='projects-admin__pagination' aria-label='Project pages'><p>{result.pagination.total} projects · Page {query.page} of {Math.max(1, result.pagination.totalPages)}</p>
-        <div className='admin-actions'><Button disabled={Boolean(blocked) || query.page <= 1} onClick={() => reload({ page: query.page - 1 })}>Previous</Button>
-          <Button disabled={Boolean(blocked) || query.page >= result.pagination.totalPages} onClick={() => reload({ page: query.page + 1 })}>Next</Button></div></nav>}
+      <Pagination pagination={result.pagination} page={query.page} noun='projects' disabled={Boolean(blocked)} onPageChange={(page) => reload({ page })} />
     </>}
     {selected && <ProjectDeleteDialog project={selected} onClose={() => setSelected(null)} onDeleted={() => { setSelected(null); setNotice('Project deleted. Its images remain in Media Library.'); reload(); }} />}
     {ordering && <ProjectOrderDialog onClose={() => setOrdering(false)} onChanged={() => reload()} />}

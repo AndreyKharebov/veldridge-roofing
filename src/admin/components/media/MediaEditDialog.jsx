@@ -41,7 +41,7 @@ export default function MediaEditDialog({ item, onSaved, onClose, onBusy }) {
   };
 
   return (
-    <Dialog title='Edit image' className='media-edit' onClose={close}>
+    <Dialog title='Edit image' className='media-edit' onClose={close} closeDisabled={saving}>
       <form className='media-edit__form' onSubmit={save} aria-busy={saving}>
         <div className='media-edit__preview'><img src={item.url} alt={item.alt || ''} /></div>
         <p className='admin-hint'>{item.mimeType.replace('image/', '').toUpperCase()} · {formatMediaSize(item.size)}</p>
@@ -64,7 +64,7 @@ export default function MediaEditDialog({ item, onSaved, onClose, onBusy }) {
             </div>
           </div>
         </fieldset>
-        <div className='media-edit__actions'>
+        <div className='admin-dialog__actions'>
           <Button disabled={saving} onClick={close}>Cancel</Button>
           <Button type='submit' variant='primary' disabled={saving || !changed || !filename.trim()}>
             {saving ? 'Saving…' : 'Save changes'}

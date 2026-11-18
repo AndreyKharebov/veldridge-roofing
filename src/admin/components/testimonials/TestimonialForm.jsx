@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 import { testimonialsApi } from '../../../lib/testimonials.js';
 import { Button, Checkbox, Field, PageHeading, Panel } from '../UI.jsx';
 import SaveStatus from '../SaveStatus.jsx';
+import { DangerZone, SaveBar } from '../Workspace.jsx';
 import ServiceImagePicker from '../services/ServiceImagePicker.jsx';
 import TestimonialCard from '../../../pages/HomePage/components/Testimonials/TestimonialCard.jsx';
 import TestimonialDeleteDialog from './TestimonialDeleteDialog.jsx';
@@ -70,7 +71,7 @@ export default function TestimonialForm({ initial, created = false }) {
   const label = saving ? (values.id ? 'Saving…' : 'Creating…') : values.id ? 'Save changes' : 'Create review';
   const disabled = saving || conflict || (Boolean(values.id) && !dirty);
   return <div className='testimonials-admin'>
-    <PageHeading title={values.id ? 'Edit review' : 'New review'} description='Manage the testimonials displayed on the homepage.' />
+    <PageHeading onBack={back} backDisabled={saving} backLabel='Testimonials' title={values.id ? 'Edit review' : 'New review'} description='Manage the testimonials displayed on the homepage.' />
     <form className='testimonials-admin__form' onSubmit={submit}>
       <fieldset className='admin-editor' disabled={saving}>
         <div className='admin-stack'>
@@ -94,8 +95,6 @@ export default function TestimonialForm({ initial, created = false }) {
             <Checkbox label='Demonstration review' checked={values.isDemo} onChange={(event) => update('isDemo', event.target.checked)} />
             <p className='admin-hint'>Demo reviews are labelled on the website. Turn this off only for an authentic review you have permission to publish. Do not enter private contact details.</p>
             <p className='admin-hint'>Published reviews appear newest first by first publication date. A draft needs only an author name.</p>
-            <Button type='submit' variant='primary' disabled={disabled}>{label}</Button>
-            <Button onClick={back}>Back to reviews</Button>
             {values.id && <Button onClick={reload}>Reload saved review</Button>}
           </Panel>
           <Panel title='Author photo' description='Optional. Without a photo, the card uses the author’s initials.'>
@@ -104,13 +103,12 @@ export default function TestimonialForm({ initial, created = false }) {
             {values.media && <Button onClick={() => { update('avatarId', null); update('media', null); }}>Remove selection</Button>}
             <p className='admin-hint'>The photo is public when the review is published. Removing this selection does not delete the library file.</p>
           </Panel>
-          {values.id && <Panel title='Delete review'><p className='admin-hint'>The review is permanently deleted. Its photo remains in Media Library.</p><Button variant='danger' onClick={() => setRemove(true)}>Delete review</Button></Panel>}
         </aside>
       </fieldset>
-      <div className='testimonials-admin__savebar'>
-        <p role='status'>{saving ? label : error || message || (dirty ? 'Unsaved changes' : 'No unsaved changes')}</p>
-        <Button disabled={saving} onClick={back}>Back</Button><Button type='submit' variant='primary' disabled={disabled}>{label}</Button>
-      </div>
+      {values.id && <DangerZone title='Delete review' actionLabel='Delete review' disabled={saving} onAction={() => setRemove(true)}>
+        <p>The review is permanently deleted. Its photo remains in Media Library.</p>
+      </DangerZone>}
+      <SaveBar pending={saving} disabled={disabled} dirty={dirty} error={error} message={message} submitLabel={label} onCancel={back} />
     </form>
     <SaveStatus pending={saving} error={error} message={saving ? label : message} onDismiss={() => { setError(''); setMessage(''); }} />
     {picker && <ServiceImagePicker title='Choose an author photo' entity='review' selectedId={values.avatarId} onClose={() => setPicker(false)} onChoose={(media) => { update('avatarId', media.id); update('media', media); setPicker(false); }} />}

@@ -1,0 +1,84 @@
+/* Shared workspace layout. Public site classes, motion tokens and API behavior are untouched. */
+.admin-shell .admin-page-header { display: grid; gap: 12px; min-width: 0; }
+.admin-shell .admin-page-back { display: flex; align-items: center; min-height: 28px; }
+.admin-shell .admin-page-back a,
+.admin-shell .admin-page-back button { border: 0; padding: 0; background: none; color: var(--admin-muted); font: inherit; text-decoration: none; cursor: pointer; }
+.admin-shell .admin-page-back :is(a, button):hover { color: var(--admin-accent-ink); text-decoration: underline; }
+.admin-shell .admin-page-back :disabled { cursor: not-allowed; }
+.admin-shell .admin-heading { align-items: flex-start; }
+.admin-shell .admin-heading__copy { min-width: 0; flex: 1; }
+.admin-shell .admin-heading__actions,
+.admin-shell .admin-heading__actions > .admin-actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+.admin-shell .admin-heading__actions .admin-button--primary { order: 1; }
+.admin-shell .admin-list-toolbar { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 16px 24px; padding: 18px 20px; min-width: 0; border: 1px solid var(--admin-border); border-radius: 12px; background: var(--admin-surface); }
+.admin-shell .admin-list-toolbar > .admin__field { flex: 1 1 220px; max-width: 360px; }
+.admin-shell .admin-toolbar-label { display: block; color: var(--admin-muted); font-size: 12px; line-height: 18px; font-weight: 600; }
+.admin-shell .admin-status-filter { display: grid; gap: 8px; min-width: 0; }
+.admin-shell .admin-status-filter__options { display: flex; flex-wrap: wrap; gap: 6px; }
+.admin-shell .admin-status-filter__options .admin-button { min-height: 40px; padding: 8px 14px; font-weight: 500; }
+.admin-shell .admin-status-filter__options .admin-button[aria-pressed='true'] { border-color: var(--admin-accent); background: var(--admin-accent-soft); color: var(--admin-accent-ink); font-weight: 600; }
+.admin-shell .admin-pagination { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px 20px; min-width: 0; padding-top: 16px; border-top: 1px solid var(--admin-border); }
+.admin-shell .admin-pagination > p { color: var(--admin-muted); font-size: 12px; line-height: 20px; }
+.admin-shell .admin-pagination__actions { display: flex; gap: 8px; margin-left: auto; }
+.admin-shell .admin-table :is(th, td):last-child { text-align: right; }
+.admin-shell .admin-table td[data-label='Actions'] > :is(.admin-actions, .services-admin__actions) { justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
+.admin-shell .admin-table td[data-label='Actions'] .admin-button { min-height: 40px; padding: 8px 14px; }
+.admin-shell .projects-admin__card-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; margin-top: auto; }
+.admin-shell .media-card__actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.admin-shell .admin-savebar { position: sticky; bottom: 12px; z-index: 10; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 16px 20px; margin-top: 4px; border: 1px solid var(--admin-border); border-radius: 12px; background: var(--admin-surface); box-shadow: 0 4px 24px rgba(23,23,23,.09); }
+.admin-shell .admin-savebar__message { flex: 1; min-width: 0; font-size: 13px; color: var(--admin-muted); overflow-wrap: anywhere; }
+.admin-shell .admin-savebar--error .admin-savebar__message { color: var(--admin-danger); }
+.admin-shell .admin-savebar__actions { display: flex; flex-wrap: wrap; gap: 10px; margin-left: auto; }
+.admin-shell .admin-danger-zone { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 20px 24px; border: 1px solid #efc9c3; border-radius: 12px; background: var(--admin-surface); }
+.admin-shell .admin-danger-zone__copy { min-width: 0; flex: 1; }
+.admin-shell .admin-danger-zone h2 { font-size: 16px; line-height: 24px; }
+.admin-shell .admin-danger-zone p { margin-top: 6px; color: var(--admin-muted); font-size: 12px; line-height: 20px; }
+.admin-shell .admin-danger-zone > .admin-button { flex-shrink: 0; }
+.admin-shell .admin-form-actions { display: flex; justify-content: flex-end; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.admin-shell .admin-empty { min-height: 160px; justify-content: center; }
+.admin-shell .admin-editor > :is(.admin-stack, aside),
+.admin-shell .admin-editor-grid > :is(.admin-stack, aside) { min-width: 0; }
+.admin-dialog .admin-dialog__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; padding-top: 16px; border-top: 1px solid var(--admin-border); }
+.admin-dialog .admin-dialog__heading { align-items: flex-start; }
+.admin-dialog .admin-dialog__body { display: grid; gap: 12px; overflow-wrap: anywhere; }
+.admin-dialog .admin-dialog__heading .admin-button { flex: 0 0 40px; min-height: 40px; padding: 6px; }
+.admin-shell .admin-button[aria-disabled='true'],
+.admin-dialog .admin-button[aria-disabled='true'] { opacity: .55; cursor: not-allowed; text-decoration: none; }
+/* One picker treatment for service/article/review covers and multi-photo projects. */
+.admin-dialog.service-image-picker,
+.admin-dialog.project-picker { width: 960px; max-width: calc(100vw - 32px); }
+.admin-dialog :is(.service-image-picker__tile, .project-picker__tile) { border-radius: 10px; }
+.admin-dialog :is(.service-image-picker__confirm, .project-picker__confirm) { align-items: center; }
+@media (max-width: 1100px) {
+  .admin-shell .admin-editor,
+  .admin-shell .admin-editor-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 700px) {
+  .admin-shell .admin-heading { flex-direction: column; gap: 16px; align-items: stretch; }
+  .admin-shell .admin-heading__actions,
+  .admin-shell .admin-heading__actions > .admin-actions { justify-content: flex-start; width: 100%; }
+  .admin-shell .admin-list-toolbar { padding: 16px; align-items: stretch; gap: 16px; }
+  .admin-shell .admin-list-toolbar > * { width: 100%; }
+  .admin-shell .admin-list-toolbar > .admin__field { max-width: none; }
+  .admin-shell .admin-pagination { align-items: flex-start; }
+  .admin-shell .admin-pagination__actions { width: 100%; margin-left: 0; }
+  .admin-shell .admin-pagination__actions > .admin-button { flex: 1; }
+  .admin-shell .admin-table :is(th, td):last-child { text-align: left; }
+  .admin-shell .admin-table td[data-label='Actions'] > :is(.admin-actions, .services-admin__actions) { justify-content: flex-end; }
+  .admin-shell .admin-savebar { bottom: max(8px, env(safe-area-inset-bottom)); flex-wrap: wrap; padding: 12px; gap: 10px; }
+  .admin-shell .admin-savebar__message { flex-basis: 100%; }
+  .admin-shell .admin-savebar__actions { width: 100%; margin-left: 0; }
+  .admin-shell .admin-savebar__actions > .admin-button { flex: 1; padding-inline: 12px; }
+  .admin-shell .admin-danger-zone { flex-direction: column; align-items: stretch; padding: 18px; gap: 12px; }
+  .admin-shell .admin-danger-zone > .admin-button { align-self: flex-end; }
+  .admin-dialog .admin-dialog__actions > .admin-button { flex: 1; padding-inline: 12px; }
+  .admin-dialog.service-image-picker,
+  .admin-dialog.project-picker { max-width: calc(100vw - 20px); }
+}
+.admin-shell .admin-table td[data-label='Actions'] > .inquiries-admin__actions { justify-content: flex-end; }
+.admin-shell .admin-list-toolbar > .inquiries-admin__search { flex: 1 1 100%; width: 100%; }
+.admin-shell .admin-list-toolbar > .admin-hint { flex: 1 1 100%; }
+.admin-shell .admin-list-toolbar.media-library__toolbar { justify-content: space-between; }
+.admin-shell .admin-list-toolbar .media-library__scope { flex: 1 1 100%; }
+.admin-shell .inquiries-admin__form .admin-form-actions .admin-button { width: auto; }
+.admin-shell .admin-table td[data-label='Actions'] a.admin-button { color: var(--admin-text); }

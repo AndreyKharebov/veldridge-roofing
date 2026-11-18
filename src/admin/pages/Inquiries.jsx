@@ -6,6 +6,7 @@ import { Badge, Button, Empty, Field, Notice, PageHeading, Panel } from '../comp
 import InquiryDeleteDialog from '../components/inquiries/InquiryDeleteDialog.jsx';
 import InquiryRecord from '../components/inquiries/InquiryRecord.jsx';
 import { statusOptions, formatInquiryDate, inquiryFailure } from '../components/inquiries/inquiryView.js';
+import { ListToolbar, Pagination, StatusFilters } from '../components/Workspace.jsx';
 import './Inquiries.sass';
 
 export function InquiriesList() {
@@ -49,12 +50,11 @@ export function InquiriesList() {
   };
   return <div className='inquiries-admin'>
     <PageHeading title='Inquiries' description='Messages from Contact. Customer details and photos are private.'>
-      <Button disabled={result.loading || Boolean(selected)} onClick={() => refresh()}>Refresh inbox</Button>
+      <Button disabled={result.loading || Boolean(selected)} onClick={() => refresh()}>Refresh</Button>
     </PageHeading>
-    <div className='admin-filter-bar' role='group' aria-label='Filter inquiries by status'>
-      {[['all', 'All inquiries'], ...statusOptions].map(([value, label]) => <Button key={value} disabled={Boolean(selected)} aria-pressed={query.status === value}
-        onClick={() => changeQuery((previous) => ({ ...previous, status: value, page: 1 }))}>{label} · {result.counts[value] ?? 0}</Button>)}
-    </div>
+    <ListToolbar>
+    <StatusFilters options={[['all', 'All inquiries'], ...statusOptions].map(([value, label]) => [value, `${label} · ${result.counts[value] ?? 0}`])}
+      value={query.status} disabled={result.loading || Boolean(selected)} onChange={(status) => changeQuery((previous) => ({ ...previous, status, page: 1 }))} />
     <p className='admin-hint'>Status counts cover the whole inbox. Search results are filtered below.</p>
     <form className='inquiries-admin__search' onSubmit={(event) => { event.preventDefault(); changeQuery((previous) => ({ ...previous, search: search.trim(), page: 1 })); }}>
       <Field name='search-inquiries' label='Search inquiries' value={search} maxLength={120} placeholder='Name, email, phone, message or reference'
@@ -62,6 +62,7 @@ export function InquiriesList() {
       <Button type='submit' disabled={Boolean(selected)}>Search</Button>
       <Button disabled={!search && !query.search} onClick={() => { setSearch(''); changeQuery((previous) => ({ ...previous, search: '', page: 1 })); }}>Clear</Button>
     </form>
+    </ListToolbar>
     {result.loading ? <Panel><p role='status'>Loading inquiries…</p></Panel> : result.error ? <Notice error><p>{result.error}</p><Button onClick={() => refresh()}>Retry</Button><Button to='/admin/login'>Sign in</Button></Notice>
       : result.inquiries.length ? <div className='admin-table-wrap'><table className='admin-table inquiries-admin__table'>
         <thead><tr><th>Customer</th><th>Message / service</th><th>Received</th><th>Status</th><th>Actions</th></tr></thead>
@@ -73,11 +74,8 @@ export function InquiriesList() {
           <td data-label='Actions'><div className='inquiries-admin__actions'><Link className='admin-button' to={`/admin/inquiries/${row.id}`}>View</Link><Button variant='danger' onClick={() => setSelected(row)}>Delete</Button></div></td>
         </tr>)}</tbody>
       </table></div> : <Empty title={query.search || query.status !== 'all' ? 'No matching inquiries.' : 'No inquiries yet.'}><p>Submitted Contact messages will appear here.</p><Button to='/contact'>Open Contact</Button></Empty>}
-    {result.pagination && !result.loading && <nav className='inquiries-admin__pagination' aria-label='Inquiry pages'>
-      <p className='admin-hint'>{result.pagination.total} matching inquiries · Page {query.page} of {Math.max(1, result.pagination.totalPages)}</p>
-      <div className='admin-actions'><Button disabled={query.page <= 1 || Boolean(selected)} onClick={() => changeQuery((previous) => ({ ...previous, page: previous.page - 1 }))}>Previous</Button>
-        <Button disabled={query.page >= result.pagination.totalPages || Boolean(selected)} onClick={() => changeQuery((previous) => ({ ...previous, page: previous.page + 1 }))}>Next</Button></div>
-    </nav>}
+    {!result.loading && !result.error && <Pagination pagination={result.pagination} page={query.page} noun='matching inquiries' disabled={Boolean(selected)}
+      onPageChange={(page) => changeQuery((previous) => ({ ...previous, page }))} />}
     {selected && <InquiryDeleteDialog inquiry={selected} onClose={() => { setSelected(null); refresh(); }} onDeleted={() => { setSelected(null); refresh(); }} />}
   </div>;
 }

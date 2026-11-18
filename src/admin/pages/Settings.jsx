@@ -1,13 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router';
+import { SaveBar } from '../components/Workspace.jsx';
 import { useContent } from '../../content/context.js';
 import { settingsApi } from '../../lib/settings.js';
 import { getOfficeLocation } from '../../utils/officeLocation.js';
 import { commonTimeZones, otherTimeZones, readSettings, settingsPayload, settingsSignature, socialFields } from '../../utils/settingsForm.js';
-import { Button, Checkbox, Field, Notice, PageHeading, Panel } from '../components/UI.jsx';
+import { Button, Checkbox, Field, PageHeading, Panel } from '../components/UI.jsx';
 import SaveStatus from '../components/SaveStatus.jsx';
 
 const isDemo = import.meta.env.VITE_DEMO_MODE !== 'false';
 export default function Settings() {
+  const navigate = useNavigate();
   const { settings: defaults } = useContent();
   const [values, setValues] = useState(() => readSettings(defaults));
   const [baseline, setBaseline] = useState(null);
@@ -19,6 +22,15 @@ export default function Settings() {
   const running = useRef(false);
   const office = getOfficeLocation(values);
   const changed = baseline !== null && settingsSignature(values) !== baseline;
+  const back = () => {
+    if (!running.current && (!changed || window.confirm('Discard your unsaved settings changes?'))) navigate('/admin');
+  };
+  useEffect(() => {
+    if (!changed && !saving) return;
+    const warn = (event) => { event.preventDefault(); event.returnValue = ''; };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [changed, saving]);
   const knownZone = !values.timeZone || commonTimeZones.some(([zone]) => zone === values.timeZone) || otherTimeZones.includes(values.timeZone);
 
   useEffect(() => {
@@ -67,7 +79,7 @@ export default function Settings() {
   if (loading) return <div className='content-status'>Loading company settings…</div>;
   if (loadError) return <div className='content-status'><h1>Cannot load company settings.</h1><p>{loadError}</p><Button onClick={() => window.location.reload()}>Retry</Button></div>;
   return <>
-    <PageHeading title='Contact settings' description='Manage company information, service area, social links and office address.' />
+    <PageHeading onBack={back} backDisabled={saving} backLabel='Overview' title='Contact settings' description='Manage company information, service area, social links and office address.' />
     <SaveStatus pending={saving} error={error} message={saving ? 'Saving settings…' : success} onDismiss={() => { setError(''); setSuccess(''); }} />
     <form onSubmit={submit}>
       <fieldset className='admin-editor-grid' disabled={saving}>
@@ -100,12 +112,6 @@ export default function Settings() {
           </Panel>
         </div>
         <aside className='admin-stack'>
-          <Panel title='Save settings'>
-            <Button variant='primary' type='submit' disabled={saving || !changed}>{saving ? 'Saving…' : 'Save changes'}</Button>
-            <Button to='/admin'>Cancel</Button>
-            <p className='admin-hint'>{changed ? 'You have unsaved changes.' : 'All changes saved.'}</p>
-            {error && <Notice error>{error}</Notice>}{success && <Notice>{success}</Notice>}
-          </Panel>
           <Panel title='Contact preview'><h3>{values.company}</h3><p className='admin-prose'>{values.phone || 'Phone not provided'}<br />{values.email || 'Email not provided'}<br />{values.street || 'Address not provided'}<br />{office.locality}</p><p className='admin-hint'>{values.hours}<br />{values.hoursNote}</p><p>{values.serviceStates.join(' · ')}</p></Panel>
           <Panel title='Google Maps' description='Your saved address determines the map location.'>
             {office.hasAddress ? <><p className='admin-prose'>{office.address}</p><a className='admin-link' href={office.searchUrl} target='_blank' rel='noopener noreferrer'>Preview this address in Google Maps ↗</a><p className='admin-hint'>Save to publish the current input.</p></> : <p className='admin-hint'>Enter a street, city and state. ZIP helps Google find the right address.</p>}
@@ -114,6 +120,7 @@ export default function Settings() {
           <Panel title='Social links preview'>{socialFields.map(([key, label]) => <p key={key} className='admin-hint'><strong>{label}:</strong> {values.socials[key] || 'Hidden'}</p>)}</Panel>
         </aside>
       </fieldset>
+      <SaveBar pending={saving} disabled={!changed} dirty={changed} error={error} message={success} submitLabel={saving ? 'Saving…' : 'Save changes'} onCancel={back} />
     </form>
   </>;
 }

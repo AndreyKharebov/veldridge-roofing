@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { DangerZone, SaveBar } from '../Workspace.jsx';
 import { useNavigate } from 'react-router';
 import { projectsApi } from '../../../lib/projects.js';
 import { Button, Checkbox, Field, PageHeading, Panel } from '../UI.jsx';
@@ -72,7 +73,7 @@ export default function ProjectForm({ initial, catalog, services, created = fals
   };
   const busy = saving || picker || preview || deleting;
   return <div className='projects-admin'>
-    <PageHeading title={values.id ? 'Edit project' : 'New project'} description='Tell the story of your work. Save a draft, then publish when it is ready.' />
+    <PageHeading onBack={goBack} backDisabled={saving} backLabel='Projects' title={values.id ? 'Edit project' : 'New project'} description='Tell the story of your work. Save a draft, then publish when it is ready.' />
     <form ref={form} className='project-editor' onSubmit={submit} noValidate>
       <fieldset className='admin-editor' disabled={saving}>
         <div className='admin-stack'>
@@ -119,18 +120,13 @@ export default function ProjectForm({ initial, catalog, services, created = fals
             <h3>{values.title || 'Project title'}</h3>
             <p className='admin-hint'>The cover is independent of the photo order.</p>
           </Panel>
-          {values.id && <Panel title='Delete project' description='Delete the project permanently, or archive it to hide it. Images stay in Media Library.'>
-            <Button variant='danger' disabled={busy} onClick={() => setDeleting(true)}>Delete project</Button>
-          </Panel>}
         </aside>
       </fieldset>
-      <div className='project-editor__savebar'>
-        <div className='project-editor__feedback'>
-          {error ? <p role='alert' className='project-editor__error'>{error}</p> : <p role='status'>{saving ? (values.id ? 'Saving project…' : 'Creating project…') : success || (dirty ? 'Unsaved changes' : 'All changes saved')}</p>}
-        </div>
-        <Button disabled={saving} onClick={goBack}>Back to projects</Button>
-        <Button type='submit' variant='primary' disabled={busy || !dirty}>{saving ? (values.id ? 'Saving…' : 'Creating…') : values.id ? 'Save changes' : 'Create project'}</Button>
-      </div>
+      {values.id && <DangerZone title='Delete project' actionLabel='Delete project' disabled={busy} onAction={() => setDeleting(true)}>
+        <p>Delete the project permanently, or archive it to hide it. Images stay in Media Library.</p>
+      </DangerZone>}
+      <SaveBar pending={saving} disabled={busy || !dirty} dirty={dirty} error={error} message={success}
+        submitLabel={saving ? (values.id ? 'Saving…' : 'Creating…') : values.id ? 'Save changes' : 'Create project'} onCancel={goBack} />
     </form>
     {!picker && !preview && !deleting && <SaveStatus pending={saving} error={error} message={saving ? (values.id ? 'Saving project…' : 'Creating project…') : success} onDismiss={() => { setError(''); setSuccess(''); }} />}
     {picker && <ProjectImagePicker existingIds={values.photos.map((photo) => photo.mediaId)} onChoose={addPhotos} onClose={() => setPicker(false)} />}

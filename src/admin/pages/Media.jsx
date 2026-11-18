@@ -4,6 +4,7 @@ import { Button, Empty, Notice, PageHeading, Panel } from '../components/UI.jsx'
 import MediaCard from '../components/media/MediaCard.jsx';
 import MediaEditDialog from '../components/media/MediaEditDialog.jsx';
 import MediaDeleteDialog from '../components/media/MediaDeleteDialog.jsx';
+import { ListToolbar, Pagination } from '../components/Workspace.jsx';
 import './Media.sass';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -137,9 +138,19 @@ export default function Media() {
 
   return <div className='media-library'>
     <PageHeading title='Media Library' description='Your images, ready for the website. Edit details or select images to remove.'>
-      <Button variant='primary' disabled={blocked} onClick={() => inputRef.current?.click()}>+ Upload images</Button>
+      <div className='admin-actions'><Button disabled={blocked} onClick={() => reload()}>Refresh</Button><Button variant='primary' disabled={blocked} onClick={() => inputRef.current?.click()}>+ Upload images</Button></div>
     </PageHeading>
     <input ref={inputRef} type='file' accept='image/jpeg,image/png,image/webp' multiple hidden onChange={handleFiles} disabled={blocked} aria-label='Select images to upload' />
+    <ListToolbar className='media-library__toolbar' label='Image selection'>
+      <div className='media-library__selection'>
+        <SelectPage checked={items.length > 0 && selectedItems.length === items.length} mixed={selectedItems.length > 0 && selectedItems.length < items.length}
+          disabled={blocked || !items.length} onChange={(event) => setSelectedIds(event.target.checked ? items.map(({ id }) => id) : [])} />
+        <span className='media-library__count' aria-live='polite'>{selectedItems.length} selected</span>
+        {selectedItems.length > 0 && <button className='media-library__clear' type='button' disabled={blocked} onClick={() => setSelectedIds([])}>Clear</button>}
+      </div>
+      <Button variant='danger' disabled={blocked || !selectedItems.length} onClick={() => openDelete(selectedItems)}>Delete selected{selectedItems.length > 0 ? ` (${selectedItems.length})` : ''}</Button>
+      <p className='media-library__scope'>Selection applies to this page only and clears when you change pages.</p>
+    </ListToolbar>
     <div className='media-library__upload'>
       <div><h2>Build your image library</h2><p>JPG, PNG or WebP · Up to 10 MB each · Up to 10 images per upload</p></div>
       {uploading && <div className='media-library__progress' role='status'>
@@ -152,25 +163,12 @@ export default function Media() {
       <ul>{uploadResults.map((entry, index) => <li key={`${index}-${entry.name}`} className={entry.success ? 'is-success' : 'is-error'}><strong>{entry.name}</strong><span>{entry.message}</span></li>)}</ul>
     </div>}
     {notice && <Notice>{notice}</Notice>}
-    <div className='media-library__toolbar'>
-      <div className='media-library__selection'>
-        <SelectPage checked={items.length > 0 && selectedItems.length === items.length} mixed={selectedItems.length > 0 && selectedItems.length < items.length}
-          disabled={blocked || !items.length} onChange={(event) => setSelectedIds(event.target.checked ? items.map(({ id }) => id) : [])} />
-        <span className='media-library__count' aria-live='polite'>{selectedItems.length} selected</span>
-        {selectedItems.length > 0 && <button className='media-library__clear' type='button' disabled={blocked} onClick={() => setSelectedIds([])}>Clear</button>}
-      </div>
-      <Button variant='danger' disabled={blocked || !selectedItems.length} onClick={() => openDelete(selectedItems)}>Delete selected{selectedItems.length > 0 ? ` (${selectedItems.length})` : ''}</Button>
-      <p className='media-library__scope'>Selection applies to this page only and clears when you change pages.</p>
-    </div>
     {error && <Notice error><p>{error}</p><div className='admin-actions'><Button disabled={busy} onClick={() => reload()}>Try again</Button><Button to='/admin/login'>Sign in</Button></div></Notice>}
     {loading ? <Panel><p role='status'>Loading images…</p></Panel> : !error && (items.length ? <div className='media-library__grid'>
       {items.map((item) => <MediaCard key={item.id} item={item} selected={selectedIds.includes(item.id)} disabled={blocked}
         onSelect={select} onEdit={(image) => { if (!blocked) { setNotice(''); setEditing(image); } }} onDelete={openDelete} />)}
     </div> : <Empty title='No images yet.'><p>Upload your first image to get started.</p></Empty>)}
-    {pagination && !error && <nav className='media-library__pagination' aria-label='Media pages'>
-      <p>{pagination.total} images · Page {pagination.page} of {Math.max(1, pagination.totalPages)}</p>
-      <div><Button disabled={blocked || query.page <= 1} onClick={() => changePage(query.page - 1)}>Previous</Button><Button disabled={blocked || query.page >= pagination.totalPages} onClick={() => changePage(query.page + 1)}>Next</Button></div>
-    </nav>}
+    {pagination && !error && <Pagination pagination={pagination} page={query.page} noun='images' disabled={blocked} onPageChange={changePage} />}
     {editing && <MediaEditDialog key={editing.id} item={editing} onSaved={handleSaved} onClose={() => setEditing(null)} onBusy={setMutationPending} />}
     {deleteTargets && <MediaDeleteDialog items={deleteTargets} onDeleted={handleDeleted} onClose={() => { setDeleteTargets(null); setMutationPending(false); }} onBusy={setMutationPending} />}
   </div>;

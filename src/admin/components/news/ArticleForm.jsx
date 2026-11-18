@@ -5,6 +5,7 @@ import { useNewsResource } from '../../../hooks/useNewsResource.js';
 import { normalizeSocialUrl } from '../../../utils/socialUrl.js';
 import { Button, Field, Notice, PageHeading, Panel } from '../UI.jsx';
 import SaveStatus from '../SaveStatus.jsx';
+import { DangerZone, SaveBar } from '../Workspace.jsx';
 import ServiceImagePicker from '../services/ServiceImagePicker.jsx';
 import ArticleDialog from '../../../pages/BlogPage/components/ArticleDialog/ArticleDialog.jsx';
 import NewsDeleteDialog from './NewsDeleteDialog.jsx';
@@ -63,7 +64,7 @@ export default function ArticleForm({ initial, created = false }) {
   const saveDisabled = saving || (Boolean(values.id) && !dirty);
   const saveLabel = saving ? (values.id ? 'Saving…' : 'Creating…') : (values.id ? 'Save changes' : 'Create article');
   return <div className='news-admin'>
-    <PageHeading title={values.id ? 'Edit article' : 'New article'} description='Write a draft, choose a cover and publish when the article is ready.' />
+    <PageHeading onBack={back} backDisabled={saving} backLabel='News' title={values.id ? 'Edit article' : 'New article'} description='Write a draft, choose a cover and publish when the article is ready.' />
     <form className='news-admin__form' onSubmit={submit}>
       <fieldset className='admin-editor' disabled={saving}>
         <div className='admin-stack'>
@@ -103,8 +104,6 @@ export default function ArticleForm({ initial, created = false }) {
             <Field label='Publication date' type='date' min='1900-01-01' max={values.status === 'published' ? new Date().toISOString().slice(0, 10) : undefined} {...field('publishedAt')} hint='Leave empty to use today (UTC) on publication. Future scheduling is not enabled.' />
             <p className='admin-hint'>Blog shows published articles newest first. Home shows the three latest. A draft needs only a title.</p>
             <Button disabled={!values.title.trim() || !values.media} onClick={() => setPreview(true)}>Preview article</Button>
-            <Button type='submit' variant='primary' disabled={saveDisabled}>{saveLabel}</Button>
-            <Button onClick={back}>Back to news</Button>
           </Panel>
           <Panel title='Article cover' description='Choose an existing image or upload one directly.'>
             {values.media ? <><img className='news-admin__cover' src={values.media.url} alt={values.imageAlt || values.media.alt || ''} /><p className='admin-hint'>{values.media.filename}</p></> : <div className='admin-image-placeholder'>No cover selected</div>}
@@ -112,13 +111,12 @@ export default function ArticleForm({ initial, created = false }) {
             {values.media && <Button onClick={() => { update('imageId', null); update('media', null); }}>Remove selection</Button>}
             <Field label='Alt text override' {...field('imageAlt')} multiline rows={3} maxLength={300} hint='Empty uses the library alt text. The original media record is not changed.' />
           </Panel>
-          {values.id && <Panel title='Delete article'><p className='admin-hint'>Permanent deletion removes the article, not its cover image.</p><Button variant='danger' onClick={() => setRemove(true)}>Delete article</Button></Panel>}
         </aside>
       </fieldset>
-      <div className='news-admin__savebar'>
-        <p role='status'>{saving ? saveLabel : error || message || (dirty ? 'Unsaved changes' : 'No unsaved changes')}</p>
-        <Button disabled={saving} onClick={back}>Back</Button><Button type='submit' variant='primary' disabled={saveDisabled}>{saveLabel}</Button>
-      </div>
+      {values.id && <DangerZone title='Delete article' actionLabel='Delete article' disabled={saving} onAction={() => setRemove(true)}>
+        <p>Permanent deletion removes the article, not its cover image.</p>
+      </DangerZone>}
+      <SaveBar pending={saving} disabled={saveDisabled} dirty={dirty} error={error} message={message} submitLabel={saveLabel} onCancel={back} />
     </form>
     <SaveStatus pending={saving} error={error} message={saving ? saveLabel : message} onDismiss={() => { setError(''); setMessage(''); }} />
     {picker && <ServiceImagePicker title='Choose an article cover' entity='article' selectedId={values.imageId} onClose={() => setPicker(false)} onChoose={(media) => { setValues((previous) => ({ ...previous, imageId: media.id, media })); setPicker(false); setError(''); setMessage(''); }} />}

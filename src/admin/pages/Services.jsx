@@ -7,9 +7,10 @@ import SaveStatus from '../components/SaveStatus.jsx';
 import ServiceImagePicker from '../components/services/ServiceImagePicker.jsx';
 import ServiceOrderDialog from '../components/services/ServiceOrderDialog.jsx';
 import ServiceDeleteDialog from '../components/services/ServiceDeleteDialog.jsx';
+import { DangerZone, ListToolbar, Pagination, SaveBar, StatusFilters } from '../components/Workspace.jsx';
 import './Services.sass';
 
-const statuses = [['all', 'All services'], ['draft', 'Draft'], ['active', 'Published'], ['archived', 'Archived']];
+const statuses = [['all', 'All services'], ['active', 'Published'], ['draft', 'Draft'], ['archived', 'Archived']];
 const limits = { title: 100, summary: 160, description: 300, eyebrow: 100, cta: 80, imageAlt: 300 };
 const groups = { main: 'Detailed service sections', supporting: 'Additional care cards' };
 const freshService = () => ({ title: '', summary: '', description: '', points: [], imageId: null, media: null,
@@ -17,6 +18,12 @@ const freshService = () => ({ title: '', summary: '', description: '', points: [
 const toForm = (service) => ({ ...freshService(), ...service, position: null,
   description: service.descriptionText ?? service.description ?? '', imageAlt: service.imageAltText ?? service.imageAlt ?? '',
   cta: service.ctaText ?? service.cta ?? '' });
+const serviceSignature = (values) => JSON.stringify({
+  ...Object.fromEntries(Object.keys(limits).map((key) => [key, (values[key] ?? '').trim()])),
+  points: values.points.map((point) => point.trim()).filter(Boolean), imageId: values.imageId,
+  showOnHome: values.showOnHome, group: values.group, status: values.status,
+  position: values.position ?? values.order ?? null,
+});
 const messageFor = (error) => error.status === 401 ? 'Your session expired. Sign in again before saving.' : error.message;
 
 export function ServicesList() {
@@ -40,11 +47,11 @@ export function ServicesList() {
   }, [query]);
   return <div className='services-admin'>
     <PageHeading title='Services' description='Manage the services shown on Home, Services and Contact.'>
-      <div className='admin-actions'><Button onClick={() => setArranging(true)}>Arrange services</Button><Button variant='primary' to='/admin/services/new'>+ Add service</Button></div>
+      <div className='admin-actions'><Button disabled={result.loading} onClick={reload}>Refresh</Button><Button disabled={result.loading} onClick={() => setArranging(true)}>Arrange services</Button><Button variant='primary' to='/admin/services/new'>+ Add service</Button></div>
     </PageHeading>
-    <div className='admin-actions'>{statuses.map(([value, label]) => <Button key={value} aria-pressed={query.status === value} onClick={() => {
+    <ListToolbar><StatusFilters options={statuses} value={query.status} disabled={result.loading} onChange={(value) => {
       setResult((previous) => ({ ...previous, loading: true })); setQuery((previous) => ({ ...previous, page: 1, status: value }));
-    }}>{label}</Button>)}</div>
+    }} /></ListToolbar>
     {notice && <Notice>{notice}</Notice>}
     {result.loading ? <Panel><p role='status'>Loading services…</p></Panel> : result.error ? <Notice error><p>{result.error}</p><Button onClick={reload}>Retry</Button></Notice>
       : result.services.length ? <div className='admin-table-wrap'><table className='admin-table services-admin__table'>
@@ -57,11 +64,9 @@ export function ServicesList() {
           <td data-label='Actions'><div className='services-admin__actions'><Link className='admin-button' to={`/admin/services/${service.id}`}>Edit</Link><Button variant='danger' onClick={() => setSelected(service)}>Delete</Button></div></td>
         </tr>)}</tbody>
       </table></div> : <Empty title={query.status === 'all' ? 'No services yet.' : 'No services with this status.'}><Button to='/admin/services/new'>Add service</Button></Empty>}
-    {result.pagination && !result.loading && <div className='admin-actions'>
-      <p className='admin-hint'>{result.pagination.total} services · Page {query.page} of {Math.max(1, result.pagination.totalPages)}</p><span className='admin-spacer' />
-      <Button disabled={query.page <= 1} onClick={() => { setResult((value) => ({ ...value, loading: true })); setQuery((value) => ({ ...value, page: value.page - 1 })); }}>Previous</Button>
-      <Button disabled={query.page >= result.pagination.totalPages} onClick={() => { setResult((value) => ({ ...value, loading: true })); setQuery((value) => ({ ...value, page: value.page + 1 })); }}>Next</Button>
-    </div>}
+    {!result.loading && !result.error && <Pagination pagination={result.pagination} page={query.page} noun='services' onPageChange={(page) => {
+      setResult((value) => ({ ...value, loading: true })); setQuery((value) => ({ ...value, page }));
+    }} />}
     <p className='admin-hint'>Positions are managed within each placement group. Drafts and archived services stay hidden on the public website.</p>
     {selected && <ServiceDeleteDialog service={selected} onClose={() => setSelected(null)} onDeleted={() => { setSelected(null); setNotice('Service deleted. Its library image was retained.'); reload(); }} />}
     {arranging && <ServiceOrderDialog onClose={() => setArranging(false)} onChanged={reload} />}
@@ -102,6 +107,8 @@ function ExistingService({ id }) {
 function ServiceForm({ initial, created = false }) {
   const navigate = useNavigate();
   const [values, setValues] = useState(initial);
+  const [baseline, setBaseline] = useState(() => serviceSignature(initial));
+  const dirty = serviceSignature(values) !== baseline;
   const [picker, setPicker] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -114,6 +121,15 @@ function ServiceForm({ initial, created = false }) {
   const [orderRetry, setOrderRetry] = useState(0);
   const running = useRef(false);
   const mounted = useRef(false);
+  useEffect(() => {
+    if (!dirty && !saving) return;
+    const warn = (event) => { event.preventDefault(); event.returnValue = ''; };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [dirty, saving]);
+  const back = () => {
+    if (!running.current && (!dirty || window.confirm('Discard your unsaved service changes?'))) navigate('/admin/services');
+  };
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   useEffect(() => {
     const controller = new AbortController();
@@ -134,7 +150,7 @@ function ServiceForm({ initial, created = false }) {
   const choose = (image) => { setValues((previous) => ({ ...previous, imageId: image.id, media: image })); setPicker(false); setError(''); setErrors({}); setSuccess(''); };
   const submit = async (event) => {
     event.preventDefault();
-    if (running.current || orderLoading || orderError || !order) return;
+    if (running.current || orderLoading || orderError || !order || (values.id && !dirty)) return;
     const problems = {};
     for (const [name, maximum] of Object.entries(limits)) {
       if (values[name].trim().length > maximum) problems[name] = `Use no more than ${maximum} characters. Existing text has not been shortened automatically.`;
@@ -159,16 +175,16 @@ function ServiceForm({ initial, created = false }) {
       if (isNew) {
         navigate(`/admin/services/${service.id}`, { replace: true, state: { createdService: service } });
       } else {
-        setValues(toForm(service)); setSuccess('Service saved successfully.'); reloadOrder();
+        const next = toForm(service); setValues(next); setBaseline(serviceSignature(next)); setSuccess('Service saved successfully.'); reloadOrder();
       }
     } catch (failure) { if (mounted.current) setError(messageFor(failure)); }
     finally { running.current = false; if (mounted.current) setSaving(false); }
   };
-  const disabled = saving || orderLoading || Boolean(orderError) || !order;
+  const disabled = saving || orderLoading || Boolean(orderError) || !order || (Boolean(values.id) && !dirty);
   const saveLabel = saving ? (values.id ? 'Saving…' : 'Creating…') : values.id ? 'Save changes' : 'Create service';
   return <div className='services-admin'>
     <SaveStatus pending={saving} message={saving ? saveLabel : success} error={error} onDismiss={() => { setError(''); setSuccess(''); }} />
-    <PageHeading title={values.id ? 'Edit service' : 'New service'} description='Create a draft or publish a service. Images can be selected or uploaded here.' />
+    <PageHeading onBack={back} backDisabled={saving} backLabel='Services' title={values.id ? 'Edit service' : 'New service'} description='Create a draft or publish a service. Images can be selected or uploaded here.' />
     <form className='services-admin__form' onSubmit={submit} noValidate>
       <fieldset className='admin-editor' disabled={saving}>
         <div className='admin-stack'>
@@ -188,8 +204,8 @@ function ServiceForm({ initial, created = false }) {
           <Panel title='Detail section labels'><Field label='Eyebrow' {...field('eyebrow')} maxLength={100} /><Field label='Contact button label' {...field('cta')} maxLength={80} /></Panel>
         </div>
         <aside className='admin-stack'>
-          <Panel title='Visibility & position'>
-            <Field label='Status' {...field('status')}><option value='draft'>Draft — admin only</option><option value='active'>Published / Active</option><option value='archived'>Archived — hidden</option></Field>
+          <Panel title='Publication'>
+            <Field label='Status' {...field('status')}><option value='draft'>Draft — admin only</option><option value='active'>Published</option><option value='archived'>Archived — hidden</option></Field>
             <Field label='Services page placement' {...field('group')}><option value='main'>Detailed service section</option><option value='supporting'>Additional care card</option></Field>
             <Field label='Position in this group' name='position' value={position} disabled={orderLoading || Boolean(orderError)} error={errors.position} onChange={(event) => update('position', Number(event.target.value))}>
               {Array.from({ length: members.length + 1 }, (_, index) => <option key={index + 1} value={index + 1}>{index + 1}{index === 0 ? ' — First' : index === members.length ? ' — Last' : ''}</option>)}
@@ -198,9 +214,6 @@ function ServiceForm({ initial, created = false }) {
             {orderError && <Notice error><p>{orderError}</p><Button onClick={reloadOrder}>Retry</Button></Notice>}
             <p className='admin-hint'>Other services shift automatically. Use Arrange services in the list to drag items into order. Detailed backgrounds alternate automatically.</p>
             <Checkbox label='Show on Home' checked={values.showOnHome} onChange={(event) => update('showOnHome', event.target.checked)} />
-            <Button type='submit' variant='primary' disabled={disabled}>{saveLabel}</Button>
-            {error && <Notice error>{error}</Notice>}{success && <Notice>{success}</Notice>}
-            <Button disabled={saving} onClick={() => navigate('/admin/services')}>Back to services</Button>
           </Panel>
           <Panel title='Service image' description='Choose an existing image or upload a new one without leaving the editor.'>
             {values.media ? <><img className='services-admin__preview' src={values.media.url} alt={values.imageAlt || values.media.alt || ''} /><p className='admin-hint'>{values.media.filename}</p></> : <div className='admin-image-placeholder'>No image selected</div>}
@@ -210,13 +223,12 @@ function ServiceForm({ initial, created = false }) {
             </div>
             <Field label='Alt text override' multiline rows={3} {...field('imageAlt')} maxLength={300} hint='Leave empty to use the library description.' />
           </Panel>
-          {values.id && <Panel title='Delete service'><p className='admin-hint'>Permanently remove this service. Its image stays in the library.</p><Button variant='danger' onClick={() => setDeleting(true)}>Delete service</Button></Panel>}
         </aside>
       </fieldset>
-      <div className='services-admin__savebar'>
-        <p role='status' className={error ? 'services-admin__savebar-error' : ''}>{saving ? saveLabel : error || success || 'Save to apply your changes.'}</p>
-        <Button type='submit' variant='primary' disabled={disabled}>{saveLabel}</Button>
-      </div>
+      {values.id && <DangerZone title='Delete service' actionLabel='Delete service' disabled={saving} onAction={() => setDeleting(true)}>
+        <p>Permanently remove this service. Its image stays in Media Library.</p>
+      </DangerZone>}
+      <SaveBar pending={saving} disabled={disabled} dirty={dirty} error={error} message={success} submitLabel={saveLabel} onCancel={back} />
     </form>
     {picker && <ServiceImagePicker selectedId={values.imageId} onChoose={choose} onClose={() => setPicker(false)} />}
     {deleting && <ServiceDeleteDialog service={values} onClose={() => setDeleting(false)} onDeleted={() => navigate('/admin/services', { replace: true })} />}

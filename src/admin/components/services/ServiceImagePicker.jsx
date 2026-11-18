@@ -52,12 +52,12 @@ export default function ServiceImagePicker({ selectedId, onChoose, onClose, titl
     finally { uploadLock.current = false; if (mounted.current) setUploading(false); }
   };
   const close = () => { if (!uploadLock.current) onClose(); };
-  return <Dialog title={title} className='service-image-picker' onClose={close}>
+  return <Dialog title={title} className='service-image-picker' onClose={close} closeDisabled={uploading}>
     <div className='service-image-picker__toolbar'>
       <p className='admin-hint'>Choose a library image or upload one here. JPEG, PNG or WebP · Up to 10 MB.</p>
       <div className='admin-actions'>
         <Button variant='primary' disabled={uploading} onClick={() => input.current?.click()}>{uploading ? 'Uploading…' : '+ Upload image'}</Button>
-        <Button disabled={uploading || result.status === 'loading'} onClick={() => reload()}>Refresh images</Button>
+        <Button disabled={uploading || result.status === 'loading'} onClick={() => reload()}>Refresh</Button>
       </div>
       <input ref={input} hidden type='file' accept='image/jpeg,image/png,image/webp' onChange={upload} disabled={uploading} aria-label={`Upload ${entity} image`} />
     </div>

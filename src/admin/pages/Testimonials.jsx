@@ -7,6 +7,7 @@ import { Badge, Button, Empty, Notice, PageHeading, Panel } from '../components/
 import TestimonialForm from '../components/testimonials/TestimonialForm.jsx';
 import TestimonialDeleteDialog from '../components/testimonials/TestimonialDeleteDialog.jsx';
 import { freshTestimonial, toTestimonialForm } from '../components/testimonials/testimonialForm.js';
+import { ListToolbar, Pagination, StatusFilters } from '../components/Workspace.jsx';
 import './Testimonials.sass';
 
 export function TestimonialsList() {
@@ -28,15 +29,10 @@ export function TestimonialsList() {
   }
   return <div className='testimonials-admin'>
     <PageHeading title='Testimonials' description='Add and manage the reviews displayed on Home.'>
-      <Button variant='primary' to='/admin/testimonials/new'>+ Add review</Button>
+      <div className='admin-actions'><Button disabled={result.loading} onClick={result.reload}>Refresh</Button><Button variant='primary' to='/admin/testimonials/new'>+ Add review</Button></div>
     </PageHeading>
-    <div className='admin-actions' role='group' aria-label='Review status'>
-      {[['all', 'All reviews'], ['draft', 'Draft'], ['published', 'Published'], ['archived', 'Archived']].map(([value, label]) => (
-        <Button key={value} variant={status === value ? 'primary' : 'secondary'} aria-pressed={status === value}
-          onClick={() => { setPage(1); setStatus(value); }}>{label}</Button>
-      ))}
-      <Button disabled={result.loading} onClick={result.reload}>Refresh reviews</Button>
-    </div>
+    <ListToolbar><StatusFilters options={['all', 'published', 'draft', 'archived'].map((key) => [key, key === 'all' ? 'All reviews' : key[0].toUpperCase() + key.slice(1)])}
+      value={status} disabled={result.loading} onChange={(value) => { setPage(1); setStatus(value); }} /></ListToolbar>
     {notice && <Notice>{notice}</Notice>}
     {result.loading && <Panel><p role='status'>Loading reviews…</p></Panel>}
     {result.error && <Notice error><p>{result.error}</p><Button onClick={result.reload}>Try again</Button></Notice>}
@@ -51,11 +47,7 @@ export function TestimonialsList() {
         </tr>)}</tbody>
       </table>
     </div> : <Empty title={status === 'all' ? 'No reviews yet.' : 'No reviews with this status.'}><p>Create a draft and publish when it is ready.</p></Empty>)}
-    {pagination && !result.loading && <nav className='admin-actions' aria-label='Review pages'>
-      <p className='admin-hint'>{pagination.total} reviews · Page {page} of {Math.max(1, pagination.totalPages)}</p><span className='admin-spacer' />
-      <Button disabled={page <= 1} onClick={() => setPage((value) => value - 1)}>Previous</Button>
-      <Button disabled={page >= pagination.totalPages} onClick={() => setPage((value) => value + 1)}>Next</Button>
-    </nav>}
+    {!result.loading && !result.error && <Pagination pagination={pagination} page={page} noun='reviews' onPageChange={setPage} />}
     <p className='admin-hint'>Drafts and archived reviews are private. Home shows published reviews newest first by first publication date.</p>
     {selected && <TestimonialDeleteDialog item={selected} onClose={() => setSelected(null)} onDone={() => { setSelected(null); setNotice('Review deleted. Its photo stays in Media Library.'); result.reload(); }} />}
   </div>;

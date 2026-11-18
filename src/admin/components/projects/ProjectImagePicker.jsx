@@ -76,7 +76,7 @@ export default function ProjectImagePicker({ existingIds, onChoose, onClose }) {
     }
   };
   const close = () => { if (!lock.current) onClose(); };
-  return <Dialog title='Add project photos' className='project-picker' onClose={close}>
+  return <Dialog title='Add project photos' className='project-picker' onClose={close} closeDisabled={uploading}>
     <div className='project-picker__toolbar'>
       <p className='admin-hint'>Choose multiple library images or upload here. Up to 20 photos per project; 10 files per upload, 10 MB each.</p>
       <div className='admin-actions'>
